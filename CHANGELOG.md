@@ -5,6 +5,7 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 ## [Unreleased]
 
 ### Added
+- `npm run android:setup` (`scripts/android/ensure-sdk.ts`) and `npm run android:build`: Gradle failed with "SDK location not found" on any machine without `ANDROID_HOME` or the git-ignored `android/local.properties`; the script now detects the default SDK folder and writes the file.
 - Five locales: Spanish (es), French (fr), German (de), Korean (ko), Simplified Chinese (zh-CN); device tags `es-*`, `fr-*`, `de-*`, `ko-*`, `zh-*` resolve to them.
 - `CLAUDE.md`: AI onboarding guide (commands, architecture, rules).
 - `AGENT.md`: agent/task menu (onboarding, memory/log, level, localization, audio, release).

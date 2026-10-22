@@ -27,7 +27,9 @@ A rebuild of the Mirror puzzle game, following the design and architecture speci
 | `npm run content:gallery` | Render the level-kit gallery into `docs/content/kit` |
 | `npm run audio:author` | Render the sound effects to listening copies in `docs/testing/audio` |
 | `npm run android:sync` | Build the web bundle and sync it into the Capacitor Android project |
-| `cmd /c gradlew.bat assembleDebug` (inside `android/`) | Build the Android debug APK |
+| `npm run android:setup` | Locate the Android SDK and write the git-ignored `android/local.properties` if `ANDROID_HOME` is not set |
+| `npm run android:build` | Setup + sync + build the Android debug APK (works on a fresh clone) |
+| `cmd /c .\gradlew.bat assembleDebug` (inside `android/`) | Build the debug APK directly; needs `android:setup` or `ANDROID_HOME` first |
 
 ## Project layout
 
