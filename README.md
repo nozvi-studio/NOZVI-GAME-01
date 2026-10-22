@@ -51,7 +51,7 @@ src/
   audio-synth/      Procedural sound-effect synthesizer
   infrastructure/   Audio, haptics, progress storage and lifecycle adapters
   localization/     Locale resolution and manager
-  locales/          Translation files (en-US, id, ja, pt-BR, vi)
+  locales/          Translation files (en-US, es, pt-BR, fr, de, ja, ko, zh-CN, id, vi)
   studio/           In-browser level editor (Studio)
   devtools/         Developer tools such as the Audio Lab
 scripts/

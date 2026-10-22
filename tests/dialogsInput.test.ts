@@ -147,3 +147,42 @@ it('toggles from the label-side of a settings row and opens the language picker 
   zone.handlers.get('pointerdown')!();
   expect(getLocale()).toBe('pt-BR');
 });
+
+it('blocks underlying settings during confirmation and supports pill-edge Cancel/Delete taps', () => {
+  const ui = setup();
+  ui.settings.open();
+  const danger = ui.items.find(i => i.text?.includes(t('setting_danger_reset')))!;
+  ui.tap(0, danger.y);
+  for (const control of ui.items.filter(i => i.interactive && i.kind !== 'rectangle')) {
+    expect(control.width).toBeGreaterThanOrEqual(64);
+    expect(control.height).toBeGreaterThanOrEqual(64);
+  }
+  ui.tap(-285, 0);
+  ui.send('pointerdown', -285, 0);
+  ui.send('pointerup', -340, 0);
+  expect(ui.items.filter(i => i.kind === 'container').at(-1)?.destroyed).toBe(false);
+  const music = ui.items.find(i => i.text === t('setting_music'))!;
+  ui.tap(-250, music.y);
+  expect(ui.repo.read().progress.settings.music).toBe(true);
+  expect(ui.root().destroyed).toBe(false);
+  const cancel = ui.items.find(i => i.text === t('btn_cancel'))!;
+  ui.tap(cancel.x - 95, cancel.y);
+  expect(ui.root().destroyed).toBe(false);
+  expect(ui.restart).not.toHaveBeenCalled();
+  ui.repo.setMusic(false);
+  ui.tap(0, danger.y);
+  const del = ui.items.filter(i => i.text === t('btn_confirm_delete')).at(-1)!;
+  ui.tap(del.x + 95, del.y);
+  expect(ui.repo.read().progress.settings.music).toBe(true);
+  expect(ui.restart).toHaveBeenCalledOnce();
+});
+
+it('keeps Reset directly below the last row when haptics are unavailable', () => {
+  vi.mocked(Capacitor.isNativePlatform).mockReturnValue(false);
+  const ui = setup();
+  ui.settings.open();
+  expect(ui.items.some(i => i.text === t('setting_haptics'))).toBe(false);
+  const sfx = ui.items.find(i => i.text === t('setting_sfx'))!;
+  const danger = ui.items.find(i => i.text?.includes(t('setting_danger_reset')))!;
+  expect(danger.y - sfx.y).toBe(84);
+});
