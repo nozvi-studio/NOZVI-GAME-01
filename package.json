@@ -1,0 +1,39 @@
+{
+  "name": "nozvi",
+  "version": "1.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=24.13.1 <25"
+  },
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:changed": "vitest run --changed",
+    "content:validate": "node --experimental-strip-types scripts/content/validate-content.ts",
+    "content:author": "node --experimental-strip-types scripts/content/author-level.ts",
+    "content:new": "node --experimental-strip-types scripts/content/new-level.ts",
+    "content:promote": "node --experimental-strip-types scripts/content/promote-level.ts",
+    "content:gallery": "node --experimental-strip-types scripts/content/render-kit-gallery.ts",
+    "audio:author": "node --experimental-strip-types scripts/audio/audio-author.ts",
+    "build": "npm run typecheck && vite build",
+    "build:release": "npm run content:validate -- --release && npm run build",
+    "android:sync": "npm run build && cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.2",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/core": "8.5.2",
+    "@capacitor/haptics": "8.0.2",
+    "phaser": "3.90.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.2",
+    "@types/node": "22.10.2",
+    "typescript": "5.7.2",
+    "vite": "6.0.7",
+    "vitest": "2.1.8"
+  }
+}

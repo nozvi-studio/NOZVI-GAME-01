@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="680" viewBox="0 0 512 680">
+<rect width="512" height="680" fill="#101a4f"/>
+<line x1="0" y1="0" x2="0" y2="640" stroke="#3b56b8" stroke-width="1"/>
+<line x1="32" y1="0" x2="32" y2="640" stroke="#22336f" stroke-width="1"/>
+<line x1="64" y1="0" x2="64" y2="640" stroke="#22336f" stroke-width="1"/>
+<line x1="96" y1="0" x2="96" y2="640" stroke="#3b56b8" stroke-width="1"/>
+<line x1="128" y1="0" x2="128" y2="640" stroke="#22336f" stroke-width="1"/>
+<line x1="160" y1="0" x2="160" y2="640" stroke="#22336f" stroke-width="1"/>
+<line x1="192" y1="0" x2="192" y2="640" stroke="#3b56b8" stroke-width="1"/>
+<line x1="224" y1="0" x2="224" y2="640" stroke="#22336f" stroke-width="1"/>
+<line x1="256" y1="0" x2="256" y2="640" stroke="#22336f" stroke-width="1"/>
+<line x1="288" y1="0" x2="288" y2="640" stroke="#3b56b8" stroke-width="1"/>
+<line x1="320" y1="0" x2="320" y2="640" stroke="#22336f" stroke-width="1"/>
+<line x1="352" y1="0" x2="352" y2="640" stroke="#22336f" stroke-width="1"/>
+<line x1="384" y1="0" x2="384" y2="640" stroke="#3b56b8" stroke-width="1"/>
+<line x1="416" y1="0" x2="416" y2="640" stroke="#22336f" stroke-width="1"/>
+<line x1="448" y1="0" x2="448" y2="640" stroke="#22336f" stroke-width="1"/>
+<line x1="480" y1="0" x2="480" y2="640" stroke="#3b56b8" stroke-width="1"/>
+<line x1="512" y1="0" x2="512" y2="640" stroke="#22336f" stroke-width="1"/>
+<line x1="0" y1="0" x2="512" y2="0" stroke="#3b56b8" stroke-width="1"/>
+<line x1="0" y1="32" x2="512" y2="32" stroke="#22336f" stroke-width="1"/>
+<line x1="0" y1="64" x2="512" y2="64" stroke="#22336f" stroke-width="1"/>
+<line x1="0" y1="96" x2="512" y2="96" stroke="#3b56b8" stroke-width="1"/>
+<line x1="0" y1="128" x2="512" y2="128" stroke="#22336f" stroke-width="1"/>
+<line x1="0" y1="160" x2="512" y2="160" stroke="#22336f" stroke-width="1"/>
+<line x1="0" y1="192" x2="512" y2="192" stroke="#3b56b8" stroke-width="1"/>
+<line x1="0" y1="224" x2="512" y2="224" stroke="#22336f" stroke-width="1"/>
+<line x1="0" y1="256" x2="512" y2="256" stroke="#22336f" stroke-width="1"/>
+<line x1="0" y1="288" x2="512" y2="288" stroke="#3b56b8" stroke-width="1"/>
+<line x1="0" y1="320" x2="512" y2="320" stroke="#22336f" stroke-width="1"/>
+<line x1="0" y1="352" x2="512" y2="352" stroke="#22336f" stroke-width="1"/>
+<line x1="0" y1="384" x2="512" y2="384" stroke="#3b56b8" stroke-width="1"/>
+<line x1="0" y1="416" x2="512" y2="416" stroke="#22336f" stroke-width="1"/>
+<line x1="0" y1="448" x2="512" y2="448" stroke="#22336f" stroke-width="1"/>
+<line x1="0" y1="480" x2="512" y2="480" stroke="#3b56b8" stroke-width="1"/>
+<line x1="0" y1="512" x2="512" y2="512" stroke="#22336f" stroke-width="1"/>
+<line x1="0" y1="544" x2="512" y2="544" stroke="#22336f" stroke-width="1"/>
+<line x1="0" y1="576" x2="512" y2="576" stroke="#3b56b8" stroke-width="1"/>
+<line x1="0" y1="608" x2="512" y2="608" stroke="#22336f" stroke-width="1"/>
+<line x1="0" y1="640" x2="512" y2="640" stroke="#22336f" stroke-width="1"/>
+<path d="M252 224h4v4h-4zM248 228h12v4h-12zM244 232h20v4h-20zM240 236h28v4h-28zM236 240h36v4h-36zM232 244h44v4h-44zM228 248h52v4h-52zM224 252h60v4h-60zM220 256h68v4h-68zM216 260h76v4h-76zM212 264h84v4h-84zM208 268h92v4h-92zM204 272h100v4h-100zM200 276h108v4h-108zM196 280h116v4h-116zM192 284h124v4h-124zM188 288h132v4h-132zM184 292h140v4h-140zM180 296h148v4h-148zM176 300h156v4h-156zM172 304h164v4h-164zM168 308h172v4h-172zM164 312h180v4h-180zM160 316h188v4h-188zM160 320h188v4h-188zM164 324h180v4h-180zM168 328h172v4h-172zM172 332h164v4h-164zM176 336h156v4h-156zM180 340h148v4h-148zM184 344h140v4h-140zM188 348h132v4h-132zM192 352h124v4h-124zM196 356h116v4h-116zM200 360h108v4h-108zM204 364h100v4h-100zM208 368h92v4h-92zM212 372h84v4h-84zM216 376h76v4h-76zM220 380h68v4h-68zM224 384h60v4h-60zM228 388h52v4h-52zM232 392h44v4h-44zM236 396h36v4h-36zM240 400h28v4h-28zM244 404h20v4h-20zM248 408h12v4h-12zM252 412h4v4h-4z" fill="#BFE3FF" fill-opacity="0.35"/>
+<polygon data-piece="P1" points="256,224 352,320 256,416 160,320" fill="none" stroke="#FFC857" stroke-width="3"/>
+<circle cx="160" cy="224" r="4" fill="#FFC857"/>
+<text x="166" y="238" fill="#DDF2FF" font-family="sans-serif" font-size="12">P1.A</text>
+<text x="8" y="666" fill="#DDF2FF" font-family="sans-serif" font-size="16">kit-diamond-0 · diamond hướng 0 · kit-gallery</text>
+</svg>

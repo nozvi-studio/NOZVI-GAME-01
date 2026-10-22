@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1254" height="1254" viewBox="0 0 1254 1254">
+  <title>Logo</title>
+  <polygon id="dark-wing" points="570,25 769,140 766,362" fill="#3B2779" stroke="#3B2779" stroke-width="1" stroke-linejoin="round"/>
+  <polygon id="dark-left" points="681,221 577,433 484,487 341,403" fill="#3B2779" stroke="#3B2779" stroke-width="1" stroke-linejoin="round"/>
+  <polygon id="yellow-top" points="681,221 410,287 341,403" fill="#FEB801" stroke="#FEB801" stroke-width="1" stroke-linejoin="round"/>
+  <polygon id="yellow-sliver" points="681,221 766,362 670,526" fill="#FEB801" stroke="#FEB801" stroke-width="1" stroke-linejoin="round"/>
+  <polygon id="mid-small" points="681,221 670,526 577,433" fill="#523D94" stroke="#523D94" stroke-width="1" stroke-linejoin="round"/>
+  <polygon id="mid-right" points="766,362 936,661 670,526" fill="#523D94" stroke="#523D94" stroke-width="1" stroke-linejoin="round"/>
+  <polygon id="yellow-big" points="670,526 936,661 503,817" fill="#FEB801" stroke="#FEB801" stroke-width="1" stroke-linejoin="round"/>
+  <polygon id="mid-bottom" points="936,661 503,817 612,1226" fill="#523D94" stroke="#523D94" stroke-width="1" stroke-linejoin="round"/>
+</svg>

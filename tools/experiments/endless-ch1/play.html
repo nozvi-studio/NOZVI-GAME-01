@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Endless lab: chơi thử</title>
+<style>
+html,body{height:100%;margin:0}
+body{font:14px system-ui;background:#111;color:#ddd;display:flex;flex-direction:column}
+header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid #333}
+select,button{font:inherit;background:#222;color:#ddd;border:1px solid #444;border-radius:6px;padding:6px 10px;cursor:pointer}
+button:hover,select:hover{border-color:#8cf}
+#info{color:#999;font-size:12px}
+main{flex:1;min-height:0;display:flex;justify-content:center;background:#000}
+iframe{height:100%;width:min(100%,calc((100vh - 52px) * 0.5625));border:0}
+</style>
+</head>
+<body>
+<header>
+  <label>Chương <select id="chapter">
+    <option value="1">Chương 1</option>
+    <option value="2" disabled>Chương 2 (chưa có)</option>
+    <option value="3" disabled>Chương 3 (chưa có)</option>
+    <option value="4" disabled>Chương 4 (chưa có)</option>
+  </select></label>
+  <button id="prev" title="Phím ←">&larr; Trước</button>
+  <label>Màn <select id="level"></select></label>
+  <button id="next" title="Phím →">Sau &rarr;</button>
+  <button id="reload" title="Chơi lại màn này">Chơi lại</button>
+  <span id="info"></span>
+</header>
+<main><iframe id="game" title="game"></iframe></main>
+<script>
+var $ = function (id) { return document.getElementById(id); };
+var levels = [];
+var KEY = 'endless-lab-play';
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { return {}; }
+}
+function save(v) { try { localStorage.setItem(KEY, JSON.stringify({ level: v })); } catch (e) {} }
+function open(i) {
+  if (i < 0 || i >= levels.length) return;
+  var l = levels[i];
+  $('level').value = String(i);
+  $('info').textContent = l.id + ' · ' + l.pieces + ' mảnh · khó ' + l.difficulty;
+  $('game').src = '/?scene=play&level=' + l.id + '&mode=harness';
+  save(i);
+}
+function current() { return Number($('level').value); }
+$('level').addEventListener('change', function () { open(current()); });
+$('prev').addEventListener('click', function () { open(current() - 1); });
+$('next').addEventListener('click', function () { open(current() + 1); });
+$('reload').addEventListener('click', function () { open(current()); });
+document.addEventListener('keydown', function (e) {
+  if (e.target && e.target.tagName === 'SELECT') return;
+  if (e.key === 'ArrowLeft') open(current() - 1);
+  if (e.key === 'ArrowRight') open(current() + 1);
+});
+fetch('./out/index.json')
+  .then(function (r) { return r.json(); })
+  .then(function (list) {
+    levels = list;
+    list.forEach(function (l, i) { $('level').add(new Option('Màn ' + (i + 1), String(i))); });
+    open(Math.min(load().level || 0, list.length - 1));
+  })
+  .catch(function () {
+    $('info').textContent = 'Không đọc được out/index.json. Chạy lại run.ts và mở qua dev server.';
+  });
+</script>
+</body>
+</html>

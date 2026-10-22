@@ -1,0 +1,254 @@
+/* Boot styles: Portrait Alpaca intro */
+
+@font-face {
+  font-family: 'Unbounded';
+  font-style: normal;
+  font-weight: 500;
+  font-display: block;
+  src: url('./fonts/unbounded-500.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Unbounded';
+  font-style: normal;
+  font-weight: 800;
+  font-display: block;
+  src: url('./fonts/unbounded-800.ttf') format('truetype');
+}
+
+/* Base reset */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #FFFDF8;
+}
+
+/* ==========================================================================
+   Portrait Alpaca Intro
+   ========================================================================== */
+
+#intro {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FFFDF8;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 250ms ease-out;
+}
+
+#intro.intro-exit {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.intro-error {
+  position: absolute;
+  z-index: 5;
+  left: 24px;
+  right: 24px;
+  bottom: max(32px, env(safe-area-inset-bottom));
+  text-align: center;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #3C2774;
+}
+
+.intro-error[hidden] { display: none; }
+
+.intro-retry-btn {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 24px;
+  color: #FFFDF8;
+  background: #523C94;
+  font: 600 14px system-ui, -apple-system, sans-serif;
+  cursor: pointer;
+}
+
+.intro-stage {
+  position: absolute;
+  width: 390px;
+  height: 844px;
+  overflow: hidden;
+  background: #FFFDF8;
+  font-family: 'Unbounded', system-ui, -apple-system, sans-serif;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(var(--boot-scale, min(calc(100vw / 390), calc(100vh / 844))));
+  transform-origin: center center;
+}
+
+.f {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: fIn 0.875s cubic-bezier(.18, .9, .22, 1.12) both;
+}
+
+@keyframes fIn {
+  0% {
+    opacity: 0;
+    transform: translate(var(--x), var(--y)) rotate(var(--r)) scale(.3);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+}
+
+.logo {
+  overflow: visible;
+  filter: drop-shadow(0 18px 22px rgba(60, 39, 116, .20));
+  animation: logoPop 0.418s 1.141s cubic-bezier(.3, 1.6, .5, 1) both, bob 3.196s 1.75s ease-in-out infinite alternate;
+}
+
+@keyframes logoPop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.09); }
+  100% { transform: scale(1); }
+}
+
+@keyframes bob {
+  from { transform: translateY(0); }
+  to { transform: translateY(-8px); }
+}
+
+.shine {
+  animation: shineLoop 3.804s 1.332s ease-in-out infinite;
+}
+
+@keyframes shineLoop {
+  0% { transform: translateX(0) skewX(-18deg); }
+  24% { transform: translateX(1700px) skewX(-18deg); }
+  100% { transform: translateX(1700px) skewX(-18deg); }
+}
+
+.intro-ring {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  opacity: 0;
+  animation: introRing 0.913s 1.179s cubic-bezier(.1, .7, .3, 1) both;
+}
+
+@keyframes introRing {
+  0% { opacity: .95; transform: scale(.2); }
+  100% { opacity: 0; transform: scale(5.5); }
+}
+
+.shard {
+  position: absolute;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  opacity: 0;
+  animation: burst 1.065s 1.179s cubic-bezier(.1, .8, .3, 1) both;
+}
+
+@keyframes burst {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(.2); }
+  65% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--r)) scale(1); }
+}
+
+.fl {
+  position: absolute;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  opacity: 0;
+  animation: flIn 0.913s 1.75s both, drift var(--d) 1.75s ease-in-out infinite alternate;
+}
+
+@keyframes flIn {
+  from { opacity: 0; }
+  to { opacity: .5; }
+}
+
+@keyframes drift {
+  from { transform: translateY(0) rotate(0deg); }
+  to { transform: translateY(-26px) rotate(50deg); }
+}
+
+.bgpoly {
+  opacity: 0;
+  animation: fade 1.217s 0.076s ease-out both;
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.w1 span {
+  display: inline-block;
+  opacity: 0;
+  animation: letter 0.571s cubic-bezier(.2, 1.5, .4, 1) both;
+}
+
+.w1 span:nth-child(1) { animation-delay: 1.522s; }
+.w1 span:nth-child(2) { animation-delay: 1.567s; }
+.w1 span:nth-child(3) { animation-delay: 1.613s; }
+.w1 span:nth-child(4) { animation-delay: 1.659s; }
+.w1 span:nth-child(5) { animation-delay: 1.704s; }
+.w1 span:nth-child(6) { animation-delay: 1.75s; }
+
+@keyframes letter {
+  0% { opacity: 0; transform: translateY(30px) rotate(10deg) scale(.5); }
+  100% { opacity: 1; transform: none; }
+}
+
+.w2 {
+  opacity: 0;
+  animation: track 0.989s 1.902s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+@keyframes track {
+  from { opacity: 0; letter-spacing: 0em; filter: blur(5px); }
+  to { opacity: 1; letter-spacing: .55em; filter: blur(0); }
+}
+
+.ln {
+  transform: scaleX(0);
+  animation: ln 0.533s 2.092s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+@keyframes ln {
+  to { transform: scaleX(1); }
+}
+
+.flash {
+  position: absolute;
+  inset: 0;
+  background: #FFFFFF;
+  opacity: 0;
+  pointer-events: none;
+  animation: flash 0.533s 1.141s ease-out both;
+}
+
+@keyframes flash {
+  0% { opacity: 0; }
+  15% { opacity: .85; }
+  100% { opacity: 0; }
+}
+
+/* Reduced motion for intro */
+@media (prefers-reduced-motion: reduce) {
+  #intro { transition: none; }
+  .f, .bgpoly, .fl, .logo, .shine, .w1 span, .w2, .ln {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .shard, .intro-ring, .flash {
+    display: none !important;
+  }
+}

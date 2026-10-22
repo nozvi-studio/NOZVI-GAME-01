@@ -1,0 +1,38 @@
+Copyright (c) 2026 Nozvi. All rights reserved.
+
+PROPRIETARY AND CONFIDENTIAL
+
+This repository and everything in it, including but not limited to source
+code, game design, level data, artwork, audio, text, build scripts and
+documentation (collectively, the "Software"), is the exclusive property of
+Nozvi (the "Owner"). The Software is
+protected by copyright and other intellectual property laws.
+
+No license or right of any kind is granted to any person, except as the Owner
+expressly agrees in a separate written agreement signed by the Owner.
+
+Without the Owner's prior written permission, you may not:
+
+  1. copy, reproduce, or redistribute the Software or any part of it;
+  2. modify the Software or create derivative works based on it;
+  3. sell, sublicense, rent, lease, or otherwise commercially exploit it;
+  4. decompile, reverse engineer, or extract the source code, assets, or
+     data from any published build, web page, or package of the Software;
+  5. use the Software, its assets, names, or branding to train, fine-tune, or
+     evaluate machine-learning models, or to build a competing product.
+
+Public availability. If any build of the Software is made accessible on the
+internet (for example through GitHub Pages), that access exists only to let
+people play the game. It does not grant any right in the Software, and the
+ability to view, download, or inspect delivered files does not make them
+open source or free to reuse.
+
+Third-party components. The Software includes third-party components that are
+licensed to the Owner under their own terms and are NOT covered by the
+statement above. See NOTICE.md.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED. TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE OWNER IS NOT LIABLE FOR
+ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM ITS USE.
+
+Unauthorized use may result in civil and criminal liability.

@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+  <defs>
+    <linearGradient id="b0gl" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity=".85"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="b0gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFE680"/>
+      <stop offset=".55" stop-color="#FFC21A"/>
+      <stop offset="1" stop-color="#FF9500"/>
+    </linearGradient>
+    <linearGradient id="b0glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E9FBFF"/>
+      <stop offset=".5" stop-color="#9FE3FF"/>
+      <stop offset="1" stop-color="#5AB8F5"/>
+    </linearGradient>
+    <filter id="b0sh" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#1B0B4A" flood-opacity=".45"/>
+    </filter>
+    <linearGradient id="b0bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#A774FF"/>
+      <stop offset="1" stop-color="#5A1FC7"/>
+    </linearGradient>
+    <radialGradient id="b0hl" cx=".3" cy=".15" r=".7">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity=".35"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="240" height="240" rx="50" fill="url(#b0bg)"/>
+  <rect width="240" height="240" rx="50" fill="url(#b0hl)"/>
+  <path d="M34,32 Q34,40 42,40 Q34,40 34,48 Q34,40 26,40 Q34,40 34,32 Z" fill="#FFFFFF" opacity="0.9"/>
+  <path d="M206,46 Q206,52 212,52 Q206,52 206,58 Q206,52 200,52 Q206,52 206,46 Z" fill="#FFFFFF" opacity="0.8"/>
+  <path d="M40,195 Q40,200 45,200 Q40,200 40,205 Q40,200 35,200 Q40,200 40,195 Z" fill="#FFFFFF" opacity="0.6"/>
+  <path d="M210,189 Q210,196 217,196 Q210,196 210,203 Q210,196 203,196 Q210,196 210,189 Z" fill="#FFFFFF" opacity="0.7"/>
+  <circle cx="70" cy="24" r="2" fill="#FFFFFF" opacity=".6"/>
+  <circle cx="180" cy="22" r="2" fill="#FFFFFF" opacity=".6"/>
+  <circle cx="20" cy="120" r="2" fill="#FFFFFF" opacity=".6"/>
+  <circle cx="222" cy="130" r="2" fill="#FFFFFF" opacity=".6"/>
+  <g filter="url(#b0sh)">
+    <polygon points="84,53.36 156,125.36 84,197.36 12,125.36" fill="#C25E00" stroke="#9A4600" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="84,44 84,116 12,116" fill="#FFF0A6"/>
+    <polygon points="84,44 156,116 84,116" fill="#FFD23F"/>
+    <polygon points="156,116 84,188 84,116" fill="#F59400"/>
+    <polygon points="84,188 12,116 84,116" fill="#FFB31F"/>
+    <polygon points="84,85.76 114.24,116 84,146.24 53.76,116" fill="#FFE27A"/>
+    <polygon points="84,85.76 84,116 53.76,116" fill="#FFF7D1"/>
+    <polygon points="84,44 156,116 84,188 12,116" fill="none" stroke="#B85C00" stroke-width="3.5" stroke-linejoin="round"/>
+    <polygon points="84,55.52 48,91.52 39.36,100.16 75.36,64.16" fill="#FFFFFF" opacity=".75"/>
+    <polygon points="156,53.36 228,125.36 156,197.36 84,125.36" fill="#C25E00" stroke="#9A4600" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="156,44 156,116 84,116" fill="#FFF0A6"/>
+    <polygon points="156,44 228,116 156,116" fill="#FFD23F"/>
+    <polygon points="228,116 156,188 156,116" fill="#F59400"/>
+    <polygon points="156,188 84,116 156,116" fill="#FFB31F"/>
+    <polygon points="156,85.76 186.24,116 156,146.24 125.76,116" fill="#FFE27A"/>
+    <polygon points="156,85.76 156,116 125.76,116" fill="#FFF7D1"/>
+    <polygon points="156,44 228,116 156,188 84,116" fill="none" stroke="#B85C00" stroke-width="3.5" stroke-linejoin="round"/>
+    <polygon points="156,55.52 120,91.52 111.36,100.16 147.36,64.16" fill="#FFFFFF" opacity=".75"/>
+    <polygon points="120,80 156,116 120,152 84,116" fill="#3A1585" stroke="#B85C00" stroke-width="3.5" stroke-linejoin="round"/>
+    <polygon points="120,80 156,116 150,116 120,86 90,116 84,116" fill="#1E0A52" opacity=".7"/>
+    <path d="M120,105 Q120,118 133,118 Q120,118 120,131 Q120,118 107,118 Q120,118 120,105 Z" fill="#FFFFFF" opacity="1"/>
+  </g>
+</svg>
