@@ -18,9 +18,6 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 - Settings language control is now a button that opens the language picker (ten languages do not fit the segmented track).
 - Language picker lists all ten locales; CJK font fallbacks added for Korean and Simplified Chinese.
 
-### Changed (branding)
-- App display name is now "Nozvi" (Capacitor `appName`, Android `app_name`/`title_activity_main`, `index.html` title); it was still "Mirror".
-
 ### Removed
 - Unused legacy `CHAPTER_NAMES` table in `src/presentation/i18n.ts` (chapter names come from `LocalizationManager`).
 
