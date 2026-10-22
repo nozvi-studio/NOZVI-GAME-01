@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.nkhanh.nozvi',
-  appName: 'Mirror',
+  appName: 'Nozvi',
   webDir: 'dist',
 };
 

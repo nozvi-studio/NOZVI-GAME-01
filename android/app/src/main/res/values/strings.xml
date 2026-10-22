@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Mirror</string>
-    <string name="title_activity_main">Mirror</string>
+    <string name="app_name">Nozvi</string>
+    <string name="title_activity_main">Nozvi</string>
     <string name="package_name">com.nkhanh.nozvi</string>
     <string name="custom_url_scheme">com.nkhanh.nozvi</string>
 </resources>
