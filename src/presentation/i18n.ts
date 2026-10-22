@@ -9,6 +9,7 @@ import enCommon from '../locales/en-US/common.json';
 import enGame from '../locales/en-US/game.json';
 import viCommon from '../locales/vi/common.json';
 import viGame from '../locales/vi/game.json';
+import { setFontLocale } from './designTokens.ts';
 import { createCosmicFactRepository } from '../infrastructure/cosmicFactRepository.ts';
 import type { StoragePort } from '../application/progressPort.ts';
 
@@ -16,6 +17,10 @@ export type Locale = SupportedLocale | 'en';
 export type TranslationKey = CommonTranslationKey;
 
 const manager = LocalizationManager.getInstance();
+
+// The CJK font stack follows the active language (Han glyphs differ between ja, ko and zh-CN).
+setFontLocale(manager.getLocale());
+manager.onLocaleChange(setFontLocale);
 
 const safeStorage: StoragePort = {
   getItem: (key: string) => {
@@ -94,49 +99,3 @@ export const MENU_TAGLINES: Record<string, readonly string[]> = {
 
 /** Tên màn chơi tiếng Anh tương thích ngược */
 export const LEVEL_TITLES_EN: Record<string, string> = enGame.levelTitles;
-
-/** Tên các chương theo ngôn ngữ phục vụ tương thích ngược */
-export const CHAPTER_NAMES: Record<string, Record<number, string>> = {
-  vi: {
-    1: 'Khởi Nguyên',
-    2: 'Giao Thoa',
-    3: 'Luân Chuyển',
-    4: 'Hội Tụ',
-    5: 'Lăng Kính',
-  },
-  'en-US': {
-    1: 'Genesis',
-    2: 'Intersections',
-    3: 'Rotations',
-    4: 'Convergence',
-    5: 'Prism',
-  },
-  en: {
-    1: 'Genesis',
-    2: 'Intersections',
-    3: 'Rotations',
-    4: 'Convergence',
-    5: 'Prism',
-  },
-  id: {
-    1: 'Permulaan',
-    2: 'Persimpangan',
-    3: 'Rotasi',
-    4: 'Konvergensi',
-    5: 'Prisma',
-  },
-  'pt-BR': {
-    1: 'Gênesis',
-    2: 'Interseções',
-    3: 'Rotações',
-    4: 'Convergência',
-    5: 'Prisma',
-  },
-  ja: {
-    1: '始まり',
-    2: '交差',
-    3: '回転',
-    4: '収束',
-    5: 'プリズム',
-  },
-};

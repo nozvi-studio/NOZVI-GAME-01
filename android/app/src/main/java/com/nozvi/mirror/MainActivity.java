@@ -1,4 +1,4 @@
-package com.nkhanh.nozvi;
+package com.nozvi.mirror;
 
 import android.os.Build;
 import android.os.Bundle;

@@ -32,7 +32,7 @@ export class LanguageSelectDialog {
 
     // 2. Tấm panel modal chiêm tinh (460 x 500)
     const modalW = 460;
-    const modalH = 500;
+    const modalH = 700;
     const panel = this.scene.add.graphics();
 
     // Lớp bóng đổ mềm
@@ -76,13 +76,13 @@ export class LanguageSelectDialog {
 
     this.container.add([backdrop, panel, title, closeBtnBg, closeBtn]);
 
-    // 4. Danh sách 5 dòng chọn ngôn ngữ
+    // 4. Danh sách 10 dòng chọn ngôn ngữ
     const currentLoc = getLocale();
     const locales = Object.values(LOCALE_REGISTRY);
     const rowW = 390;
-    const rowH = 54;
+    const rowH = 48;
     const startY = -modalH / 2 + 105;
-    const rowGap = 65;
+    const rowGap = 56;
 
     locales.forEach((meta, idx) => {
       const rowY = startY + idx * rowGap;

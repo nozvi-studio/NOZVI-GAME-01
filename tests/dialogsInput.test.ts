@@ -134,14 +134,17 @@ it('makes all settings controls at least 64x64 and the complete reset pill actio
   expect(ui.root().destroyed).toBe(false);
 });
 
-it('toggles from the label-side of a settings row and selects from a segment edge', () => {
+it('toggles from the label-side of a settings row and opens the language picker from the language button', () => {
   const ui = setup();
   ui.settings.open();
   const music = ui.items.find(i => i.text === t('setting_music'))!;
   ui.tap(-250, music.y);
   expect(ui.repo.read().progress.settings.music).toBe(false);
-  const pt = ui.items.find(i => i.text === 'PT')!;
-  ui.tap(pt.x + 29, pt.y);
+  const current = ui.items.find(i => i.text === 'English')!;
+  ui.tap(current.x + 29, current.y);
+  const row = ui.items.find(i => i.text === 'Português')!;
+  const zone = ui.items.find(i => i.kind === 'zone' && i.interactive && i.y === row.y)!;
+  zone.handlers.get('pointerdown')!();
   expect(getLocale()).toBe('pt-BR');
 });
 

@@ -74,10 +74,8 @@ describe('Màn hoàn thành theo mockup improve-v1', () => {
 });
 
 describe('SettingsDialog Language Segment Control', () => {
-  test('hỗ trợ đủ 5 ngôn ngữ trong thanh điều khiển', () => {
-    const supportedSegments = ['VI', 'EN', 'ID', 'PT', 'JA'];
-    expect(supportedSegments.length).toBe(5);
-    for (const code of ['vi', 'en-US', 'id', 'pt-BR', 'ja'] as const) {
+  test('hỗ trợ đủ 10 ngôn ngữ', () => {
+    for (const code of ['en-US', 'es', 'pt-BR', 'fr', 'de', 'ja', 'ko', 'zh-CN', 'id', 'vi'] as const) {
       setLocale(code);
       expect(getLocale()).toBe(code);
     }

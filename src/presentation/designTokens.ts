@@ -77,6 +77,34 @@ export const COLOR_NUMBERS = {
   dangerText: 0xe65a5a,
 } as const;
 
+/**
+ * Hệ thống font CJK theo ngôn ngữ. Chữ Hán dùng chung mã Unicode nhưng mỗi ngôn ngữ vẽ
+ * một kiểu glyph; trình duyệt lấy font đầu tiên có chữ đó, nên font của ngôn ngữ đang
+ * dùng phải đứng trước (nếu không zh-CN sẽ bị vẽ bằng glyph Nhật trên máy có Yu Gothic).
+ */
+const CJK_FONTS = {
+  ja: ["'Hiragino Sans'", "'Noto Sans CJK JP'", "'Yu Gothic'", "'Meiryo'"],
+  ko: ["'Apple SD Gothic Neo'", "'Noto Sans CJK KR'", "'Malgun Gothic'"],
+  zh: ["'PingFang SC'", "'Noto Sans CJK SC'", "'Microsoft YaHei'"],
+} as const;
+
+type CjkFamily = keyof typeof CJK_FONTS;
+
+const CJK_ORDER: Readonly<Record<CjkFamily, readonly CjkFamily[]>> = {
+  ja: ['ja', 'ko', 'zh'],
+  ko: ['ko', 'ja', 'zh'],
+  zh: ['zh', 'ja', 'ko'],
+};
+
+let cjkPrimary: CjkFamily = 'ja';
+
+/** Chọn font CJK ưu tiên theo mã ngôn ngữ (gọi từ `i18n.ts` mỗi khi đổi ngôn ngữ). */
+export function setFontLocale(locale: string): void {
+  cjkPrimary = locale === 'zh-CN' ? 'zh' : locale === 'ko' ? 'ko' : 'ja';
+}
+
+const cjkStack = (): string => CJK_ORDER[cjkPrimary].flatMap((f) => CJK_FONTS[f]).join(', ');
+
 export const TYPO_TOKENS = {
   fontFamily: {
     /**
@@ -88,11 +116,19 @@ export const TYPO_TOKENS = {
      * Baloo 2 cùng chất bo tròn và có đủ bộ chữ tiếng Việt.
      * `tests/displayFontCoverage.test.ts` canh không cho lặp lại lỗi này.
      */
-    display: "'Baloo 2', 'Hiragino Sans', 'Noto Sans CJK JP', 'Yu Gothic', 'Meiryo', -apple-system, sans-serif",
-    serif: "'Baloo 2', 'Hiragino Sans', 'Noto Sans CJK JP', 'Yu Gothic', 'Meiryo', -apple-system, sans-serif",
-    sans: "'Be Vietnam Pro', 'Hiragino Sans', 'Noto Sans CJK JP', 'Yu Gothic', 'Meiryo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    get display(): string {
+      return `'Baloo 2', ${cjkStack()}, -apple-system, sans-serif`;
+    },
+    get serif(): string {
+      return `'Baloo 2', ${cjkStack()}, -apple-system, sans-serif`;
+    },
+    get sans(): string {
+      return `'Be Vietnam Pro', ${cjkStack()}, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+    },
     /** Tên level cần bộ glyph tiếng Việt và CJK đầy đủ, kể cả khi webfont chưa tải. */
-    levelTitle: "'Be Vietnam Pro', 'Hiragino Sans', 'Noto Sans CJK JP', 'Yu Gothic', 'Meiryo', 'Segoe UI', Arial, sans-serif",
+    get levelTitle(): string {
+      return `'Be Vietnam Pro', ${cjkStack()}, 'Segoe UI', Arial, sans-serif`;
+    },
   },
   fontSize: {
     heroTitle: '60px',

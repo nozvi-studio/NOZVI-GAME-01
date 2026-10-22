@@ -17,6 +17,11 @@ export class LocaleResolver {
     if (lower === 'id' || lower.startsWith('id-')) return 'id';
     if (lower === 'pt-br' || lower === 'pt' || lower.startsWith('pt-')) return 'pt-BR';
     if (lower === 'ja' || lower.startsWith('ja-')) return 'ja';
+    if (lower === 'es' || lower.startsWith('es-')) return 'es';
+    if (lower === 'fr' || lower.startsWith('fr-')) return 'fr';
+    if (lower === 'de' || lower.startsWith('de-')) return 'de';
+    if (lower === 'ko' || lower.startsWith('ko-')) return 'ko';
+    if (lower === 'zh-cn' || lower === 'zh' || lower.startsWith('zh-hans') || lower === 'zh-sg') return 'zh-CN';
 
     if (lower.startsWith('en-')) return 'en-US';
 

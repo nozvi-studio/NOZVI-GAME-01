@@ -1,4 +1,4 @@
-export type SupportedLocale = 'en-US' | 'vi' | 'id' | 'pt-BR' | 'ja';
+export type SupportedLocale = 'en-US' | 'es' | 'pt-BR' | 'fr' | 'de' | 'ja' | 'ko' | 'zh-CN' | 'id' | 'vi';
 
 export interface LocaleMetadata {
   readonly code: SupportedLocale;

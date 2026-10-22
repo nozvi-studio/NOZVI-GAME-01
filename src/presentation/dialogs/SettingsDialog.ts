@@ -4,12 +4,14 @@ import type { ProgressRepository } from '../../application/progressPort.ts';
 import { COLOR_NUMBERS, COLOR_TOKENS, TYPO_TOKENS } from '../designTokens.ts';
 import { designViewBounds } from '../designViewport.ts';
 import { TEXTURE_KEYS } from '../TextureFactory.ts';
-import { t, getLocale, setLocale, resetCosmicFacts } from '../i18n.ts';
+import { t, getLocale, resetCosmicFacts } from '../i18n.ts';
 import type { SupportedLocale } from '../../localization/types.ts';
 import { setMotionScale } from '../transitions/motion.ts';
 import { audioServices } from '../audio/audioServices.ts';
 import { playUiCue } from '../audio/uiCues.ts';
 import { createDialogPanelInput } from './dialogInput.ts';
+import { LanguageSelectDialog } from './LanguageSelectDialog.ts';
+import { LOCALE_REGISTRY } from '../../localization/localizationConfig.ts';
 
 export class SettingsDialog {
   private scene: Phaser.Scene;
@@ -176,79 +178,51 @@ export class SettingsDialog {
       })
       .setOrigin(0, 0.5);
 
-    // 5-Segment Pill Track: [ VI | EN | ID | PT | JA ]
-    const segments: Array<{ code: SupportedLocale; label: string }> = [
-      { code: 'vi', label: 'VI' },
-      { code: 'en-US', label: 'EN' },
-      { code: 'id', label: 'ID' },
-      { code: 'pt-BR', label: 'PT' },
-      { code: 'ja', label: 'JA' },
-    ];
+    // Ten languages do not fit a segmented track: show the current one and open the language picker.
+    const meta = LOCALE_REGISTRY[current as SupportedLocale] ?? LOCALE_REGISTRY['en-US'];
+    const btnW = 340;
+    const btnH = 56;
+    const btnX = 100;
 
-    const pillW = 340;
-    const pillH = 56;
-    const pillX = 100;
-    const slotW = pillW / segments.length;
+    const btnBg = this.scene.add.graphics();
+    btnBg.fillStyle(0x0e153b, 1.0);
+    btnBg.fillRoundedRect(btnX - btnW / 2, y - btnH / 2, btnW, btnH, 17);
+    btnBg.lineStyle(1.5, 0x3b4a82, 0.85);
+    btnBg.strokeRoundedRect(btnX - btnW / 2, y - btnH / 2, btnW, btnH, 17);
 
-    const pillBg = this.scene.add.graphics();
-    pillBg.fillStyle(0x0e153b, 1.0);
-    pillBg.fillRoundedRect(pillX - pillW / 2, y - pillH / 2, pillW, pillH, 17);
-    pillBg.lineStyle(1.5, 0x3b4a82, 0.85);
-    pillBg.strokeRoundedRect(pillX - pillW / 2, y - pillH / 2, pillW, pillH, 17);
+    const flag = this.scene.add.text(btnX - btnW / 2 + 28, y, meta.flagEmoji, { fontSize: '24px' }).setOrigin(0.5);
+    const name = this.scene.add
+      .text(btnX - btnW / 2 + 60, y, meta.nativeName, {
+        fontFamily: TYPO_TOKENS.fontFamily.display,
+        fontSize: '20px',
+        color: '#FFD54F',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0, 0.5);
+    const chevron = this.scene.add
+      .text(btnX + btnW / 2 - 28, y, '›', {
+        fontFamily: TYPO_TOKENS.fontFamily.display,
+        fontSize: '28px',
+        color: '#7A89B8',
+      })
+      .setOrigin(0.5);
+    const btnHit = this.scene.add.zone(btnX, y, btnW, 64).setInteractive({ useHandCursor: true });
 
-    // Vị trí phân đoạn đang kích hoạt
-    const activeIdx = Math.max(0, segments.findIndex((s) => s.code === current));
-    const activeSlotCenterX = pillX - pillW / 2 + (activeIdx + 0.5) * slotW;
-    const activePillW = slotW - 3;
-    const activePillH = pillH - 4;
-
-    const activeBg = this.scene.add.graphics();
-    activeBg.fillStyle(0xffa800, 1.0);
-    activeBg.fillRoundedRect(activeSlotCenterX - activePillW / 2, y - activePillH / 2, activePillW, activePillH, 14);
-    activeBg.fillStyle(0xffd54f, 0.95);
-    activeBg.fillRoundedRect(activeSlotCenterX - activePillW / 2 + 1, y - activePillH / 2, activePillW - 2, activePillH * 0.6, 12);
-    activeBg.lineStyle(1.6, 0x3b2779, 1.0);
-    activeBg.strokeRoundedRect(activeSlotCenterX - activePillW / 2, y - activePillH / 2, activePillW, activePillH, 14);
-
-    const textElements: Phaser.GameObjects.Text[] = [];
-    const hitZones: Phaser.GameObjects.Zone[] = [];
-
-    segments.forEach((seg, i) => {
-      const slotCenterX = pillX - pillW / 2 + (i + 0.5) * slotW;
-      const isActive = i === activeIdx;
-
-      const segText = this.scene.add
-        .text(slotCenterX, y, seg.label, {
-          fontFamily: TYPO_TOKENS.fontFamily.display,
-          fontSize: '20px',
-          color: isActive ? '#22145A' : '#7A89B8',
-          fontStyle: 'bold',
-        })
-        .setOrigin(0.5);
-      const segmentHit = this.scene.add
-        .zone(slotCenterX, y, slotW, 64)
-        .setInteractive({ useHandCursor: true });
-
-      segmentHit.on('pointerdown', () => {
-        if (getLocale() !== seg.code) {
-          playUiCue(this.scene, 'tap');
-          setLocale(seg.code);
-          this.close();
-          this.open();
-          if ('buildMainMenu' in this.scene) {
-            (this.scene as any).buildMainMenu(this.progressRepo.read().progress.completed);
-          }
+    btnHit.on('pointerdown', () => {
+      playUiCue(this.scene, 'tap');
+      new LanguageSelectDialog(this.scene, () => {
+        this.close();
+        this.open();
+        if ('buildMainMenu' in this.scene) {
+          (this.scene as any).buildMainMenu(this.progressRepo.read().progress.completed);
         }
-      });
-
-      textElements.push(segText);
-      hitZones.push(segmentHit);
+      }).open();
     });
 
     const divider = this.scene.add.graphics();
     divider.lineStyle(1, COLOR_NUMBERS.icePrimary, 0.15);
     divider.lineBetween(-270, y + 42, 270, y + 42);
-    this.container.add([rowLabel, pillBg, activeBg, ...textElements, ...hitZones, divider]);
+    this.container.add([rowLabel, btnBg, flag, name, chevron, btnHit, divider]);
   }
 
   /**

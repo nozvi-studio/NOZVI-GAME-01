@@ -20,6 +20,16 @@ import ptCommon from '../locales/pt-BR/common.json';
 import ptGame from '../locales/pt-BR/game.json';
 import jaCommon from '../locales/ja/common.json';
 import jaGame from '../locales/ja/game.json';
+import esCommon from '../locales/es/common.json';
+import esGame from '../locales/es/game.json';
+import frCommon from '../locales/fr/common.json';
+import frGame from '../locales/fr/game.json';
+import deCommon from '../locales/de/common.json';
+import deGame from '../locales/de/game.json';
+import koCommon from '../locales/ko/common.json';
+import koGame from '../locales/ko/game.json';
+import zhCommon from '../locales/zh-CN/common.json';
+import zhGame from '../locales/zh-CN/game.json';
 
 export class LocalizationManager {
   private static instance: LocalizationManager;
@@ -35,6 +45,11 @@ export class LocalizationManager {
       id: { common: idCommon as CommonTranslations, game: idGame as unknown as GameTranslations },
       'pt-BR': { common: ptCommon as CommonTranslations, game: ptGame as unknown as GameTranslations },
       ja: { common: jaCommon as CommonTranslations, game: jaGame as unknown as GameTranslations },
+      es: { common: esCommon as CommonTranslations, game: esGame as unknown as GameTranslations },
+      fr: { common: frCommon as CommonTranslations, game: frGame as unknown as GameTranslations },
+      de: { common: deCommon as CommonTranslations, game: deGame as unknown as GameTranslations },
+      ko: { common: koCommon as CommonTranslations, game: koGame as unknown as GameTranslations },
+      'zh-CN': { common: zhCommon as CommonTranslations, game: zhGame as unknown as GameTranslations },
     };
     this.currentLocale = LocaleResolver.resolve();
   }
