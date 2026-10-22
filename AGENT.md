@@ -37,7 +37,7 @@ General rules live in `CLAUDE.md`.
 
 ## 4. Localization
 - **Read first:** `src/localization/localizationConfig.ts` and one sample folder in `src/locales/`.
-- **Do:** copy the key set from `en-US`, translate, register the locale, check that `LanguageSelectDialog` shows it correctly.
+- **Do:** copy the key set from `en-US`, translate, register the locale (see the locale rule in `CLAUDE.md`), check that `LanguageSelectDialog` shows it correctly. Fact length budgets: 115 chars Latin, 80 Korean, 70 Japanese/Chinese.
 - **Done when:** `npm run typecheck` and `npm test` pass; no keys are missing versus `en-US`.
 
 ## 5. Audio

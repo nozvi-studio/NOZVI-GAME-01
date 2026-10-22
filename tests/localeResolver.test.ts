@@ -52,6 +52,12 @@ describe('LocaleResolver', () => {
     expect(LocaleResolver.matchDeviceTag('vi-VN')).toBe('vi');
     expect(LocaleResolver.matchDeviceTag('pt')).toBe('pt-BR');
     expect(LocaleResolver.matchDeviceTag('en-AU')).toBe('en-US');
+    expect(LocaleResolver.matchDeviceTag('es-MX')).toBe('es');
+    expect(LocaleResolver.matchDeviceTag('fr-CA')).toBe('fr');
+    expect(LocaleResolver.matchDeviceTag('de-AT')).toBe('de');
+    expect(LocaleResolver.matchDeviceTag('ko-KR')).toBe('ko');
+    expect(LocaleResolver.matchDeviceTag('zh-CN')).toBe('zh-CN');
+    expect(LocaleResolver.matchDeviceTag('zh-Hans-CN')).toBe('zh-CN');
     expect(LocaleResolver.matchDeviceTag('unknown')).toBeNull();
   });
 });

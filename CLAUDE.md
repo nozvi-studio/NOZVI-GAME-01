@@ -26,7 +26,7 @@ Environment: Node `>=24.13.1 <25`, npm 11.13.0.
 - Scene changes go **only** through `director.go(...)` (`src/presentation/transitions/SceneDirector.ts`); never call `scene.start` directly (`sceneStartGate` test).
 - Every player command goes through `feedbackEvents()` → `FeedbackDirector.handle()`; durations come from `FEEDBACK_TOKENS` / `VICTORY_TOKENS` in `src/presentation/designTokens.ts`.
 - Levels: edit `src/content/sources/<id>.ts`, then run `content:author`; never hand-edit the generated JSON in `src/content/levels/`.
-- Current locales: en-US, id, ja, pt-BR, vi (`src/locales/`). A new locale must be registered in `src/localization/localizationConfig.ts`.
+- Current locales: en-US, es, pt-BR, fr, de, ja, ko, zh-CN, id, vi (`src/locales/`; `en` is an alias of `en-US`). A new locale needs: a `src/locales/<code>/` folder, an entry in `types.ts`, `localizationConfig.ts`, `LocaleResolver.ts`, `LocalizationManager.ts`, and the locale lists in the tests.
 
 ## Workflow
 

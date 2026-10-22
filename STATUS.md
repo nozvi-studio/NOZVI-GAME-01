@@ -13,12 +13,11 @@
 ## In progress
 - [x] AI onboarding setup: `CLAUDE.md`, `AGENT.md`
 - [x] Project log setup: `STATUS.md`, `CHANGELOG.md`
-- [ ] Add new languages (currently en-US, id, ja, pt-BR, vi)
+- [x] Add 5 languages: es, fr, de, ko, zh-CN (now 10 locales)
 
 ## Next steps
-- Target locale set from the system list: en, es, pt-BR, fr, de, ja, ko, zh-CN, id, vi.
-- Missing versus the current set: es, fr, de, ko, zh-CN (5 locales).
+- Have a native speaker review the machine-drafted es, fr, de, ko, zh-CN strings.
+- Check CJK glyph rendering on device (ko/zh-CN rely on system fonts like ja; no CJK webfont is bundled).
 
 ## Blockers / open questions
-- The request said "4 new languages", but the target list yields 5 missing locales (es, fr, de, ko, zh-CN). Confirm the scope.
-- The list says `en`; the code uses `en-US`. Confirm whether to rename or keep `en-US` as the fallback.
+- None. `en` from the system list is treated as an alias of `en-US` (kept as default/fallback).

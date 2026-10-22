@@ -11,6 +11,16 @@ import ptCommon from '../src/locales/pt-BR/common.json';
 import ptGame from '../src/locales/pt-BR/game.json';
 import jaCommon from '../src/locales/ja/common.json';
 import jaGame from '../src/locales/ja/game.json';
+import esCommon from '../src/locales/es/common.json';
+import esGame from '../src/locales/es/game.json';
+import frCommon from '../src/locales/fr/common.json';
+import frGame from '../src/locales/fr/game.json';
+import deCommon from '../src/locales/de/common.json';
+import deGame from '../src/locales/de/game.json';
+import koCommon from '../src/locales/ko/common.json';
+import koGame from '../src/locales/ko/game.json';
+import zhCommon from '../src/locales/zh-CN/common.json';
+import zhGame from '../src/locales/zh-CN/game.json';
 
 const BUNDLES = {
   'en-US': { common: enCommon, game: enGame },
@@ -18,7 +28,16 @@ const BUNDLES = {
   id: { common: idCommon, game: idGame },
   'pt-BR': { common: ptCommon, game: ptGame },
   ja: { common: jaCommon, game: jaGame },
+  es: { common: esCommon, game: esGame },
+  fr: { common: frCommon, game: frGame },
+  de: { common: deCommon, game: deGame },
+  ko: { common: koCommon, game: koGame },
+  'zh-CN': { common: zhCommon, game: zhGame },
 };
+
+/** Max characters per victory/chapter fact: CJK scripts are denser than Latin. */
+const FACT_BUDGET: Record<string, number> = { ja: 70, 'zh-CN': 70, ko: 80 };
+const factBudget = (locale: string): number => FACT_BUDGET[locale] ?? 115;
 
 // Màn có tiêu đề và lời chiến thắng riêng theo mã. Các màn mới (1-7…1-10, 2-14…2-28) dùng
 // kho chapterVerses của chương nên không cần mục riêng ở đây.
@@ -95,11 +114,11 @@ describe('Localization Coverage & Symmetry', () => {
     }
   });
 
-  it('victory facts respect per-locale line length budget (<=115 Latin, <=70 Japanese)', () => {
+  it('victory facts respect per-locale line length budget (<=115 Latin, <=80 Korean, <=70 Japanese/Chinese)', () => {
     for (const locale of localizationConfig.supportedLocales) {
       const verses = Object.values(BUNDLES[locale].game.victoryVerses as Record<string, string>);
       expect(new Set(verses).size, `duplicate victory fact in ${locale}`).toBe(verses.length);
-      const maxBudget = locale === 'ja' ? 70 : 115;
+      const maxBudget = factBudget(locale);
       for (const text of verses) {
         expect(text.length, `${locale}: "${text}" exceeds budget ${maxBudget}`).toBeLessThanOrEqual(maxBudget);
       }
@@ -130,7 +149,7 @@ describe('Localization Coverage & Symmetry', () => {
         expect(list?.length, `chapterVerses[${ch}] in ${locale} must have exactly 15 items`).toBe(15);
         expect(new Set(list).size, `chapterVerses[${ch}] in ${locale} contains duplicate facts`).toBe(15);
         list?.forEach((verse, idx) => {
-          const maxBudget = locale === 'ja' ? 70 : 115;
+          const maxBudget = factBudget(locale);
           expect(
             verse.length,
             `chapterVerses[${ch}][${idx}] in ${locale} exceeded budget ${maxBudget} (${verse.length} chars): "${verse}"`

@@ -7,8 +7,13 @@ import viCommon from '../src/locales/vi/common.json';
 import idCommon from '../src/locales/id/common.json';
 import ptCommon from '../src/locales/pt-BR/common.json';
 import jaCommon from '../src/locales/ja/common.json';
+import esCommon from '../src/locales/es/common.json';
+import frCommon from '../src/locales/fr/common.json';
+import deCommon from '../src/locales/de/common.json';
+import koCommon from '../src/locales/ko/common.json';
+import zhCommon from '../src/locales/zh-CN/common.json';
 
-const LOCALES = { 'en-US': enCommon, vi: viCommon, id: idCommon, 'pt-BR': ptCommon, ja: jaCommon } as Record<string, Record<string, string>>;
+const LOCALES = { 'en-US': enCommon, vi: viCommon, id: idCommon, 'pt-BR': ptCommon, ja: jaCommon, es: esCommon, fr: frCommon, de: deCommon, ko: koCommon, 'zh-CN': zhCommon } as Record<string, Record<string, string>>;
 
 describe('Gợi ý đầu màn (3-1 xoay, 3-8 liên động)', () => {
   test('chỉ các bước có khoá ngôn ngữ mới hiện; màn cũ có ftueSteps (1-1, 1-2, 2-1) không bị hiện chữ tiếng Việt', () => {
