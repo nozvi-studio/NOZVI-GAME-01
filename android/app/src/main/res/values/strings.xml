@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">Mirror</string>
     <string name="title_activity_main">Mirror</string>
-    <string name="package_name">com.nkhanh.nozvi</string>
-    <string name="custom_url_scheme">com.nkhanh.nozvi</string>
+    <string name="package_name">com.nozvi.mirror</string>
+    <string name="custom_url_scheme">com.nozvi.mirror</string>
 </resources>

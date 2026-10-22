@@ -18,6 +18,9 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 - Settings language control is now a button that opens the language picker (ten languages do not fit the segmented track).
 - Language picker lists all ten locales; CJK font fallbacks added for Korean and Simplified Chinese.
 
+### Changed (Android)
+- Application ID / package renamed from `com.nkhanh.nozvi` to `com.nozvi.mirror` (`capacitor.config.ts`, `build.gradle`, `strings.xml`, `MainActivity.java` and its folder). Uninstall any old debug build first; it installs as a separate app.
+
 ### Removed
 - Unused legacy `CHAPTER_NAMES` table in `src/presentation/i18n.ts` (chapter names come from `LocalizationManager`).
 
