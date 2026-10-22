@@ -20,5 +20,5 @@
 - Check CJK glyph rendering on device (ja/ko/zh-CN rely on system fonts; no CJK webfont is bundled). The font stack now follows the active locale (`setFontLocale`).
 
 ## Blockers / open questions
-- Android package rename (`com.nozvi.mirror`) is synced but not compiled here: no Android SDK on this machine. Run `gradlew.bat assembleDebug` on a machine with the SDK.
+- Android package rename (`com.nozvi.mirror`) compiles: `gradlew assembleDebug` passed on 2026-10-22. On a fresh machine run `npm run android:setup` (or set `ANDROID_HOME`) first; `local.properties` is git-ignored.
 - None. `en` from the system list is treated as an alias of `en-US` (kept as default/fallback).

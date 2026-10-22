@@ -20,7 +20,9 @@
     "audio:author": "node --experimental-strip-types scripts/audio/audio-author.ts",
     "build": "npm run typecheck && vite build",
     "build:release": "npm run content:validate -- --release && npm run build",
-    "android:sync": "npm run build && cap sync android"
+    "android:setup": "node --experimental-strip-types scripts/android/ensure-sdk.ts",
+    "android:sync": "npm run build && cap sync android",
+    "android:build": "npm run android:setup && npm run android:sync && cd android && gradlew assembleDebug"
   },
   "dependencies": {
     "@capacitor/android": "8.5.2",
