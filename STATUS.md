@@ -17,7 +17,7 @@
 
 ## Next steps
 - Have a native speaker review the machine-drafted es, fr, de, ko, zh-CN strings.
-- Check CJK glyph rendering on device (ko/zh-CN rely on system fonts like ja; no CJK webfont is bundled).
+- Check CJK glyph rendering on device (ja/ko/zh-CN rely on system fonts; no CJK webfont is bundled). The font stack now follows the active locale (`setFontLocale`).
 
 ## Blockers / open questions
 - None. `en` from the system list is treated as an alias of `en-US` (kept as default/fallback).

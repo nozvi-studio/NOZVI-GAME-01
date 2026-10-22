@@ -9,6 +9,7 @@ import enCommon from '../locales/en-US/common.json';
 import enGame from '../locales/en-US/game.json';
 import viCommon from '../locales/vi/common.json';
 import viGame from '../locales/vi/game.json';
+import { setFontLocale } from './designTokens.ts';
 import { createCosmicFactRepository } from '../infrastructure/cosmicFactRepository.ts';
 import type { StoragePort } from '../application/progressPort.ts';
 
@@ -16,6 +17,10 @@ export type Locale = SupportedLocale | 'en';
 export type TranslationKey = CommonTranslationKey;
 
 const manager = LocalizationManager.getInstance();
+
+// The CJK font stack follows the active language (Han glyphs differ between ja, ko and zh-CN).
+setFontLocale(manager.getLocale());
+manager.onLocaleChange(setFontLocale);
 
 const safeStorage: StoragePort = {
   getItem: (key: string) => {

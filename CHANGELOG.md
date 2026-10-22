@@ -11,6 +11,7 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 - `STATUS.md` and `CHANGELOG.md`: project log maintained by the memory agent.
 
 ### Fixed
+- Simplified Chinese no longer renders Han characters with Japanese glyphs: the CJK system font stack is ordered by the active locale (`setFontLocale` in `designTokens.ts`).
 - German `btn_reset` was translated as "Back"; two settings dialog input tests dropped during the language-picker refactor are restored.
 
 ### Changed
