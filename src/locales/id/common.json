@@ -48,6 +48,7 @@
   "lang_modal_title": "Pilih Bahasa",
   "gate_endless": "Gerbang Abadi",
   "gate_coming_soon": "Segera",
+  "gate_locked": "Terkunci",
   "hint_rotate_first": "Ketuk bagian untuk memilih, tekan Putar agar menghadap benar, lalu seret ke bayangan",
   "hint_linked_rotation": "Bagian bertitik penuh ikut memutar bagian bercincin; memutar bagian bercincin hanya memutar dirinya sendiri",
   "tutorial_step_label": "Panduan {n}/{total}",

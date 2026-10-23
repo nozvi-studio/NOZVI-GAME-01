@@ -1,5 +1,5 @@
 /** Level whose completion opens each chapter's Endless gate on the map. */
-export const ENDLESS_UNLOCK_LEVEL: Readonly<Record<number, string>> = { 1: '1-10', 2: '2-15' };
+export const ENDLESS_UNLOCK_LEVEL: Readonly<Record<number, string>> = { 1: '1-10' };
 
 /** Chapters that already have an endless pool to play; the gate shows for the rest but cannot start a run. */
 const ENDLESS_PLAYABLE_CHAPTERS: readonly number[] = [1];

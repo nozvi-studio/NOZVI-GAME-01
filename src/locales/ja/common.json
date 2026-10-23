@@ -48,6 +48,7 @@
   "lang_modal_title": "言語の選択",
   "gate_endless": "終わりなき試練",
   "gate_coming_soon": "まもなく解放",
+  "gate_locked": "ロック中",
   "hint_rotate_first": "ピースをタップして選び、「回転」で向きを合わせてから輪郭にドラッグします",
   "hint_linked_rotation": "黒い点のあるピースを回すと、輪のあるピースも一緒に回ります。輪のピースを回しても相手は動きません",
   "tutorial_step_label": "チュートリアル {n}/{total}",

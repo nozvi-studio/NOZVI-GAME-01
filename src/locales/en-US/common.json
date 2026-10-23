@@ -48,6 +48,7 @@
   "lang_modal_title": "Select Language",
   "gate_endless": "Endless Gate",
   "gate_coming_soon": "Coming Soon",
+  "gate_locked": "Locked",
   "hint_rotate_first": "Tap a piece to select it, press Rotate to turn it, then drag it onto the outline",
   "hint_linked_rotation": "A piece with a solid dot turns the pieces with a ring along with it; turning a ringed piece moves only itself",
   "tutorial_step_label": "Tutorial {n}/{total}",

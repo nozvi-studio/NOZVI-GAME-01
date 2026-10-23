@@ -55,6 +55,7 @@ export type CommonTranslationKey =
   | 'lang_modal_title'
   | 'gate_endless'
   | 'gate_coming_soon'
+  | 'gate_locked'
   | 'hint_rotate_first'
   | 'hint_linked_rotation'
   | 'tutorial_step_label'

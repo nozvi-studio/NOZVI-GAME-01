@@ -48,6 +48,7 @@
   "lang_modal_title": "Sprache wählen",
   "gate_endless": "Endlostor",
   "gate_coming_soon": "Bald verfügbar",
+  "gate_locked": "Gesperrt",
   "hint_rotate_first": "Tippe ein Teil an, drehe es mit Drehen und ziehe es dann auf den Umriss",
   "hint_linked_rotation": "Ein Teil mit vollem Punkt dreht die Teile mit Ring mit; ein Teil mit Ring dreht nur sich selbst",
   "tutorial_step_label": "Tutorial {n}/{total}",

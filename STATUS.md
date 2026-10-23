@@ -4,7 +4,7 @@
 > Last updated: 2026-10-22
 
 ## Branches
-- Working on: `feature/ai-onboarding-memory-agent-i18n` (cut from `release/v1.0.0`)
+- Last worked on: `feature/release-checklist-localization` (merged into `release/v1.0.0`, 2026-10-23)
 - Release branch: `release/v1.0.0` · Main: `main` · Development: `dev`
 
 ## Version
@@ -14,6 +14,13 @@
 - [x] AI onboarding setup: `CLAUDE.md`, `AGENT.md`
 - [x] Project log setup: `STATUS.md`, `CHANGELOG.md`
 - [x] Add 5 languages: es, fr, de, ko, zh-CN (now 10 locales)
+
+- [x] Localization release checklist (LOC-01..05) on `feature/release-checklist-localization`: see `docs/testing/release-checklist-localization.md`. Scope locked; device evidence not collected yet. LOC-05 is N/A (no IAP). Chapter 2 Endless gate removed; chapters 4/5 "Coming soon" kept pending the leader.
+
+- [x] Compliance checklist (COMP-01..05): see `docs/testing/release-checklist-compliance.md`. Blocker: no Privacy Policy / Terms link or URL yet (COMP-01). COMP-03 and COMP-05 are N/A (no IAP, no accounts).
+
+- [x] Gameplay checklist (GAME-01..04): see `docs/testing/release-checklist-gameplay.md`. No lose state or currency reward in the game (confirm with the leader); no network code, so GAME-03 is N/A; device evidence still to collect.
+- [ ] Monetization checklist (MON-01..06): see `docs/testing/release-checklist-monetization.md`. No ads/IAP/analytics SDK, so MON-01..05 are N/A; MON-06 (analytics events) left open for the owner.
 
 ## Next steps
 - Have a native speaker review the machine-drafted es, fr, de, ko, zh-CN strings.
