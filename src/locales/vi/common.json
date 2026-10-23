@@ -48,6 +48,7 @@
   "lang_modal_title": "Chọn Ngôn Ngữ",
   "gate_endless": "Ải Vô Tận",
   "gate_coming_soon": "Sắp mở",
+  "gate_locked": "Đã khóa",
   "hint_rotate_first": "Chạm mảnh để chọn, bấm Xoay cho đúng hướng rồi kéo vào bóng",
   "hint_linked_rotation": "Mảnh có chấm đặc kéo theo mảnh có vòng tròn khi xoay; xoay mảnh có vòng thì mảnh kia đứng yên",
   "tutorial_step_label": "Hướng dẫn {n}/{total}",

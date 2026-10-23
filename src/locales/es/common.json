@@ -48,6 +48,7 @@
   "lang_modal_title": "Elegir idioma",
   "gate_endless": "Puerta infinita",
   "gate_coming_soon": "Próximamente",
+  "gate_locked": "Bloqueado",
   "hint_rotate_first": "Toca una pieza para seleccionarla, pulsa Girar para rotarla y arrástrala sobre el contorno",
   "hint_linked_rotation": "Una pieza con punto sólido gira también las piezas con anillo; girar una pieza con anillo solo la mueve a ella",
   "tutorial_step_label": "Tutorial {n}/{total}",

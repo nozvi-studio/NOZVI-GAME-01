@@ -634,10 +634,10 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
     }
 
     // 6. Cổng vũ trụ Ải Vô Tận (Endless Gate) đặt ở cuối mỗi chương và luôn hiện;
-    // mở sau 1-10 và 2-15 (endlessGateRules.ts). Chuẩn mockup: GalaxyMap.dc.html
+    // mở sau 1-10 (endlessGateRules.ts). Chuẩn mockup: GalaxyMap.dc.html
     // The link starts at the level that opens the gate. Chapter 1 hangs it beside 1-10; chapter 2
-    // seats it in the heart of the galaxy next to 2-15.
-    const chapterTails = [1, 2].map(chapter => ({
+    // has no gate until it ships an endless pool.
+    const chapterTails = [1].map(chapter => ({
       chapter,
       lastNodeId: ENDLESS_UNLOCK_LEVEL[chapter],
     }));
@@ -669,7 +669,7 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
         const endlessLevel = getEndlessLevelNumber(tail.chapter);
         const badgeText = isUnlocked
           ? `${t('gate_endless')} ${endlessLevel}`
-          : t('gate_coming_soon');
+          : t('gate_locked');
 
         const endlessGate = new ChapterEndlessGate(this, {
           x: gateX,

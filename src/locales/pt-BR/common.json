@@ -48,6 +48,7 @@
   "lang_modal_title": "Selecionar Idioma",
   "gate_endless": "Portal Infinito",
   "gate_coming_soon": "Em Breve",
+  "gate_locked": "Bloqueado",
   "hint_rotate_first": "Toque numa peça para selecioná-la, use Girar para virá-la e arraste-a para o contorno",
   "hint_linked_rotation": "Uma peça com ponto cheio gira junto as peças com anel; girar uma peça com anel move só ela",
   "tutorial_step_label": "Tutorial {n}/{total}",

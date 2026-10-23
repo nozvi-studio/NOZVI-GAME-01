@@ -48,6 +48,7 @@
   "lang_modal_title": "Choisir la langue",
   "gate_endless": "Porte infinie",
   "gate_coming_soon": "Bientôt",
+  "gate_locked": "Verrouillé",
   "hint_rotate_first": "Touchez une pièce pour la sélectionner, appuyez sur Pivoter pour la tourner, puis glissez-la sur le contour",
   "hint_linked_rotation": "Une pièce à point plein fait tourner avec elle les pièces cerclées ; tourner une pièce cerclée ne déplace qu'elle",
   "tutorial_step_label": "Tutoriel {n}/{total}",

@@ -48,6 +48,7 @@
   "lang_modal_title": "언어 선택",
   "gate_endless": "끝없는 관문",
   "gate_coming_soon": "곧 공개",
+  "gate_locked": "잠김",
   "hint_rotate_first": "조각을 탭해 선택하고, 회전 버튼으로 돌린 뒤 윤곽 위로 드래그하세요",
   "hint_linked_rotation": "채워진 점이 있는 조각을 돌리면 고리가 있는 조각도 함께 돌아가요. 고리 조각은 자기만 돌아가요",
   "tutorial_step_label": "튜토리얼 {n}/{total}",
