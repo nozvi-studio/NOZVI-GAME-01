@@ -5,6 +5,10 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 ## [Unreleased]
 
 ### Added
+- `docs/testing/release-checklist-gameplay.md`: GAME-01..04 findings and device test plan.
+- `gate_locked` string ("Locked") in all ten locales for the locked chapter 1 Endless gate badge, replacing "Coming Soon" there.
+- `docs/testing/release-checklist-compliance.md`: COMP-01..05 findings and device/console to-dos.
+- `docs/testing/release-checklist-localization.md`: LOC-01..05 release checklist, decisions and on-device test list.
 - `npm run android:setup` (`scripts/android/ensure-sdk.ts`) and `npm run android:build`: Gradle failed with "SDK location not found" on any machine without `ANDROID_HOME` or the git-ignored `android/local.properties`; the script now detects the default SDK folder and writes the file.
 - Five locales: Spanish (es), French (fr), German (de), Korean (ko), Simplified Chinese (zh-CN); device tags `es-*`, `fr-*`, `de-*`, `ko-*`, `zh-*` resolve to them.
 - `CLAUDE.md`: AI onboarding guide (commands, architecture, rules).
@@ -16,6 +20,7 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 - German `btn_reset` was translated as "Back"; two settings dialog input tests dropped during the language-picker refactor are restored.
 
 ### Changed
+- `index.html` `lang` is now `en` (was `vi`), matching the English default.
 - Settings language control is now a button that opens the language picker (ten languages do not fit the segmented track).
 - Language picker lists all ten locales; CJK font fallbacks added for Korean and Simplified Chinese.
 
@@ -23,6 +28,7 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 - Application ID / package renamed from `com.nkhanh.nozvi` to `com.nozvi.mirror` (`capacitor.config.ts`, `build.gradle`, `strings.xml`, `MainActivity.java` and its folder). Uninstall any old debug build first; it installs as a separate app.
 
 ### Removed
+- Chapter 2 Endless gate on the level map (unfinished, no endless pool): `ENDLESS_UNLOCK_LEVEL` is now `{ 1: '1-10' }` and `endlessGateRules` tests updated.
 - Unused legacy `CHAPTER_NAMES` table in `src/presentation/i18n.ts` (chapter names come from `LocalizationManager`).
 
 ## [1.0.0]
