@@ -4,18 +4,18 @@ import { campaignManifest } from '../../content/manifest.ts';
 import { resolveNextCampaignLevel } from '../../domain/campaign.ts';
 import { createProgressRepository } from '../../infrastructure/progressRepository.ts';
 import type { ProgressRepository } from '../../application/progressPort.ts';
-import { COLOR_NUMBERS, COLOR_TOKENS, DEPTH_TOKENS, LAYOUT_TOKENS, TYPO_TOKENS, glowTier } from '../designTokens.ts';
-import { TEXTURE_KEYS, TextureFactory } from '../TextureFactory.ts';
+import { COLOR_NUMBERS, DEPTH_TOKENS, TYPO_TOKENS, glowTier } from '../designTokens.ts';
+import { TextureFactory } from '../TextureFactory.ts';
 import { applyDesignViewport, designSafeArea, designViewBounds } from '../designViewport.ts';
 import { SettingsDialog } from '../dialogs/SettingsDialog.ts';
 import { LanguageSelectDialog } from '../dialogs/LanguageSelectDialog.ts';
 import { LOCALE_REGISTRY } from '../../localization/localizationConfig.ts';
-import { t, getLocale, setLocale } from '../i18n.ts';
+import { t, getLocale } from '../i18n.ts';
 import { formatMenuContinueSubtext } from '../hud/hudText.ts';
 import { director } from '../transitions/SceneDirector.ts';
 import type { Choreographed, TransitionContext } from '../transitions/SceneDirector.ts';
 import type { TransitionTimeline } from '../transitions/TransitionTimeline.ts';
-import { getMotionScale, isReducedMotion } from '../transitions/motion.ts';
+import { isReducedMotion } from '../transitions/motion.ts';
 import { applySteps } from '../transitions/choreography.ts';
 import type { Parts } from '../transitions/choreography.ts';
 import { MENU_OUT_TO_MAP, MENU_OUT_TO_PLAY, MENU_SPECIAL, menuIn } from '../transitions/routes.ts';
@@ -60,7 +60,6 @@ export class MenuScene extends Phaser.Scene implements Choreographed {
   private galaxySky!: Phaser.GameObjects.Image;
 
   private blockOffsetY = 0;
-  private viewHeight: number = LAYOUT_TOKENS.canvas.height;
   private layout!: MenuLayout;
   private safe = { top: 0, right: 0, bottom: 0, left: 0 };
 
@@ -92,7 +91,6 @@ export class MenuScene extends Phaser.Scene implements Choreographed {
     const view = designViewBounds(this);
     this.safe = designSafeArea(this);
     this.blockOffsetY = 0;
-    this.viewHeight = view.height;
     this.layout = computeMenuLayout(view.height, this.safe.top, this.safe.bottom);
 
     const theme = this.currentTheme(progress.completed);

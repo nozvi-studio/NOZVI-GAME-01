@@ -1,5 +1,5 @@
 import type { Level, Placement } from './model.ts';
-import { GRID_HEIGHT, GRID_WIDTH, TOTAL_CELLS } from './model.ts';
+import { GRID_WIDTH, TOTAL_CELLS } from './model.ts';
 import { fitsBoard, turnedCells } from './geometry.ts';
 
 /**

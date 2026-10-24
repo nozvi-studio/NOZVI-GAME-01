@@ -1,7 +1,6 @@
 import { getSafeStorage, memoryStorage } from '../../infrastructure/safeStorage.ts';
 import Phaser from 'phaser';
 import type { Level, PieceState, PuzzleState, Transition } from '../../domain/model.ts';
-import { GRID_WIDTH, GRID_HEIGHT } from '../../domain/model.ts';
 import { loadLevel } from '../../content/catalog.ts';
 import { expandEquivalentAnchors } from '../../domain/pieceEquivalence.ts';
 import { campaignManifest } from '../../content/manifest.ts';
@@ -21,14 +20,13 @@ import { TIME_BAR } from '../hud/timeBarModel.ts';
 import { applyDesignViewport, designSafeArea, designViewBounds } from '../designViewport.ts';
 import {
   computeLayout,
-  gridToCanvas,
   pieceCenterCanvas,
   pieceHitbox,
   pieceRadiusPx,
 } from '../board/layout.ts';
 import type { LayoutMetrics } from '../board/layout.ts';
 
-import { COLOR_NUMBERS, COLOR_TOKENS, DEPTH_TOKENS, FEEDBACK_TOKENS, TYPO_TOKENS, VICTORY_TOKENS } from '../designTokens.ts';
+import { DEPTH_TOKENS, FEEDBACK_TOKENS, TYPO_TOKENS, VICTORY_TOKENS } from '../designTokens.ts';
 import { TextureFactory } from '../TextureFactory.ts';
 
 import { PauseDialog } from '../dialogs/PauseDialog.ts';
@@ -639,7 +637,6 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
   private transitionView(): PlayTransitionView {
     const board = this.boardRenderer.getTransitionParts();
     const hud = this.hud.getTransitionParts();
-    const state = this.controller.getPuzzleState();
     return {
       scene: this,
       parts: {

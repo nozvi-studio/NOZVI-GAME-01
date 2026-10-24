@@ -1,7 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
-import type { Chapter, Orientation } from '../domain/model.ts';
-import type { LevelSource } from './authoring.ts';
+import type { Chapter } from '../domain/model.ts';
 import { authorLevel } from './authorLevel.ts';
 import type { LevelDocument, ValidationIssue } from './document.ts';
 import {

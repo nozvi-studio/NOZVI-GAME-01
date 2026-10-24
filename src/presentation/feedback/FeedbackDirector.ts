@@ -270,7 +270,7 @@ export class FeedbackDirector {
   }
 
   playVictory(): void {
-    const { scene, board, hud, level, layout } = this.deps;
+    const { scene, board, hud, level } = this.deps;
     const plan = victoryPlan(level.pieces.length, isReducedMotion());
     const tl = new TransitionTimeline();
     this.victory = tl;

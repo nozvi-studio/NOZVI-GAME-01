@@ -1,4 +1,4 @@
-import type { Cell, Chapter, Level, Orientation, Piece, Placement, PlacementMode, Turns } from '../domain/model.ts';
+import type { Chapter, Level, Orientation, Piece, Placement, PlacementMode, Turns } from '../domain/model.ts';
 import { GRID_HEIGHT, GRID_WIDTH, TOTAL_CELLS } from '../domain/model.ts';
 import { fitsBoard, turnedCells } from '../domain/geometry.ts';
 import { evaluate, matchesTarget } from '../domain/mask.ts';

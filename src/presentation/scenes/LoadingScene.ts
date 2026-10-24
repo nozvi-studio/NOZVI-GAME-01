@@ -72,7 +72,6 @@ export class LoadingScene extends Phaser.Scene {
   private barTip!: Phaser.GameObjects.Graphics;
   private percentText!: Phaser.GameObjects.Text;
   private factText: Phaser.GameObjects.Text | null = null;
-  private factLabel: Phaser.GameObjects.Text | null = null;
   private hintText: Phaser.GameObjects.Text | null = null;
   private swapping = false;
   private visible = false;
@@ -319,7 +318,7 @@ export class LoadingScene extends Phaser.Scene {
     if (!this.deck) return;
 
     const innerW = view.width - 80 * k;
-    this.factLabel = this.add
+    this.add
       .text(view.width / 2, 550 * this.ky, t('loading_fact_label'), {
         fontFamily: TYPO_TOKENS.fontFamily.sans,
         fontSize: `${12 * k}px`,

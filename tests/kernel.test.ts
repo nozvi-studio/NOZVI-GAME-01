@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { Level, Placement } from '../src/domain/model.ts';
+import type { Level } from '../src/domain/model.ts';
 import { GRID_HEIGHT, GRID_WIDTH } from '../src/domain/model.ts';
 import { fitsBoard, rotateCells } from '../src/domain/geometry.ts';
 import { evaluate, matchesTarget } from '../src/domain/mask.ts';

@@ -36,6 +36,7 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 - Application ID / package renamed from `com.nkhanh.nozvi` to `com.nozvi.mirror` (`capacitor.config.ts`, `build.gradle`, `strings.xml`, `MainActivity.java` and its folder). Uninstall any old debug build first; it installs as a separate app.
 
 ### Removed
+- Dead code: unused imports, locals and private fields in `src/`, `tests/` (e.g. `CHAPTER_TINTS`, `LoadingScene.factLabel`, `MenuScene.viewHeight`); no behavior change.
 - Chapter 2 Endless gate on the level map (unfinished, no endless pool): `ENDLESS_UNLOCK_LEVEL` is now `{ 1: '1-10' }` and `endlessGateRules` tests updated.
 - Unused legacy `CHAPTER_NAMES` table in `src/presentation/i18n.ts` (chapter names come from `LocalizationManager`).
 

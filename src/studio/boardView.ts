@@ -1,5 +1,5 @@
-import { GRID_HEIGHT, GRID_WIDTH, TOTAL_CELLS } from '../domain/model.ts';
-import type { ShapeKind, Turns } from '../domain/model.ts';
+import { GRID_HEIGHT, GRID_WIDTH } from '../domain/model.ts';
+import type { Turns } from '../domain/model.ts';
 import { effectiveOrientation, shapePolygon } from '../domain/shapes.ts';
 import { filterDecoys } from '../content/authoring.ts';
 import type { LevelSource } from '../content/authoring.ts';

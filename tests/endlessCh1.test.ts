@@ -3,7 +3,6 @@ import {
   getEndlessLevelNumber,
   saveEndlessLevelNumber,
   loadEndlessLevel,
-  ENDLESS_CH1_STORAGE_KEY,
 } from '../src/content/endless/endlessCatalog.ts';
 
 describe('Chapter 1 Endless Mode', () => {
