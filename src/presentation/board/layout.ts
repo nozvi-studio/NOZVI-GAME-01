@@ -262,15 +262,6 @@ export function trayPieceRadiusPx(layout: LayoutMetrics, trayCount: number = 2):
 }
 
 /**
- * Tỉ lệ thu nhỏ chung của mọi mảnh trong khay: mảnh lớn nhất của màn vừa khít ô, các mảnh nhỏ hơn giữ đúng
- * tỉ lệ so với nó. Thu từng mảnh cho vừa ô riêng sẽ làm mọi mảnh trông bằng nhau, người chơi phải đoán
- * mảnh nào to mảnh nào nhỏ. `refFrameSize` là frameSize lớn nhất trong màn.
- */
-export function trayScale(layout: LayoutMetrics, trayCount: number, refFrameSize: number): number {
-  return trayPieceRadiusPx(layout, trayCount) / pieceRadiusPx(refFrameSize, layout);
-}
-
-/**
  * Cỡ tương đối (0..1) của một mảnh trong khay so với mảnh lớn nhất. Lấy căn bậc hai của tỉ lệ khung: vẫn to nhỏ
  * theo thứ tự đúng để đoán được cỡ thật, nhưng mảnh 16 cạnh mảnh 96 không còn bị thu còn 1/6 (li ti, khó nhìn
  * ở màn nhiều mảnh như 2-9).

@@ -7,6 +7,7 @@ import { PlayScene } from './presentation/scenes/PlayScene.ts';
 import { LevelSelectScene } from './presentation/scenes/LevelSelectScene.ts';
 import { FixtureScene } from './presentation/scenes/FixtureScene.ts';
 import { setupAndroidLifecycle } from './infrastructure/lifecycle.ts';
+import { createPlatformServices, installGlobalErrorHandlers } from './infrastructure/platformServices.ts';
 import { createProgressRepository } from './infrastructure/progressRepository.ts';
 import { getSafeStorage, memoryStorage } from './infrastructure/safeStorage.ts';
 import { campaignManifest } from './content/manifest.ts';
@@ -27,13 +28,9 @@ import type { AudioServices } from './presentation/audio/audioServices.ts';
 import { AUDIO_TOKENS } from './presentation/designTokens.ts';
 import './style.css';
 
-window.addEventListener('error', (event) => {
-  console.error('[UNCAUGHT ERROR]:', event.error || event.message);
-});
-
-window.addEventListener('unhandledrejection', (event) => {
-  console.error('[UNHANDLED REJECTION]:', event.reason);
-});
+// Chưa gắn SDK nào: mọi lệnh là no-op. Gắn Sentry/CrazyGames bằng cách truyền driver vào đây.
+const platform = createPlatformServices();
+installGlobalErrorHandlers(window, platform.crash);
 
 const launch = resolveLaunch(window.location.search, import.meta.env.DEV);
 

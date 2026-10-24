@@ -49,7 +49,6 @@ export function createInspector(options: InspectorOptions): Inspector {
   container.style.fontSize = '13px';
 
   let latestCheck: AuthorResult | null = null;
-  let isChecking = false;
   let isSaving = false;
 
   function render() {

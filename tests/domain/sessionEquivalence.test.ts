@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Level, Piece, PuzzleState } from '../../src/domain/model.ts';
+import type { Piece, PuzzleState } from '../../src/domain/model.ts';
 import { expandEquivalentAnchors } from '../../src/domain/pieceEquivalence.ts';
 import { applyCommand } from '../../src/domain/session.ts';
 

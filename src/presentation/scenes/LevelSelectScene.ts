@@ -7,7 +7,7 @@ import type { LevelAccessMode } from '../../domain/campaign.ts';
 import type { Chapter } from '../../domain/model.ts';
 import { createProgressRepository } from '../../infrastructure/progressRepository.ts';
 import type { ProgressRepository } from '../../application/progressPort.ts';
-import { ANIM_TOKENS, COLOR_NUMBERS, COLOR_TOKENS, LAYOUT_TOKENS, TYPO_TOKENS } from '../designTokens.ts';
+import { COLOR_NUMBERS, COLOR_TOKENS, LAYOUT_TOKENS, TYPO_TOKENS } from '../designTokens.ts';
 import { TEXTURE_KEYS, TextureFactory } from '../TextureFactory.ts';
 import { applyDesignViewport, designSafeArea, designViewBounds } from '../designViewport.ts';
 import { bandArtPlacements, layoutCampaignMap, snapToRowGap } from '../galaxy/constellationLayout.ts';
@@ -50,14 +50,6 @@ type NodeInfo = {
   available: boolean;
 };
 
-/** Sắc độ nền từng chương, phủ rất nhẹ để nền trời vẫn lộ ra. */
-const CHAPTER_TINTS: Readonly<Record<Chapter, { color: number; alpha: number }>> = {
-  1: { color: 0x7fb8ff, alpha: 0.04 }, // Khởi Nguyên: xanh trời
-  2: { color: 0xb48cff, alpha: 0.06 }, // Giao Thoa: tím giao thoa
-  3: { color: 0xffb86b, alpha: 0.06 }, // Luân Chuyển: hổ phách hoàng hôn
-  4: { color: 0xffe9a8, alpha: 0.04 }, // Hội Tụ: ánh vàng nhạt
-  5: { color: 0x7fe3ff, alpha: 0.04 }, // Lăng Kính: xanh lăng kính
-};
 
 const METEOR_HEADING = Phaser.Math.DegToRad(35);
 const METEOR_TRAVEL = 520;
@@ -461,7 +453,6 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
       pillBg.lineStyle(2, gTheme.colors.accent, 0.95);
       pillBg.strokeRoundedRect(-pillWidth / 2, -pillHeight / 2, pillWidth, pillHeight, pillRadius);
 
-      const romanNumeral = chapterRoman(band.chapter);
       const isTeaser = band.nodeCount === 0;
       const mainTitle = this.add
         .text(0, -13, getChapterLabel(band.chapter, gTheme.name), {

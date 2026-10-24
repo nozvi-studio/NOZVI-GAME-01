@@ -5,7 +5,7 @@ import { computeLayout } from '../src/presentation/board/layout.ts';
 import { loadLevel } from '../src/content/catalog.ts';
 import type { PieceState } from '../src/domain/model.ts';
 import type { PlayViewSnapshot } from '../src/application/playController.ts';
-import { COLOR_NUMBERS, DEPTH_TOKENS } from '../src/presentation/designTokens.ts';
+import { DEPTH_TOKENS } from '../src/presentation/designTokens.ts';
 import { createFakeScene, readyTextures } from './helpers/fakeScene.ts';
 
 vi.mock('phaser', () => ({

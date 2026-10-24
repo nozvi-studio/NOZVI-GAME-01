@@ -56,7 +56,6 @@ export const getRandomMenuTagline = (forcedIndex?: number): string => manager.ge
 export const getVictoryVerse = (levelId: string, fallbackVerse?: string): string => manager.getVictoryVerse(levelId, fallbackVerse);
 export const getChapterTagline = (chapter: number, fallbackTagline?: string): string => manager.getChapterTagline(chapter, fallbackTagline);
 export const getGalaxyType = (chapter: number, fallbackType?: string): string => manager.getGalaxyType(chapter, fallbackType);
-export const getMenuTagline = (chapter?: number, fallbackTagline?: string): string => manager.getMenuTagline(chapter, fallbackTagline);
 
 export const getChapterVerses = (chapter: number): readonly string[] | undefined =>
   manager.getChapterVerses(chapter);
@@ -97,5 +96,3 @@ export const MENU_TAGLINES: Record<string, readonly string[]> = {
   'en-US': enGame.taglines,
 };
 
-/** Tên màn chơi tiếng Anh tương thích ngược */
-export const LEVEL_TITLES_EN: Record<string, string> = enGame.levelTitles;

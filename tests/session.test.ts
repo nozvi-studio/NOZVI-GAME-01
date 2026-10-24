@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { makeAdjacentFixture } from '../src/content/fixtures.ts';
 import { validateLevel } from '../src/content/validate.ts';
-import { applyCommand, createPuzzle, placementsOf } from '../src/domain/session.ts';
+import { applyCommand, createPuzzle } from '../src/domain/session.ts';
 import type { Level } from '../src/domain/model.ts';
 import { GRID_HEIGHT, GRID_WIDTH } from '../src/domain/model.ts';
 import { rotateCells } from '../src/domain/geometry.ts';

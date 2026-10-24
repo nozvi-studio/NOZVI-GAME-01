@@ -2,11 +2,8 @@ import { describe, expect, test } from 'vitest';
 import { buildLevelDocument } from '../src/content/authoring.ts';
 import { searchSolutions } from '../src/content/authoringReport.ts';
 import type { LevelDocument } from '../src/content/document.ts';
-import { LEVEL_SOURCES } from '../src/content/sources/index.ts';
 import { ANCHOR_SOURCES, anchorDocument } from './fixtures/anchorLevels.ts';
 import {
-  DIFFICULTY_THRESHOLDS,
-  DIFFICULTY_WEIGHTS,
   collectWarnings,
   scoreDifficulty,
 } from '../src/content/difficulty.ts';
