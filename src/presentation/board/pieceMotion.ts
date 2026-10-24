@@ -1,7 +1,7 @@
 import type { Piece, PieceState } from '../../domain/model.ts';
 import { FEEDBACK_TOKENS, PIECE_TOKENS } from '../designTokens.ts';
 import type { LayoutMetrics } from './layout.ts';
-import { pieceCenterCanvas, pieceHitbox, pieceRadiusPx, trayPieceRadiusPx } from './layout.ts';
+import { pieceCenterCanvas, pieceHitbox, pieceRadiusPx, trayPieceRadiusPx, trayRelativeSize } from './layout.ts';
 import { EASES } from '../transitions/motion.ts';
 
 export type Pt = { x: number; y: number };
@@ -90,6 +90,11 @@ export type PoseInput = {
   showTarget: boolean;
   /** Chỉ có khi chính mảnh này đang được kéo; toạ độ là tâm mảnh */
   drag: { x: number; y: number; candidate: Pt | null } | null;
+  /**
+   * frameSize lớn nhất của màn. Có thì mọi mảnh trong khay dùng chung một tỉ lệ nên giữ nguyên to/nhỏ so với
+   * nhau; vắng thì mảnh tự co cho vừa ô (cách cũ).
+   */
+  trayRefFrame?: number;
 };
 
 export function anchorCenter(piece: Piece, anchorId: string, layout: LayoutMetrics): Pt | null {
@@ -129,7 +134,11 @@ export function pieceTargetPose(piece: Piece, state: PieceState, input: PoseInpu
   return {
     x: hit.x + hit.width / 2,
     y: hit.y + hit.height / 2,
-    scale: trayPieceRadiusPx(layout, input.trayCount) / pieceRadiusPx(piece.frameSize, layout),
+    scale:
+      input.trayRefFrame === undefined
+        ? trayPieceRadiusPx(layout, input.trayCount) / pieceRadiusPx(piece.frameSize, layout)
+        : (trayPieceRadiusPx(layout, input.trayCount) * trayRelativeSize(piece.frameSize, input.trayRefFrame)) /
+          pieceRadiusPx(piece.frameSize, layout),
     angle: 0,
     alpha: input.selected ? 1 : 0.9,
   };

@@ -14,7 +14,7 @@ import {
 } from '../src/presentation/board/pieceMotion.ts';
 import type { Pose, PoseInput } from '../src/presentation/board/pieceMotion.ts';
 import { loadLevel } from '../src/content/catalog.ts';
-import { computeLayout, pieceCenterCanvas, pieceHitbox } from '../src/presentation/board/layout.ts';
+import { computeLayout, largestFrameSize, pieceCenterCanvas, pieceHitbox, pieceRadiusPx, trayPieceRadiusPx } from '../src/presentation/board/layout.ts';
 import { FEEDBACK_TOKENS, PIECE_TOKENS } from '../src/presentation/designTokens.ts';
 
 const layout = computeLayout(720, 1280);
@@ -85,6 +85,34 @@ describe('tư thế đích của mảnh', () => {
     expect(pose.y).toBe(hit.y + hit.height / 2);
     expect(pose.scale).toBeCloseTo(52 / 120, 9);
     expect(pose.alpha).toBe(0.9);
+  });
+
+  test('khay: các mảnh khác cỡ giữ đúng tỉ lệ với nhau, mảnh lớn nhất vừa ô', () => {
+    const lv = loadLevel('2-1', 'campaign');
+    const ref = largestFrameSize(lv.pieces);
+    const input = { ...base, trayCount: lv.pieces.length, trayRefFrame: ref };
+    // Bigger frame is drawn bigger, but softened (sqrt) so small pieces do not shrink to specks
+    const drawn = lv.pieces.map((p) => ({
+      frame: p.frameSize,
+      radius: pieceTargetPose(p, { kind: 'tray', turns: 0 }, input).scale * pieceRadiusPx(p.frameSize, layout),
+    }));
+    expect(new Set(lv.pieces.map((p) => p.frameSize)).size).toBeGreaterThan(1);
+    const big = drawn.find((d) => d.frame === ref)!;
+    const small = drawn.find((d) => d.frame < ref)!;
+    expect(small.radius).toBeLessThan(big.radius);
+    expect(small.radius / big.radius).toBeCloseTo(Math.sqrt(small.frame / ref), 6);
+    const biggest = lv.pieces.find((p) => p.frameSize === ref)!;
+    const pose = pieceTargetPose(biggest, { kind: 'tray', turns: 0 }, input);
+    expect(pose.scale * pieceRadiusPx(ref, layout)).toBeCloseTo(trayPieceRadiusPx(layout, lv.pieces.length), 6);
+  });
+
+  test('khay: không có mốc chung thì giữ cách cũ, mỗi mảnh tự co cho vừa ô', () => {
+    const lv = loadLevel('2-1', 'campaign');
+    const input = { ...base, trayCount: lv.pieces.length };
+    for (const p of lv.pieces) {
+      const pose = pieceTargetPose(p, { kind: 'tray', turns: 0 }, input);
+      expect(pose.scale * pieceRadiusPx(p.frameSize, layout)).toBeCloseTo(trayPieceRadiusPx(layout, lv.pieces.length), 6);
+    }
   });
 
   test('snap: tâm khung tại neo, scale 1', () => {

@@ -12,6 +12,7 @@ import { playUiCue } from '../audio/uiCues.ts';
 import { createDialogPanelInput } from './dialogInput.ts';
 import { LanguageSelectDialog } from './LanguageSelectDialog.ts';
 import { LOCALE_REGISTRY } from '../../localization/localizationConfig.ts';
+import { APP_VERSION } from '../../appVersion.ts';
 
 export class SettingsDialog {
   private scene: Phaser.Scene;
@@ -43,7 +44,9 @@ export class SettingsDialog {
     const modalW = 620;
     const lastRowOffset = canVibrate ? 462 : 378;
     const dangerOffset = lastRowOffset + 84;
-    const modalH = dangerOffset + 72 / 2 + 34;
+    // Room under the danger box for the version line.
+    const versionRowH = 46;
+    const modalH = dangerOffset + 72 / 2 + 34 + versionRowH;
     const panel = this.scene.add.graphics();
     const panelInput = createDialogPanelInput(this.scene, backdrop, modalW, modalH, () => this.close());
 
@@ -159,7 +162,16 @@ export class SettingsDialog {
       this.showDeleteConfirmation();
     });
 
-    this.container.add([dangerBox, resetProgressBtn, resetHit]);
+    // 7. Phiên bản: để người chơi báo lỗi đúng bản (menu chính không còn hiện)
+    const versionText = this.scene.add
+      .text(0, dangerY + 36 + 38, t('loading_version', { version: APP_VERSION }), {
+        fontFamily: TYPO_TOKENS.fontFamily.sans,
+        fontSize: '18px',
+        color: '#7F88C2',
+      })
+      .setOrigin(0.5);
+
+    this.container.add([dangerBox, resetProgressBtn, resetHit, versionText]);
   }
 
   /**

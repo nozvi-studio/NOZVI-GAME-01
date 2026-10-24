@@ -3,7 +3,6 @@
   "btn_continue": "Continuer",
   "btn_replay": "Rejouer",
   "btn_select_level": "Choisir un niveau",
-  "version_footer": "Mirror v1.0.0 · Là où les étoiles se rassemblent",
   "loading_fact_label": "Le saviez-vous ?",
   "loading_tap_hint": "Touchez pour un autre fait",
   "loading_version": "Mirror v{version}",

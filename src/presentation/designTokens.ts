@@ -268,6 +268,11 @@ export const FEEDBACK_TOKENS = {
   tiltPerPxPerSec: 0.02,
   tiltMaxDeg: 4,
   magnetStrength: 0.3,
+  /**
+   * How far above the fingertip a dragged piece rides on a touch screen, in design units (about 7 mm on a
+   * phone), so a big finger does not hide the piece or the spot it is going to. Not used for a mouse.
+   */
+  fingerLift: 80,
   /** Resting alpha of the target shadow; it rises to 1 on levels that teach the glow. */
   targetIdleAlpha: 0.7,
   magnetRingFarRatio: 1.45,

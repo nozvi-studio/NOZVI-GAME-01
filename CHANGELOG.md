@@ -16,10 +16,18 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 - `STATUS.md` and `CHANGELOG.md`: project log maintained by the memory agent.
 
 ### Fixed
+- Intro splash: removed the looping shine/clip-path layer and drop-shadow filter that made the fly-in lag; ring and burst animations now use `forwards` fill.
+- Star rating: the budget no longer clamps to 20–45 s; the 3-star window is `par x THREE_STAR_PAR_RATIO` (1.25), so levels with 2+ pieces no longer share a window shorter than their own par.
+- Target badge touch area: the hit circle is centred in its 192 px box (`targetBadgeHit.ts`), instead of landing up and to the left.
+- Dropping a piece next to the bottom of the board on touch no longer counts as "return to tray": the drop test uses the piece position, not the fingertip.
+- Tray pieces keep their relative sizes (`trayRefFrame`) instead of each shrinking to fit its slot.
+- Snap hint pill overflow and HUD / menu layout adjustments (`Hud`, `hudText`, `menuLayout`, `layout`, `tutorialGeometry`).
 - Simplified Chinese no longer renders Han characters with Japanese glyphs: the CJK system font stack is ordered by the active locale (`setFontLocale` in `designTokens.ts`).
 - German `btn_reset` was translated as "Back"; two settings dialog input tests dropped during the language-picker refactor are restored.
 
 ### Changed
+- Touch drag carries the piece `fingerLift` (80 design units) above the fingertip; mouse drag is unchanged.
+- Removed the `version_footer` string from all ten locales and the menu footer.
 - `index.html` `lang` is now `en` (was `vi`), matching the English default.
 - Settings language control is now a button that opens the language picker (ten languages do not fit the segmented track).
 - Language picker lists all ten locales; CJK font fallbacks added for Korean and Simplified Chinese.

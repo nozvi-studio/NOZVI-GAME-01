@@ -53,6 +53,12 @@ const BADGE_ABOVE_BOARD = 22;
  */
 const MIN_BOARD_TOP_GAP = BOARD_Y - (LAYOUT_TOKENS.header.y + LAYOUT_TOKENS.header.height);
 
+/** Khe tối thiểu giữa đáy bàn và đỉnh khay, bằng khe của artboard gốc (1016 - 1000). */
+const MIN_BOARD_TRAY_GAP = TRAY_Y - (BOARD_Y + BOARD_HEIGHT);
+
+/** Mức nâng tối đa của khay + thanh đáy khỏi mép dưới màn hình, đơn vị thiết kế. Chỉnh ở đây nếu vẫn thấy thấp. */
+const BOTTOM_BAR_LIFT = 48;
+
 // Face radius 76 plus the outer glow's 4 units. Moving upward by the growth
 // keeps the bottom edge's existing board overlap while using free header space.
 const BADGE_OUTER_EXTENT = 80;
@@ -94,15 +100,22 @@ export function computeLayout(
   const headerHeight = LAYOUT_TOKENS.header.height;
 
   const bottomBarHeight = LAYOUT_TOKENS.bottomBar.height;
-  const bottomBarY = height - safe.bottom - bottomBarHeight;
-
-  const trayY = bottomBarY - TRAY_TO_BAR_GAP - TRAY_HEIGHT;
-
-  // Căn giữa bàn trong khoảng trống giữa đáy header và đỉnh khay, nhưng không
-  // để nó trôi lên đè vào header khi màn quá thấp.
   const slotTop = headerY + headerHeight;
-  const centeredBoardY = slotTop + (trayY - slotTop - BOARD_HEIGHT) / 2;
+  const flushBarY = height - safe.bottom - bottomBarHeight;
+
+  // Bàn (và huy hiệu mục tiêu) được căn giữa như khi cụm đáy còn sát mép dưới, để việc nâng cụm đáy
+  // không làm huy hiệu nhỏ đi. Căn giữa trong khoảng trống giữa đáy header và đỉnh khay, nhưng không
+  // để nó trôi lên đè vào header khi màn quá thấp.
+  const flushTrayY = flushBarY - TRAY_TO_BAR_GAP - TRAY_HEIGHT;
+  const centeredBoardY = slotTop + (flushTrayY - slotTop - BOARD_HEIGHT) / 2;
   const boardY = Math.max(slotTop + MIN_BOARD_TOP_GAP, centeredBoardY);
+
+  // Nâng khay + thanh đáy lên khỏi mép màn hình, nhưng chỉ bằng phần khe còn dư dưới bàn: màn 9:16 không
+  // còn khe (bàn đã sát khay) nên giữ nguyên, máy dài được nâng đủ.
+  const spareBelowBoard = flushTrayY - (boardY + BOARD_HEIGHT) - MIN_BOARD_TRAY_GAP;
+  const bottomLift = Math.min(BOTTOM_BAR_LIFT, Math.max(0, spareBelowBoard));
+  const bottomBarY = flushBarY - bottomLift;
+  const trayY = bottomBarY - TRAY_TO_BAR_GAP - TRAY_HEIGHT;
   const targetBadgeScale = computeTargetBadgeScale(slotTop, boardY);
 
   return {
@@ -246,6 +259,29 @@ export function trayPieceRadiusPx(layout: LayoutMetrics, trayCount: number = 2):
     layout.trayBounds.height / 2 - 16,
     traySlotWidth(layout, trayCount) / 2 - 16
   );
+}
+
+/**
+ * Tỉ lệ thu nhỏ chung của mọi mảnh trong khay: mảnh lớn nhất của màn vừa khít ô, các mảnh nhỏ hơn giữ đúng
+ * tỉ lệ so với nó. Thu từng mảnh cho vừa ô riêng sẽ làm mọi mảnh trông bằng nhau, người chơi phải đoán
+ * mảnh nào to mảnh nào nhỏ. `refFrameSize` là frameSize lớn nhất trong màn.
+ */
+export function trayScale(layout: LayoutMetrics, trayCount: number, refFrameSize: number): number {
+  return trayPieceRadiusPx(layout, trayCount) / pieceRadiusPx(refFrameSize, layout);
+}
+
+/**
+ * Cỡ tương đối (0..1) của một mảnh trong khay so với mảnh lớn nhất. Lấy căn bậc hai của tỉ lệ khung: vẫn to nhỏ
+ * theo thứ tự đúng để đoán được cỡ thật, nhưng mảnh 16 cạnh mảnh 96 không còn bị thu còn 1/6 (li ti, khó nhìn
+ * ở màn nhiều mảnh như 2-9).
+ */
+export function trayRelativeSize(frameSize: number, refFrameSize: number): number {
+  return Math.sqrt(Math.min(1, frameSize / refFrameSize));
+}
+
+/** frameSize lớn nhất trong màn: mốc để các mảnh trong khay giữ đúng tỉ lệ với nhau. */
+export function largestFrameSize(pieces: ReadonlyArray<{ frameSize: number }>): number {
+  return pieces.reduce((max, p) => Math.max(max, p.frameSize), 0);
 }
 
 export type CanvasPoint = { x: number; y: number };

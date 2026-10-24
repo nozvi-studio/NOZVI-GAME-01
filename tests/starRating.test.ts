@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import {
-  BUDGET_MAX_MS,
-  BUDGET_MIN_MS,
   parFromSolution,
+  STAR_PERCENTS,
   starsFor,
+  THREE_STAR_PAR_RATIO,
   timeBudget,
 } from '../src/domain/starRating.ts';
 
@@ -18,13 +18,19 @@ describe('parFromSolution', () => {
 });
 
 describe('timeBudget', () => {
-  test('par / 0.15 inside the clamp', () => {
-    expect(timeBudget(4000)).toBe(26_667);
+  test('3-star window is par x THREE_STAR_PAR_RATIO', () => {
+    expect(timeBudget(4000)).toBe(33_333);
+    expect(timeBudget(16_000)).toBe(133_333);
   });
-  test('clamps to 20 s and 45 s', () => {
-    expect(timeBudget(1000)).toBe(BUDGET_MIN_MS);
-    expect(timeBudget(9000)).toBe(BUDGET_MAX_MS);
-    expect(timeBudget(100_000)).toBe(BUDGET_MAX_MS);
+  test('the 3-star window grows with par instead of hitting a ceiling', () => {
+    const window3 = (par: number) => (timeBudget(par) * STAR_PERCENTS[0]) / 100;
+    expect(window3(9000)).toBeCloseTo(9000 * THREE_STAR_PAR_RATIO, -1);
+    expect(window3(22_000)).toBeCloseTo(22_000 * THREE_STAR_PAR_RATIO, -1);
+    expect(window3(22_000)).toBeGreaterThan(window3(9000));
+  });
+  test('a solver at par earns 3 stars on a 4-piece level', () => {
+    const par = parFromSolution([{ turns: 0 }, { turns: 0 }, { turns: 0 }, { turns: 0 }]);
+    expect(starsFor(par, timeBudget(par))).toBe(3);
   });
 });
 

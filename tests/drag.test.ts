@@ -22,6 +22,43 @@ describe('Hitbox, Layout and Drag Transactions', () => {
     expect(drag.originState).toEqual({ kind: 'tray', turns: 0 });
   });
 
+  test('cảm ứng: mảnh được mang lên trên ngón tay đúng `lift`, chuột thì giữ nguyên chỗ nắm', () => {
+    const state = createPuzzle(level);
+    const mouse = beginDrag(state, pieceD1, 300, 1000, layout);
+    const touch = beginDrag(state, pieceD1, 300, 1000, layout, 0, 2, 80);
+    expect(mouse.lift).toBe(0);
+    expect(touch.lift).toBe(80);
+    // centre = pointer - offset: the touch centre sits 80 above the mouse one, same x
+    const centreY = (d: typeof mouse) => 1000 - d.pointerOffset.y;
+    expect(centreY(mouse) - centreY(touch)).toBe(80);
+    expect(300 - touch.pointerOffset.x).toBe(300 - mouse.pointerOffset.x);
+  });
+
+  test('cảm ứng: xem trước và vị trí thả dùng tâm đã nâng, không phải đầu ngón tay', () => {
+    const state = createPuzzle(level);
+    const anchorCanvas = gridToCanvas(44, 96, layout);
+    const drag = beginDrag(state, pieceD1, 200, 1000, layout, 0, 2, 80);
+    drag.pointerOffset = { x: 0, y: 80 }; // centre 80 above the finger
+    // finger 80 below the anchor centre puts the piece centre right on the anchor
+    const update = updateDrag(drag, level, anchorCanvas.x, anchorCanvas.y + 80, layout);
+    expect(update.snapCandidateId).toBe('A');
+    const done = finishDrag(drag, level, anchorCanvas.x, anchorCanvas.y + 80, layout);
+    expect(done.accepted).toBe(true);
+  });
+
+  test('cảm ứng: điểm xét "thả vào khay" là chỗ mảnh đang nằm, không phải đầu ngón tay', () => {
+    const state = createPuzzle(level);
+    const tray = layout.trayBounds;
+    const finger = { x: tray.x + tray.width / 2, y: tray.y + 20 };
+    // Piece carried 400 above the finger: its centre is well inside the board while the finger is on the tray.
+    const lifted = beginDrag(state, pieceD1, 200, 1000, layout, 0, 2, 400);
+    lifted.pointerOffset = { x: 0, y: 400 };
+    expect(finishDrag(lifted, level, finger.x, finger.y, layout).state.pieces.D1.kind).not.toBe('tray');
+    // A mouse (no lift) with the pointer on the tray still returns the piece.
+    const mouse = beginDrag(state, pieceD1, 200, 1000, layout);
+    expect(finishDrag(mouse, level, finger.x, finger.y, layout).state.pieces.D1.kind).toBe('tray');
+  });
+
   test('updateDrag nhận biết snapCandidateId khi ở gần neo và không mutate committedState', () => {
     const state = createPuzzle(level);
     // Neo A của D1: gốc (24, 76), tâm (44, 96). Kéo thả tính theo TÂM mảnh.

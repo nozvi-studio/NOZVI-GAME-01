@@ -12,7 +12,6 @@ export type CommonTranslationKey =
   | 'btn_continue'
   | 'btn_replay'
   | 'btn_select_level'
-  | 'version_footer'
   | 'loading_fact_label'
   | 'loading_tap_hint'
   | 'loading_version'

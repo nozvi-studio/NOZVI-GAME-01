@@ -3,6 +3,7 @@ import { COLOR_TOKENS, LAYOUT_TOKENS, TYPO_TOKENS, VICTORY_CARD } from '../src/p
 import { computeLayout } from '../src/presentation/board/layout.ts';
 import {
   getSnapHintText,
+  snapHintPillSize,
   VICTORY_VERSE_FONT_SIZE,
   formatMatchCount,
   formatNodeLabel,
@@ -48,6 +49,13 @@ describe('HUD theo mockup improve-v1', () => {
     const hint = getSnapHintText();
     expect(hint).toBe('Thả để khớp');
     expect(hint).not.toBe(hint.toUpperCase());
+  });
+
+  test('viên thuốc nhãn hít giãn theo bề rộng chữ, không nhỏ hơn mức tối thiểu', () => {
+    expect(snapHintPillSize(60).width).toBe(160);
+    const wide = snapHintPillSize(250);
+    expect(wide.width).toBeGreaterThanOrEqual(250 + 2 * 18);
+    expect(wide.height).toBe(44);
   });
 
   test('thanh đếm mảnh hiển thị đúng định dạng n/m', () => {

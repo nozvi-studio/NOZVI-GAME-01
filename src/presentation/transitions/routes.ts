@@ -4,7 +4,7 @@ export type Point = { x: number; y: number };
 
 // ---------- Menu (spec F1 mục 3.1, 3.4, 3.5) ----------
 // Part: emblem, titleBlock, primaryButton, buttons (chính + phụ),
-// chrome (tiêu đề, nút phụ, cài đặt, footer), corner (cài đặt, footer).
+// chrome (tiêu đề, nút phụ, cài đặt, chọn ngôn ngữ), corner (cài đặt, chọn ngôn ngữ).
 
 export const MENU_OUT_TO_PLAY: readonly Step[] = [
   { part: 'primaryButton', atMs: 0, durationMs: 350, delta: { scale: 0.9, alpha: 0 } },

@@ -10,7 +10,7 @@ import { applyDesignViewport, designSafeArea, designViewBounds } from '../design
 import { SettingsDialog } from '../dialogs/SettingsDialog.ts';
 import { LanguageSelectDialog } from '../dialogs/LanguageSelectDialog.ts';
 import { LOCALE_REGISTRY } from '../../localization/localizationConfig.ts';
-import { t, getLocale, setLocale, getRandomMenuTagline } from '../i18n.ts';
+import { t, getLocale, setLocale } from '../i18n.ts';
 import { formatMenuContinueSubtext } from '../hud/hudText.ts';
 import { director } from '../transitions/SceneDirector.ts';
 import type { Choreographed, TransitionContext } from '../transitions/SceneDirector.ts';
@@ -30,7 +30,6 @@ import type { GalaxyTheme } from '../galaxy/galaxyTheme.ts';
 import { computeMenuLayout, type MenuLayout } from '../menu/menuLayout.ts';
 import { addGalaxyArtwork, galaxyGradient, preloadGalaxyArtwork } from '../galaxy/GalaxyArtwork.ts';
 import { setPcBackground } from '../sky/pcBackground.ts';
-import { cjkWordWrapCallback } from '../cjkWrap.ts';
 
 /** The surface MenuScene drives on whichever hero emblem the chapter uses. */
 type MenuEmblem = Pick<DualJewelEmblem, 'graphics' | 'setRingSpeed' | 'update'>;
@@ -47,7 +46,6 @@ export class MenuScene extends Phaser.Scene implements Choreographed {
   private secondaryButton!: Phaser.GameObjects.Container;
   private settingsButton!: Phaser.GameObjects.Container;
   private langPillContainer!: Phaser.GameObjects.Container;
-  private footer!: Phaser.GameObjects.Text;
   private mirrorLogoContainer?: Phaser.GameObjects.Container;
   private logoSheenGraphics?: Phaser.GameObjects.Graphics;
   private letterObjects: {
@@ -204,53 +202,6 @@ export class MenuScene extends Phaser.Scene implements Choreographed {
 
     // The chapter badge is gone: the Start button already names the chapter under its label.
 
-    // Dòng thông tin thiên văn: khung kính 28 px hai bên, mũi thoi accent + chữ canh trái
-    const factY = this.layout.factY;
-    const factPadX = 14 * K;
-    const factPadY = 10 * K;
-    const factDiamond = 10 * K;
-    const factX = 64;
-    const factW = 720 - factX * 2;
-    // Chữ canh giữa; mũi thoi accent nằm ở mép trái, căn giữa theo chiều dọc
-    const factInset = factPadX + factDiamond + 8 * K;
-    const search = typeof window !== 'undefined' ? window.location?.search ?? '' : '';
-    const taglineParam = new URLSearchParams(search).get('tagline');
-    const forcedTagline = taglineParam !== null ? Number.parseInt(taglineParam, 10) : undefined;
-    const factText =
-      getRandomMenuTagline(Number.isNaN(forcedTagline) ? undefined : forcedTagline) ||
-      currentTheme.tagline;
-    const factCaption = this.add
-      .text(360, 0, factText, {
-        fontFamily: TYPO_TOKENS.fontFamily.sans,
-        fontSize: `${Math.round(13 * K)}px`,
-        color: '#E4E8FF',
-        align: 'center',
-        wordWrap: {
-          width: factW - factInset * 2,
-          callback: cjkWordWrapCallback(factW - factInset * 2),
-        },
-      })
-      .setOrigin(0.5, 0);
-    // Mockup line height is 18 px: pin it so wrapped lines match the design
-    const factLines = Math.max(1, factCaption.getWrappedText().length);
-    factCaption.setLineSpacing(18 * K - factCaption.height / factLines);
-    const factH = factLines * 18 * K + factPadY * 2;
-    const factTop = factY - factH / 2;
-    factCaption.setY(factTop + factPadY);
-    const factBg = this.add.graphics();
-    factBg.fillStyle(0x0a0a28, 0.5);
-    factBg.fillRoundedRect(factX, factTop, factW, factH, 14 * K);
-    const dcx = factX + factPadX + factDiamond / 2;
-    const dcy = factY;
-    factBg.fillStyle(currentTheme.colors.accent, 1);
-    factBg.fillPoints([
-      new Phaser.Geom.Point(dcx, dcy - factDiamond / 2),
-      new Phaser.Geom.Point(dcx + factDiamond / 2, dcy),
-      new Phaser.Geom.Point(dcx, dcy + factDiamond / 2),
-      new Phaser.Geom.Point(dcx - factDiamond / 2, dcy),
-    ], true);
-    this.titleBlock.add([factBg, factCaption]);
-
     // -------------------------------------------------------------
     // 1. NÚT CHÍNH: Tiếp tục (gradient hổ phách, cạnh dưới 5px, quầng sáng)
     // -------------------------------------------------------------
@@ -369,23 +320,13 @@ export class MenuScene extends Phaser.Scene implements Choreographed {
     secBtnContainer.add([secFace, secBtnText, secBtnZone]);
     this.secondaryButton = secBtnContainer;
 
-    // Chân trang phiên bản (y=1240)
-    const footerText = this.add
-      .text(360, this.layout.footerY, t('version_footer'), {
-        fontFamily: TYPO_TOKENS.fontFamily.sans,
-        fontSize: `${Math.round(11 * K)}px`,
-        color: '#C9D2FF',
-      })
-      .setOrigin(0.5);
-    this.footer = footerText;
-
+    // Version lives in the Settings dialog now; the bottom strip is reserved for a banner ad (layout.adSlotY).
     this.uiContainer.add([
       this.langPillContainer,
       this.settingsButton,
       this.titleBlock,
       this.primaryButton,
       this.secondaryButton,
-      this.footer,
     ]);
   }
 
@@ -844,8 +785,8 @@ export class MenuScene extends Phaser.Scene implements Choreographed {
       titleBlock: [this.titleBlock],
       primaryButton: [this.primaryButton],
       buttons: [this.primaryButton, this.secondaryButton],
-      chrome: [this.titleBlock, this.secondaryButton, this.settingsButton, this.langPillContainer, this.footer],
-      corner: [this.settingsButton, this.langPillContainer, this.footer],
+      chrome: [this.titleBlock, this.secondaryButton, this.settingsButton, this.langPillContainer],
+      corner: [this.settingsButton, this.langPillContainer],
     };
   }
 
