@@ -5,6 +5,9 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 ## [Unreleased]
 
 ### Added
+- Sentry crash reporting (web), opt-in: set `VITE_SENTRY_DSN` in `.env.local` (git-ignored). Without it nothing is bundled or sent. `@sentry/browser` loads through a dynamic `import()` into its own chunk and initialises in the background (`initInBackground`, 8 s timeout), so a blocked or hung SDK never delays boot. Sentry's own GlobalHandlers are off; errors go through `installGlobalErrorHandlers` once. `sendDefaultPii` is off.
+- Crash reporter guards: max 10 reports and 100 breadcrumbs per 60 s, duplicate reports dropped, re-entrant `capture` blocked. Analytics `track` only queues (max 100, flushed in batches after 2 s, and on `pagehide`).
+- Dev-only crash test: `window.__crashTest('capture' | 'throw' | 'reject')` (not in release builds).
 - `PlatformServices` seam (`application/platformPort.ts`, `infrastructure/platformServices.ts`): `CrashReporterPort` and `AnalyticsPort` with no-op defaults; driver errors are swallowed so an external SDK (Sentry, CrazyGames, Firebase) can never break the game. `main.ts` routes `error` / `unhandledrejection` through it (still logged to console).
 - `docs/testing/release-checklist-gameplay.md`: GAME-01..04 findings and device test plan.
 - `gate_locked` string ("Locked") in all ten locales for the locked chapter 1 Endless gate badge, replacing "Coming Soon" there.

@@ -3,6 +3,7 @@ import {
   createAnalytics,
   createCrashReporter,
   createPlatformServices,
+  initInBackground,
   installGlobalErrorHandlers,
 } from '../src/infrastructure/platformServices.ts';
 import type { AnalyticsDriver, CrashDriver } from '../src/infrastructure/platformServices.ts';
@@ -10,7 +11,10 @@ import type { TelemetryEvent } from '../src/application/telemetry.ts';
 
 const EVENT: TelemetryEvent = { type: 'level_start', levelId: '1-1', timestamp: 1 };
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.useRealTimers();
+});
 
 describe('CrashReporterPort', () => {
   test('chuyển capture, breadcrumb, setContext cho driver', () => {
@@ -49,9 +53,12 @@ describe('CrashReporterPort', () => {
 });
 
 describe('AnalyticsPort', () => {
-  test('chuyển sự kiện cho driver', () => {
+  test('track chỉ xếp hàng; driver được gọi khi flush', () => {
     const seen: TelemetryEvent[] = [];
-    createAnalytics({ track: (e) => void seen.push(e) }).track(EVENT);
+    const port = createAnalytics({ track: (e) => void seen.push(e) }, { schedule: () => {} });
+    port.track(EVENT);
+    expect(seen).toEqual([]);
+    port.flush();
     expect(seen).toEqual([EVENT]);
   });
 
@@ -59,7 +66,9 @@ describe('AnalyticsPort', () => {
     const driver: AnalyticsDriver = {
       track: () => (mode === 'throw' ? (() => { throw new Error('sdk'); })() : Promise.reject(new Error('sdk'))),
     };
-    expect(() => createAnalytics(driver).track(EVENT)).not.toThrow();
+    const port = createAnalytics(driver, { schedule: () => {} });
+    port.track(EVENT);
+    expect(() => port.flush()).not.toThrow();
   });
 
   test('createPlatformServices không driver là no-op', () => {
@@ -67,7 +76,117 @@ describe('AnalyticsPort', () => {
     expect(() => {
       p.crash.capture('x');
       p.analytics.track(EVENT);
+      p.analytics.flush();
     }).not.toThrow();
+  });
+
+  test('tự gửi sau flushMs, theo lô, và chỉ hẹn giờ một lần', () => {
+    const seen: TelemetryEvent[] = [];
+    const timers: Array<() => void> = [];
+    const port = createAnalytics({ track: (e) => void seen.push(e) }, { schedule: (run) => void timers.push(run) });
+    port.track(EVENT);
+    port.track({ ...EVENT, levelId: '1-2' });
+    expect(timers).toHaveLength(1);
+    expect(seen).toEqual([]);
+    timers[0]();
+    expect(seen.map((e) => (e as { levelId: string }).levelId)).toEqual(['1-1', '1-2']);
+    port.track(EVENT);
+    expect(timers).toHaveLength(2);
+  });
+
+  test('vượt maxQueue thì bỏ sự kiện cũ nhất', () => {
+    const seen: string[] = [];
+    const port = createAnalytics(
+      { track: (e) => void seen.push((e as { levelId: string }).levelId) },
+      { maxQueue: 2, schedule: () => {} }
+    );
+    for (const id of ['a', 'b', 'c']) port.track({ ...EVENT, levelId: id });
+    port.flush();
+    expect(seen).toEqual(['b', 'c']);
+  });
+});
+
+describe('createCrashReporter chống bão lỗi', () => {
+  const clock = (start = 0) => {
+    let t = start;
+    return { now: () => t, advance: (ms: number) => void (t += ms) };
+  };
+
+  test('bỏ báo cáo trùng trong cùng cửa sổ, cho qua lại sau cửa sổ', () => {
+    const c = clock();
+    const seen: unknown[] = [];
+    const port = createCrashReporter({ capture: (e) => void seen.push(e) }, { now: c.now, windowMs: 1000 });
+    port.capture('same');
+    port.capture('same');
+    port.capture('other');
+    expect(seen).toEqual(['same', 'other']);
+    c.advance(1000);
+    port.capture('same');
+    expect(seen).toEqual(['same', 'other', 'same']);
+  });
+
+  test('giới hạn số báo cáo mỗi cửa sổ', () => {
+    const seen: unknown[] = [];
+    const port = createCrashReporter({ capture: (e) => void seen.push(e) }, { maxPerWindow: 3, now: () => 0 });
+    for (let i = 0; i < 50; i++) port.capture(`e${i}`);
+    expect(seen).toHaveLength(3);
+  });
+
+  test('giới hạn breadcrumb mỗi cửa sổ', () => {
+    let n = 0;
+    const port = createCrashReporter(
+      { capture: () => {}, breadcrumb: () => void (n += 1) },
+      { maxBreadcrumbsPerWindow: 5, now: () => 0 }
+    );
+    for (let i = 0; i < 50; i++) port.breadcrumb('x');
+    expect(n).toBe(5);
+  });
+
+  test('driver tự gây lỗi lại vào capture thì không lặp vô hạn', () => {
+    let calls = 0;
+    const holder: { port?: ReturnType<typeof createCrashReporter> } = {};
+    holder.port = createCrashReporter({
+      capture: () => {
+        calls += 1;
+        holder.port!.capture(new Error(`again ${calls}`));
+      },
+    });
+    holder.port.capture(new Error('first'));
+    expect(calls).toBe(1);
+  });
+});
+
+describe('initInBackground', () => {
+  test('trả về giá trị khi init xong', async () => {
+    await expect(initInBackground('x', async () => 42)).resolves.toBe(42);
+  });
+
+  test('init reject hoặc ném đồng bộ thì trả null, không reject', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    await expect(initInBackground('x', () => Promise.reject(new Error('no')))).resolves.toBeNull();
+    await expect(
+      initInBackground('x', () => {
+        throw new Error('sync');
+      })
+    ).resolves.toBeNull();
+  });
+
+  test('init treo vĩnh viễn thì trả null sau timeout', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const result = initInBackground('x', () => new Promise<never>(() => {}), 5000);
+    await vi.advanceTimersByTimeAsync(5000);
+    await expect(result).resolves.toBeNull();
+  });
+
+  test('init xong sau timeout bị bỏ qua', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    let late!: (v: string) => void;
+    const result = initInBackground('x', () => new Promise<string>((r) => (late = r)), 100);
+    await vi.advanceTimersByTimeAsync(100);
+    late('muộn');
+    await expect(result).resolves.toBeNull();
   });
 });
 

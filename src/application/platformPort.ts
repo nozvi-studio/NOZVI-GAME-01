@@ -12,7 +12,10 @@ export interface CrashReporterPort {
 
 /** Gửi sự kiện theo dõi (CrazyGames, Firebase...). Cùng quy ước: không ném lỗi, không chặn game. */
 export interface AnalyticsPort {
+  /** Chỉ xếp vào hàng đợi; việc gửi thật diễn ra sau, ngoài khung hình đang chạy. */
   track(event: TelemetryEvent): void;
+  /** Gửi ngay những gì còn trong hàng đợi (vd. khi tab sắp đóng). */
+  flush(): void;
 }
 
 export interface PlatformServices {

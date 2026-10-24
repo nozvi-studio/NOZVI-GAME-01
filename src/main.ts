@@ -8,6 +8,9 @@ import { LevelSelectScene } from './presentation/scenes/LevelSelectScene.ts';
 import { FixtureScene } from './presentation/scenes/FixtureScene.ts';
 import { setupAndroidLifecycle } from './infrastructure/lifecycle.ts';
 import { createPlatformServices, installGlobalErrorHandlers } from './infrastructure/platformServices.ts';
+import { createSentryCrashDriver } from './infrastructure/sentryCrashDriver.ts';
+import { installCrashTest } from './devtools/crashTest.ts';
+import { APP_VERSION } from './appVersion.ts';
 import { createProgressRepository } from './infrastructure/progressRepository.ts';
 import { getSafeStorage, memoryStorage } from './infrastructure/safeStorage.ts';
 import { campaignManifest } from './content/manifest.ts';
@@ -28,9 +31,16 @@ import type { AudioServices } from './presentation/audio/audioServices.ts';
 import { AUDIO_TOKENS } from './presentation/designTokens.ts';
 import './style.css';
 
-// Chưa gắn SDK nào: mọi lệnh là no-op. Gắn Sentry/CrazyGames bằng cách truyền driver vào đây.
-const platform = createPlatformServices();
+// Không có DSN thì không có driver: mọi lệnh là no-op, game chạy y như chưa gắn SDK.
+const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
+const platform = createPlatformServices({
+  crash: sentryDsn
+    ? createSentryCrashDriver({ dsn: sentryDsn, release: APP_VERSION, environment: import.meta.env.MODE })
+    : null,
+});
 installGlobalErrorHandlers(window, platform.crash);
+window.addEventListener('pagehide', () => platform.analytics.flush());
+if (import.meta.env.DEV) installCrashTest(window, platform.crash);
 
 const launch = resolveLaunch(window.location.search, import.meta.env.DEV);
 

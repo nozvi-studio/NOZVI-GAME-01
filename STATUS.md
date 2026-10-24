@@ -23,7 +23,7 @@
 - [ ] Monetization checklist (MON-01..06): see `docs/testing/release-checklist-monetization.md`. No ads/IAP/analytics SDK, so MON-01..05 are N/A; MON-06 (analytics events) left open for the owner.
 
 ## Next steps
-- Crash reporting / tracking: plug real drivers into `createPlatformServices()` in `main.ts` (web: CrazyGames SDK, native: `@sentry/capacitor`); check CrazyGames' rules on outbound requests first. Update Privacy Policy / Data Safety (COMP-01).
+- Crash reporting (`feature/sentry-crash-reporting`): Sentry web driver is in; needs a DSN in `.env.local` to verify end to end with `__crashTest` (not yet verified against real Sentry). Still to do: CrazyGames SDK driver, `@sentry/capacitor` for Android/iOS, source maps upload (builds ship none, so stacks are minified), check CrazyGames' rules on outbound requests, update Privacy Policy / Data Safety (COMP-01).
 - Remaining unused params left on purpose: `Hud` `title`, `endlessCatalog` `chapter`.
 - Have a native speaker review the machine-drafted es, fr, de, ko, zh-CN strings.
 - Check CJK glyph rendering on device (ja/ko/zh-CN rely on system fonts; no CJK webfont is bundled). The font stack now follows the active locale (`setFontLocale`).

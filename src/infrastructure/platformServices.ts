@@ -33,13 +33,91 @@ function safely(run: () => void | Promise<void>): void {
   }
 }
 
-export function createCrashReporter(driver: CrashDriver | null | undefined): CrashReporterPort {
+/**
+ * Khởi tạo SDK ngoài ở nền. Không bao giờ reject và không bao giờ chờ quá `timeoutMs`: treo hay lỗi thì
+ * trả null và driver tương ứng đứng yên, game vẫn lên. Gọi hàm này KHÔNG `await` trên đường boot.
+ */
+export function initInBackground<T>(name: string, init: () => Promise<T>, timeoutMs = 8000): Promise<T | null> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (value: T | null, why?: string): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (why) console.warn(`[platform] ${name} ${why}`);
+      resolve(value);
+    };
+    const timer = setTimeout(() => finish(null, 'init timed out'), timeoutMs);
+    try {
+      init().then(
+        (value) => finish(value),
+        () => finish(null, 'init failed')
+      );
+    } catch {
+      finish(null, 'init failed');
+    }
+  });
+}
+
+export type CrashGuardOptions = {
+  /** Số báo cáo tối đa mỗi cửa sổ thời gian; vượt thì bỏ. */
+  maxPerWindow?: number;
+  maxBreadcrumbsPerWindow?: number;
+  windowMs?: number;
+  now?: () => number;
+};
+
+function errorKey(error: unknown, context?: CrashContext): string {
+  const text = error instanceof Error ? `${error.name}:${error.message}:${error.stack?.split('\n')[1] ?? ''}` : String(error);
+  return `${context?.source ?? ''}|${text}`;
+}
+
+/**
+ * Bảo vệ game khỏi chính crash reporter: giới hạn tần suất, bỏ báo cáo trùng trong cùng cửa sổ, và chặn vòng
+ * lặp (SDK tự sinh lỗi -> handler toàn cục -> capture -> SDK lại sinh lỗi...).
+ */
+export function createCrashReporter(
+  driver: CrashDriver | null | undefined,
+  options: CrashGuardOptions = {}
+): CrashReporterPort {
+  const { maxPerWindow = 10, maxBreadcrumbsPerWindow = 100, windowMs = 60_000, now = Date.now } = options;
+  let windowStart = now();
+  let captured = 0;
+  let crumbs = 0;
+  let seen = new Set<string>();
+  let busy = false;
+
+  const roll = (): void => {
+    const t = now();
+    if (t - windowStart >= windowMs) {
+      windowStart = t;
+      captured = 0;
+      crumbs = 0;
+      seen = new Set();
+    }
+  };
+
   return {
     capture(error, context) {
-      if (driver) safely(() => driver.capture(error, context));
+      if (!driver || busy) return;
+      roll();
+      const key = errorKey(error, context);
+      if (captured >= maxPerWindow || seen.has(key)) return;
+      seen.add(key);
+      captured += 1;
+      busy = true;
+      try {
+        safely(() => driver.capture(error, context));
+      } finally {
+        busy = false;
+      }
     },
     breadcrumb(message) {
-      if (driver?.breadcrumb) safely(() => driver.breadcrumb!(message));
+      if (!driver?.breadcrumb) return;
+      roll();
+      if (crumbs >= maxBreadcrumbsPerWindow) return;
+      crumbs += 1;
+      safely(() => driver.breadcrumb!(message));
     },
     setContext(key, value) {
       if (driver?.setContext) safely(() => driver.setContext!(key, value));
@@ -47,11 +125,43 @@ export function createCrashReporter(driver: CrashDriver | null | undefined): Cra
   };
 }
 
-export function createAnalytics(driver: AnalyticsDriver | null | undefined): AnalyticsPort {
+export type AnalyticsQueueOptions = {
+  /** Quá số này thì bỏ sự kiện cũ nhất: SDK chậm không được làm bộ nhớ phình ra. */
+  maxQueue?: number;
+  flushMs?: number;
+  schedule?: (run: () => void, ms: number) => unknown;
+};
+
+/**
+ * `track` chỉ xếp hàng (rẻ, chạy ngay trong lúc kéo thả); driver được gọi sau đó, theo lô, ngoài đường nóng.
+ */
+export function createAnalytics(
+  driver: AnalyticsDriver | null | undefined,
+  options: AnalyticsQueueOptions = {}
+): AnalyticsPort {
+  const { maxQueue = 100, flushMs = 2000, schedule = (run, ms) => setTimeout(run, ms) } = options;
+  let queue: TelemetryEvent[] = [];
+  let armed = false;
+
+  const flush = (): void => {
+    armed = false;
+    const batch = queue;
+    queue = [];
+    if (!driver) return;
+    for (const event of batch) safely(() => driver.track(event));
+  };
+
   return {
     track(event) {
-      if (driver) safely(() => driver.track(event));
+      if (!driver) return;
+      queue.push(event);
+      if (queue.length > maxQueue) queue.shift();
+      if (!armed) {
+        armed = true;
+        schedule(flush, flushMs);
+      }
     },
+    flush,
   };
 }
 
