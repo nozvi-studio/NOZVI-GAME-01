@@ -14,7 +14,10 @@ function fakeSentry() {
       initOptions = o;
       log.push('init');
     },
-    captureException: (e, hint) => void log.push(`capture:${(e as Error).message}:${JSON.stringify(hint?.extra ?? null)}`),
+    captureException: (e, hint) =>
+      void log.push(
+        `capture:${(e as Error).message}:${JSON.stringify(hint?.extra ?? null)}${hint?.mechanism ? `:handled=${hint.mechanism.handled}` : ''}`
+      ),
     addBreadcrumb: (b) => void log.push(`crumb:${b.message}:${b.category}`),
     setTag: (k, v) => void log.push(`tag:${k}=${v}`),
   };
@@ -80,6 +83,21 @@ describe('createSentryCrashDriver', () => {
     expect(() => port.capture(new Error('a'))).not.toThrow();
     await new Promise((r) => setTimeout(r, 0));
     expect(f.log).toEqual([]);
+  });
+});
+
+describe('mechanism của lỗi toàn cục', () => {
+  test('lỗi window.onerror / unhandledrejection được gắn handled=false, lỗi thủ công thì không', async () => {
+    const f = fakeSentry();
+    const driver = createSentryCrashDriver(CONFIG, async () => f.sentry);
+    await driver.capture(new Error('a'), { source: 'window.onerror' });
+    await driver.capture(new Error('b'), { source: 'unhandledrejection' });
+    await driver.capture(new Error('c'), { source: 'crash-test' });
+    expect(f.log.filter((l) => l.startsWith('capture'))).toEqual([
+      'capture:a:{"source":"window.onerror"}:handled=false',
+      'capture:b:{"source":"unhandledrejection"}:handled=false',
+      'capture:c:{"source":"crash-test"}',
+    ]);
   });
 });
 

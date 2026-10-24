@@ -10,7 +10,10 @@ export type SentryConfig = {
 /** Phần của `@sentry/browser` mà game dùng; giữ hẹp để test thay bằng đồ giả. */
 export type SentryLike = {
   init(options: Record<string, unknown>): unknown;
-  captureException(error: unknown, hint?: { extra?: Record<string, unknown> }): unknown;
+  captureException(
+    error: unknown,
+    hint?: { extra?: Record<string, unknown>; mechanism?: { handled: boolean; type: string } }
+  ): unknown;
   addBreadcrumb(breadcrumb: { message: string; category: string }): unknown;
   setTag(key: string, value: string): unknown;
 };
@@ -39,7 +42,16 @@ export function createSentryCrashDriver(
 
   return {
     capture: (error, context) =>
-      ready.then((sentry) => void sentry?.captureException(error, context ? { extra: { ...context } } : undefined)),
+      ready.then(
+        (sentry) =>
+          void sentry?.captureException(error, {
+            ...(context ? { extra: { ...context } } : {}),
+            // Lỗi toàn cục là lỗi không ai bắt: để Sentry gắn nhãn "Unhandled" đúng như khi dùng handler của nó.
+            ...(context?.source === 'window.onerror' || context?.source === 'unhandledrejection'
+              ? { mechanism: { handled: false, type: `game.${String(context.source)}` } }
+              : {}),
+          })
+      ),
     breadcrumb: (message) =>
       ready.then((sentry) => void sentry?.addBreadcrumb({ message, category: 'game' })),
     setContext: (key, value) => ready.then((sentry) => void sentry?.setTag(key, String(value))),
