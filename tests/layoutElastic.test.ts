@@ -31,9 +31,25 @@ describe('computeLayout — bố cục dọc co giãn', () => {
     }
   });
 
-  it.each(Object.entries(SCREENS))('thanh đáy chạm mép dưới trên %s', (_name, height) => {
+  it.each(Object.entries(SCREENS))('thanh đáy không tràn khỏi mép dưới trên %s', (_name, height) => {
     const l = computeLayout(W, height, NO_SAFE);
-    expect(l.bottomBarBounds.y + l.bottomBarBounds.height).toBeCloseTo(height);
+    expect(l.bottomBarBounds.y + l.bottomBarBounds.height).toBeLessThanOrEqual(height + 0.005);
+  });
+
+  it('máy 9:16 không còn chỗ trống nên thanh đáy vẫn sát mép dưới', () => {
+    const l = computeLayout(W, SCREENS['9:16'], NO_SAFE);
+    expect(l.bottomBarBounds.y + l.bottomBarBounds.height).toBeCloseTo(SCREENS['9:16']);
+  });
+
+  it.each(['9:19.5', '9:21 (máy trong ảnh chụp)'] as const)('máy dài %s được nâng thanh đáy lên 48 đơn vị', (name) => {
+    const height = SCREENS[name];
+    const l = computeLayout(W, height, NO_SAFE);
+    expect(height - (l.bottomBarBounds.y + l.bottomBarBounds.height)).toBeCloseTo(48);
+  });
+
+  it.each(Object.entries(SCREENS))('nâng thanh đáy không làm khay đè lên bàn trên %s', (_name, height) => {
+    const l = computeLayout(W, height, NO_SAFE);
+    expect(l.trayBounds.y - (l.boardBounds.y + l.boardBounds.height)).toBeGreaterThanOrEqual(16 - 0.005);
   });
 
   it.each(Object.entries(SCREENS))('không có gì tràn ra ngoài khung trên %s', (_name, height) => {
@@ -57,10 +73,11 @@ describe('computeLayout — bố cục dọc co giãn', () => {
     expect(gapOf(tall)).toBeGreaterThan(gapOf(short));
   });
 
-  it('bàn được căn giữa khoảng trống giữa header và khay', () => {
+  it('bàn được căn giữa như khi cụm đáy sát mép dưới, nên nâng cụm đáy không làm huy hiệu nhỏ đi', () => {
     const l = computeLayout(W, SCREENS['9:21 (máy trong ảnh chụp)'], NO_SAFE);
     const above = l.boardBounds.y - (l.headerBounds.y + l.headerBounds.height);
-    const below = l.trayBounds.y - (l.boardBounds.y + l.boardBounds.height);
+    const lift = SCREENS['9:21 (máy trong ảnh chụp)'] - (l.bottomBarBounds.y + l.bottomBarBounds.height);
+    const below = l.trayBounds.y + lift - (l.boardBounds.y + l.boardBounds.height);
     expect(above).toBeCloseTo(below);
   });
 });
@@ -72,7 +89,8 @@ describe('computeLayout — lề an toàn', () => {
     const l = computeLayout(W, height, safe);
 
     expect(l.headerBounds.y).toBe(96);
-    expect(l.bottomBarBounds.y + l.bottomBarBounds.height).toBeCloseTo(height - 48);
+    // Cách mép dưới đúng lề an toàn 48 cộng mức nâng 48.
+    expect(l.bottomBarBounds.y + l.bottomBarBounds.height).toBeCloseTo(height - 48 - 48);
   });
 
   it('giữ mọi thứ trong vùng an toàn khi notch rất dày', () => {

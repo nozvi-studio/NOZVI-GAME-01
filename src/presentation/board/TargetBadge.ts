@@ -4,6 +4,7 @@ import type { LayoutMetrics } from './layout.ts';
 import { COLOR_NUMBERS, DEPTH_TOKENS, FEEDBACK_TOKENS, LAYOUT_TOKENS } from '../designTokens.ts';
 import { BADGE_SILHOUETTE_FIT, drawTargetSilhouette } from './targetSilhouette.ts';
 import { motionFamily, scaleTiming } from '../transitions/motion.ts';
+import { TARGET_BADGE_HIT_SIZE, targetBadgeHitCircle } from './targetBadgeHit.ts';
 
 export class TargetBadge {
   private scrim: Phaser.GameObjects.Rectangle;
@@ -40,10 +41,12 @@ export class TargetBadge {
       hollow: COLOR_NUMBERS.boardSurfaceTop,
     });
 
-    // Vùng chạm hình tròn mở rộng bán kính 96px (đạt chuẩn touch target)
-    this.container.setSize(192, 192);
+    // Vùng chạm hình tròn mở rộng bán kính 96px (đạt chuẩn touch target). Container tính vùng chạm từ
+    // góc trên-trái của khung size, nên tâm vòng tròn phải nằm giữa khung (xem targetBadgeHit.ts).
+    const hit = targetBadgeHitCircle();
+    this.container.setSize(TARGET_BADGE_HIT_SIZE, TARGET_BADGE_HIT_SIZE);
     this.container.setInteractive(
-      new Phaser.Geom.Circle(0, 0, 96),
+      new Phaser.Geom.Circle(hit.x, hit.y, hit.radius),
       Phaser.Geom.Circle.Contains
     );
 

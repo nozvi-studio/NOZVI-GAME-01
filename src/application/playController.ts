@@ -162,7 +162,8 @@ export class PlayController {
     return this.hitPiece(pointerX, pointerY, layout)?.piece.id ?? null;
   }
 
-  onPointerDown(pointerX: number, pointerY: number, layout: LayoutMetrics): boolean {
+  /** `fingerLift` > 0 carries the piece that far above the pointer (a touch); 0 keeps it under the pointer. */
+  onPointerDown(pointerX: number, pointerY: number, layout: LayoutMetrics, fingerLift: number = 0): boolean {
     if (this.puzzleState.phase === 'won') {
       return false;
     }
@@ -180,7 +181,8 @@ export class PlayController {
       pointerY,
       layout,
       originalIndex,
-      this.level.pieces.length
+      this.level.pieces.length,
+      fingerLift
     );
     this.dragUpdate = updateDrag(this.dragSession, this.level, pointerX, pointerY, layout, {
       computePreviewMask: false,

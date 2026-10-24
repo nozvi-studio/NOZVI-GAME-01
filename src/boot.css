@@ -109,7 +109,6 @@ html, body {
 
 .logo {
   overflow: visible;
-  filter: drop-shadow(0 18px 22px rgba(60, 39, 116, .20));
   animation: logoPop 0.418s 1.141s cubic-bezier(.3, 1.6, .5, 1) both, bob 3.196s 1.75s ease-in-out infinite alternate;
 }
 
@@ -124,23 +123,13 @@ html, body {
   to { transform: translateY(-8px); }
 }
 
-.shine {
-  animation: shineLoop 3.804s 1.332s ease-in-out infinite;
-}
-
-@keyframes shineLoop {
-  0% { transform: translateX(0) skewX(-18deg); }
-  24% { transform: translateX(1700px) skewX(-18deg); }
-  100% { transform: translateX(1700px) skewX(-18deg); }
-}
-
 .intro-ring {
   position: absolute;
   width: 120px;
   height: 120px;
   border-radius: 50%;
   opacity: 0;
-  animation: introRing 0.913s 1.179s cubic-bezier(.1, .7, .3, 1) both;
+  animation: introRing 0.913s 1.179s cubic-bezier(.1, .7, .3, 1) forwards;
 }
 
 @keyframes introRing {
@@ -152,7 +141,7 @@ html, body {
   position: absolute;
   clip-path: polygon(50% 0, 100% 100%, 0 100%);
   opacity: 0;
-  animation: burst 1.065s 1.179s cubic-bezier(.1, .8, .3, 1) both;
+  animation: burst 1.065s 1.179s cubic-bezier(.1, .8, .3, 1) forwards;
 }
 
 @keyframes burst {
@@ -243,7 +232,7 @@ html, body {
 /* Reduced motion for intro */
 @media (prefers-reduced-motion: reduce) {
   #intro { transition: none; }
-  .f, .bgpoly, .fl, .logo, .shine, .w1 span, .w2, .ln {
+  .f, .bgpoly, .fl, .logo, .w1 span, .w2, .ln {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;

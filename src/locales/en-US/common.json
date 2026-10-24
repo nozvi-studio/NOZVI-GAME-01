@@ -3,7 +3,6 @@
   "btn_continue": "Continue",
   "btn_replay": "Replay",
   "btn_select_level": "Select Level",
-  "version_footer": "Mirror v1.0.0 · Where The Stars Gather",
   "loading_fact_label": "Did you know?",
   "loading_tap_hint": "Tap for another fact",
   "loading_version": "Mirror v{version}",

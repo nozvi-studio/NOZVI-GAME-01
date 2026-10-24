@@ -19,6 +19,7 @@ import {
   VICTORY_VERSE_FONT_SIZE,
   formatMatchCount,
   getSnapHintText,
+  snapHintPillSize,
   getVictoryLabels,
 } from './hudText.ts';
 import { enter, exit, type Poseable } from '../transitions/choreography.ts';
@@ -535,9 +536,6 @@ export class Hud {
   /** Nhãn "Thả để khớp": hiện/ẩn trong ~120 ms, bám mảnh với τ 60 ms */
   public tickSnapHint(dtMs: number, target: { x: number; y: number } | null): void {
     if (!this.snapHint) {
-      const bg = this.scene.add.graphics();
-      bg.fillStyle(0xfff4d2, 1);
-      bg.fillRoundedRect(-80, -22, 160, 44, 14);
       const label = this.scene.add
         .text(0, 0, getSnapHintText(), {
           fontFamily: TYPO_TOKENS.fontFamily.sans,
@@ -546,6 +544,10 @@ export class Hud {
           fontStyle: 'bold',
         })
         .setOrigin(0.5);
+      const pill = snapHintPillSize(label.width);
+      const bg = this.scene.add.graphics();
+      bg.fillStyle(0xfff4d2, 1);
+      bg.fillRoundedRect(-pill.width / 2, -pill.height / 2, pill.width, pill.height, 14);
       this.snapHint = this.scene.add.container(0, 0, [bg, label]).setDepth(DEPTH_TOKENS.hudControls).setAlpha(0);
     }
     const reduced = isReducedMotion();

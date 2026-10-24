@@ -3,7 +3,6 @@
   "btn_continue": "이어하기",
   "btn_replay": "다시 하기",
   "btn_select_level": "레벨 선택",
-  "version_footer": "Mirror v1.0.0 · 별이 모이는 곳",
   "loading_fact_label": "알고 계셨나요?",
   "loading_tap_hint": "탭하면 다른 상식이 나와요",
   "loading_version": "Mirror v{version}",

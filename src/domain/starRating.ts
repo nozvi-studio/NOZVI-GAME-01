@@ -6,8 +6,11 @@ export const PAR_COEFFICIENTS = { baseMs: 4000, perPieceMs: 2500, perTurnMs: 120
 /** A star is lost once this percent of the budget has passed; first entry is the 3-star window. */
 export const STAR_PERCENTS = [15, 45, 75] as const;
 
-export const BUDGET_MIN_MS = 20_000;
-export const BUDGET_MAX_MS = 45_000;
+/**
+ * 3 stars are awarded up to par x this ratio (par = expert time). Single knob to tune after playtests;
+ * the 2- and 1-star windows follow from `STAR_PERCENTS`.
+ */
+export const THREE_STAR_PAR_RATIO = 1.25;
 
 /** Expert time for a level, from the placements of its first sample solution. */
 export function parFromSolution(steps: ReadonlyArray<{ turns: number }>): number {
@@ -17,10 +20,12 @@ export function parFromSolution(steps: ReadonlyArray<{ turns: number }>): number
   );
 }
 
-/** The 3-star window is `STAR_PERCENTS[0]` % of the budget, so the budget is par divided by it. */
+/**
+ * The 3-star window is `STAR_PERCENTS[0]` % of the budget and must equal par x `THREE_STAR_PAR_RATIO`.
+ * No clamp: a fixed ceiling made every level with 2+ pieces share one window shorter than its own par.
+ */
 export function timeBudget(parMs: number): number {
-  const raw = Math.round((parMs * 100) / STAR_PERCENTS[0]);
-  return Math.min(BUDGET_MAX_MS, Math.max(BUDGET_MIN_MS, raw));
+  return Math.round((parMs * THREE_STAR_PAR_RATIO * 100) / STAR_PERCENTS[0]);
 }
 
 /** Integer comparison (no float thresholds) so exact boundaries are stable. */

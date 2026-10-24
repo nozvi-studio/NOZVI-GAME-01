@@ -1,9 +1,11 @@
 import type { Level } from '../../domain/model.ts';
 import {
+  largestFrameSize,
   pieceCenterCanvas,
   pieceHitbox,
   pieceRadiusPx,
   trayPieceRadiusPx,
+  trayRelativeSize,
   trayWellRects,
   type CanvasPoint,
   type LayoutMetrics,
@@ -38,7 +40,8 @@ export function tutorialSpot(level: Level, pieceId: string, layout: LayoutMetric
     pieceId,
     trayWell: well,
     trayCentre: { x: hit.x + hit.width / 2, y: hit.y + hit.height / 2 },
-    trayRadius: trayPieceRadiusPx(layout, level.pieces.length),
+    // Same shared tray scale as the piece itself, so the coach ring hugs a smaller piece.
+    trayRadius: trayPieceRadiusPx(layout, level.pieces.length) * trayRelativeSize(piece.frameSize, largestFrameSize(level.pieces)),
     target: pieceCenterCanvas(piece.frameSize, placement.x, placement.y, layout),
     targetRadius: pieceRadiusPx(piece.frameSize, layout),
     targetTurns: placement.turns,

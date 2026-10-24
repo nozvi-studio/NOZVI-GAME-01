@@ -27,6 +27,21 @@ export function getSnapHintText(): string {
   return t('snap_hint');
 }
 
+const SNAP_HINT_MIN_WIDTH = 160;
+const SNAP_HINT_HEIGHT = 44;
+const SNAP_HINT_PADDING_X = 18;
+
+/**
+ * Kích thước viên thuốc của nhãn hít theo bề rộng chữ đã đo. Chiều rộng cố định
+ * từng làm chữ các ngôn ngữ dài (fr, de, id...) tràn ra ngoài viền.
+ */
+export function snapHintPillSize(textWidth: number): { width: number; height: number } {
+  return {
+    width: Math.max(SNAP_HINT_MIN_WIDTH, Math.ceil(textWidth) + SNAP_HINT_PADDING_X * 2),
+    height: SNAP_HINT_HEIGHT,
+  };
+}
+
 /** Cỡ chữ kiến thức chiến thắng nổi bật và dễ đọc */
 export const VICTORY_VERSE_FONT_SIZE = 24;
 

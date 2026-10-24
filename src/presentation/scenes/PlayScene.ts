@@ -28,7 +28,7 @@ import {
 } from '../board/layout.ts';
 import type { LayoutMetrics } from '../board/layout.ts';
 
-import { COLOR_NUMBERS, COLOR_TOKENS, DEPTH_TOKENS, TYPO_TOKENS, VICTORY_TOKENS } from '../designTokens.ts';
+import { COLOR_NUMBERS, COLOR_TOKENS, DEPTH_TOKENS, FEEDBACK_TOKENS, TYPO_TOKENS, VICTORY_TOKENS } from '../designTokens.ts';
 import { TextureFactory } from '../TextureFactory.ts';
 
 import { PauseDialog } from '../dialogs/PauseDialog.ts';
@@ -341,7 +341,7 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
       if (!this.tutorialAllows(under ? { type: 'press-piece', pieceId: under } : { type: 'hud' }, under !== null || onBoard)) {
         return;
       }
-      const hit = this.controller.onPointerDown(pointer.worldX, pointer.worldY, layout);
+      const hit = this.controller.onPointerDown(pointer.worldX, pointer.worldY, layout, pointer.wasTouch ? FEEDBACK_TOKENS.fingerLift : 0);
       this.pressStart = {
         pieceId: hit ? this.controller.getSnapshot().dragInfo?.pieceId ?? null : null,
         x: pointer.worldX,

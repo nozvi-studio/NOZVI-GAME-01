@@ -1,10 +1,10 @@
 # STATUS
 
 > The *current* state of the project. Overwrite when things change; history lives in `CHANGELOG.md`.
-> Last updated: 2026-10-22
+> Last updated: 2026-10-24
 
 ## Branches
-- Last worked on: `feature/release-checklist-localization` (merged into `release/v1.0.0`, 2026-10-23)
+- Last worked on: `fix/intro-fly-in-lag` (gameplay/UI polish; merged into `release/v1.0.0`, 2026-10-24). Before it: `feature/release-checklist-localization` (merged 2026-10-23)
 - Release branch: `release/v1.0.0` · Main: `main` · Development: `dev`
 
 ## Version

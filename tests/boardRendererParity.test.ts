@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from 'vitest';
 import type Phaser from 'phaser';
 import { BoardRenderer } from '../src/presentation/board/BoardRenderer.ts';
+import { PieceView } from '../src/presentation/board/PieceView.ts';
 import { computeLayout } from '../src/presentation/board/layout.ts';
 import { anchorLevel } from './fixtures/anchorLevels.ts';
 import type { PieceState } from '../src/domain/model.ts';
@@ -58,21 +59,52 @@ const snapped: PieceState = { kind: 'snapped', anchorId: 'A', turns: 0 };
 const tray: PieceState = { kind: 'tray', turns: 0 };
 
 describe('vùng giao mờ dần', () => {
-  test('đường sáng vùng giao tăng dần từ 0 và chỉ hiện khi còn chồng', () => {
+  const glowLines = (calls: Array<{ method: string; depth?: number }>, from = 0) =>
+    calls.slice(from).filter((c) => c.method === 'strokePoints' && c.depth === DEPTH_TOKENS.draggingPiece + 1);
+
+  /** Holds P2 exactly over the anchor P1 sits on, so the two footprints coincide. */
+  const holdOverAnchor = (renderer: BoardRenderer) => {
+    const piece = (renderer as unknown as { level: { pieces: Array<{ id: string; frameSize: number }> } }).level.pieces[1];
+    const centre = (renderer as unknown as { candidateCenter: (p: unknown, id: string, turns: number) => { x: number; y: number } })
+      .candidateCenter(piece, 'A', 0);
+    vi.spyOn(PieceView.prototype, 'currentPose').mockReturnValue({ x: centre.x, y: centre.y, scale: 1, angle: 0, alpha: 1 });
+  };
+
+  test('đường sáng vùng giao chỉ hiện khi đang giữ mảnh, tăng dần từ 0', () => {
     const { renderer, snapshot, calls } = setup();
+    holdOverAnchor(renderer);
     const glowAlpha = () =>
       [...calls].reverse().find((c) => c.method === 'lineStyle' && c.args[0] === 1.5 && c.depth === DEPTH_TOKENS.draggingPiece + 1)
         ?.args[2] as number;
-    renderer.tick(16, snapshot(), { P1: snapped, P2: tray });
-    renderer.tick(0, snapshot(), { P1: snapped, P2: snapped });
+    const held = () => snapshot({ dragInfo: { pieceId: 'P2', x: 360, y: 400, snapCandidateId: null } });
+    const stage = { P1: snapped, P2: tray };
+    renderer.tick(0, held(), stage);
     expect(glowAlpha()).toBe(0);
-    renderer.tick(300, snapshot(), { P1: snapped, P2: snapped });
+    renderer.tick(300, held(), stage);
     expect(glowAlpha()).toBeCloseTo(0.45, 5);
-    renderer.tick(400, snapshot(), { P1: snapped, P2: snapped });
+    renderer.tick(400, held(), stage);
     expect(glowAlpha()).toBeCloseTo(0.9, 5);
+  });
+
+  test('thả mảnh là tắt đường sáng ngay khung đó, dù hai mảnh còn chồng nhau', () => {
+    const { renderer, snapshot, calls } = setup();
+    holdOverAnchor(renderer);
+    const held = () => snapshot({ dragInfo: { pieceId: 'P2', x: 360, y: 400, snapCandidateId: null } });
+    renderer.tick(16, held(), { P1: snapped, P2: tray });
+    renderer.tick(700, held(), { P1: snapped, P2: tray });
+    expect(glowLines(calls).length).toBeGreaterThan(0);
     const before = calls.length;
-    renderer.tick(16, snapshot(), { P1: snapped, P2: tray });
-    expect(calls.slice(before).some((c) => c.method === 'strokePoints')).toBe(false);
+    renderer.tick(16, snapshot(), { P1: snapped, P2: snapped });
+    expect(glowLines(calls, before).length).toBe(0);
+    // The overlap is still a real hole after the drop.
+    expect(calls.slice(before).some((c) => c.method === 'fillPoints') || calls.some((c) => c.method === 'setMask')).toBe(true);
+  });
+
+  test('hai mảnh đã đặt chồng nhau không vẽ đường sáng khi không giữ mảnh nào', () => {
+    const { renderer, snapshot, calls } = setup();
+    renderer.tick(0, snapshot(), { P1: snapped, P2: snapped });
+    renderer.tick(700, snapshot(), { P1: snapped, P2: snapped });
+    expect(glowLines(calls).length).toBe(0);
   });
 
   test('vùng giao chẵn là lỗ thật: cắt mảnh bằng mask đảo, không tô màu mặt bia', () => {
@@ -106,16 +138,14 @@ describe('vùng giao mờ dần', () => {
     expect(calls.some((c) => c.method === 'strokePoints' && c.depth === DEPTH_TOKENS.placedPieces + 2)).toBe(true);
   });
 
-  test('mảnh tạm (temporary) khi buông ra vẫn hiển thị vùng giao chẵn/lẻ ở depth 51', () => {
+  test('mảnh tạm (temporary) khi buông ra vẫn là lỗ thật nhưng không còn đường sáng', () => {
     const { renderer, snapshot, calls } = setup();
     const temporaryState: PieceState = { kind: 'temporary', x: 16, y: 56, turns: 0 };
     renderer.tick(0, snapshot(), { P1: snapped, P2: temporaryState });
     renderer.tick(200, snapshot(), { P1: snapped, P2: temporaryState });
 
-    const parityLine = calls.find(
-      (c) => c.method === 'strokePoints' && c.depth === DEPTH_TOKENS.draggingPiece + 1
-    );
-    expect(parityLine).toBeDefined();
+    expect(calls.some((c) => c.method === 'setMask')).toBe(true);
+    expect(glowLines(calls).length).toBe(0);
 
     const dragParityCalls = calls.filter(
       (c) => c.depth === DEPTH_TOKENS.draggingPiece + 1 && c.method === 'fillPoints'

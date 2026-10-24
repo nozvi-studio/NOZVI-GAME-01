@@ -24,7 +24,10 @@ import {
 export type DragSession = {
   pieceId: string;
   startWorld: { x: number; y: number };
+  /** Pointer minus piece centre. Includes `lift`, so the centre rides `lift` px above the pointer. */
   pointerOffset: { x: number; y: number };
+  /** How far above the fingertip the piece is carried (0 for a mouse). */
+  lift: number;
   originState: PieceState;
   committedState: PuzzleState;
 };
@@ -99,7 +102,9 @@ export function beginDrag(
   pointerY: number,
   layout: LayoutMetrics,
   pieceIndexInTray: number = 0,
-  trayCount: number = 2
+  trayCount: number = 2,
+  /** Carry the piece this far above the pointer (touch); 0 keeps it exactly where it was grabbed. */
+  fingerLift: number = 0
 ): DragSession {
   const originState = state.pieces[piece.id] ?? { kind: 'tray', turns: 0 };
   let pieceCenterX = pointerX;
@@ -124,8 +129,9 @@ export function beginDrag(
     startWorld: { x: pointerX, y: pointerY },
     pointerOffset: {
       x: pointerX - pieceCenterX,
-      y: pointerY - pieceCenterY,
+      y: pointerY - pieceCenterY + fingerLift,
     },
+    lift: fingerLift,
     originState,
     committedState: state,
   };
@@ -211,12 +217,14 @@ export function finishDrag(
   pointerY: number,
   layout: LayoutMetrics
 ): Transition {
-  // Thả vào vùng khay mảnh (trayBounds) -> trả về khay
+  // Thả vào vùng khay mảnh (trayBounds) -> trả về khay. Với cảm ứng, mảnh nằm `lift` px trên ngón tay nên
+  // điểm xét là chỗ mảnh đang ở, không phải đầu ngón tay (không thì thả sát đáy bàn bị tính là về khay).
+  const refY = pointerY - drag.lift;
   const inTray =
     pointerX >= layout.trayBounds.x &&
     pointerX <= layout.trayBounds.x + layout.trayBounds.width &&
-    pointerY >= layout.trayBounds.y &&
-    pointerY <= layout.trayBounds.y + layout.trayBounds.height;
+    refY >= layout.trayBounds.y &&
+    refY <= layout.trayBounds.y + layout.trayBounds.height;
 
   if (inTray) {
     return applyCommand(level, drag.committedState, {

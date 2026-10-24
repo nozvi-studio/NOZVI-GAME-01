@@ -5,11 +5,13 @@ import type { CanvasPoint, LayoutMetrics } from './layout.ts';
 import {
   pieceBoardOrigin,
   pieceCenterCanvas,
+  largestFrameSize,
   pieceHitbox,
   piecePolygonAround,
   piecePolygonCanvas,
   pieceRadiusPx,
   trayPieceRadiusPx,
+  trayRelativeSize,
   trayWellRects,
 } from './layout.ts';
 import { GridPainter } from './GridPainter.ts';
@@ -70,6 +72,8 @@ export class BoardRenderer {
   private readonly level: Level;
   private readonly textures: PieceTextureSource;
   private readonly trayCount: number;
+  /** Largest frameSize in the level: the tray draws every piece at one shared scale against it. */
+  private readonly trayRefFrame: number;
 
   private readonly ringGraphics: Phaser.GameObjects.Graphics;
   private readonly targetGraphics: Phaser.GameObjects.Graphics;
@@ -156,6 +160,7 @@ export class BoardRenderer {
     this.level = level;
     this.textures = textures;
     this.trayCount = level.pieces.length;
+    this.trayRefFrame = largestFrameSize(level.pieces);
     this.hoverAlpha = (level.targetPlacements ?? []).map(() => FEEDBACK_TOKENS.targetIdleAlpha);
 
     this.ringGraphics = scene.add.graphics().setDepth(DEPTH_TOKENS.celestialRings);
@@ -275,6 +280,7 @@ export class BoardRenderer {
       layout: this.layout,
       trayIndex,
       trayCount: this.trayCount,
+      trayRefFrame: this.trayRefFrame,
       selected: false,
       showTarget: false,
       drag: null,
@@ -408,6 +414,7 @@ export class BoardRenderer {
         layout: this.layout,
         trayIndex: index,
         trayCount: this.trayCount,
+        trayRefFrame: this.trayRefFrame,
         selected: snapshot.selectedPieceId === piece.id,
         showTarget: snapshot.showTarget,
         drag: dragging
@@ -442,7 +449,8 @@ export class BoardRenderer {
       const state = pieces[piece.id] ?? { kind: 'tray', turns: 0 };
       if (piece.id === dragId && state.kind === 'tray') {
         const hit = pieceHitbox(piece, state, this.layout, index, this.trayCount);
-        const radius = trayPieceRadiusPx(this.layout, this.trayCount);
+        // Same shared scale as the piece in the tray, so the placeholder is as big as the piece was.
+        const radius = trayPieceRadiusPx(this.layout, this.trayCount) * trayRelativeSize(piece.frameSize, this.trayRefFrame);
         drawJewelPolygon(
           this.placeholderGraphics,
           piecePolygonAround(piece, state.turns, hit.x + hit.width / 2, hit.y + hit.height / 2, radius * 2),
@@ -710,7 +718,10 @@ export class BoardRenderer {
       this.setDeepMasked(false);
       return;
     }
-    this.glow = reduced ? 1 : Math.min(1, this.glow + dtMs / FEEDBACK_TOKENS.overlapGlowMs);
+    // The light line belongs to the piece in the hand: it shows only while one is held and cuts out the
+    // frame it is dropped (no fade), even if the pieces still overlap. The holes themselves stay.
+    const lit = snapshot.dragInfo ? new Set<ParityLayer>(this.dragHollow) : null;
+    this.glow = !lit || lit.size === 0 ? 0 : reduced ? 1 : Math.min(1, this.glow + dtMs / FEEDBACK_TOKENS.overlapGlowMs);
     const eased = this.glow * this.glow * (3 - 2 * this.glow);
     const dim = snapshot.showTarget ? FEEDBACK_TOKENS.eyeResultAlpha : 1;
     this.holeShape.fillStyle(0xffffff, 1);
@@ -724,6 +735,7 @@ export class BoardRenderer {
         deepHoles = true;
       }
       if (snapshot.phase === 'won') continue; // solved: the removed areas keep no edge
+      if (!lit?.has(layer)) continue;
       this.glowGraphics.lineStyle(5, COLOR_NUMBERS.iceHighlight, 0.18 * eased * dim);
       this.glowGraphics.strokePoints(pts, true, true);
       this.glowGraphics.lineStyle(1.5, COLOR_NUMBERS.iceHighlight, 0.9 * eased * dim);
