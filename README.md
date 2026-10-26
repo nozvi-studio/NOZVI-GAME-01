@@ -82,6 +82,15 @@ With `npm run dev` running:
 
 Both are served only by the dev server and are not part of the production build.
 
+## Analytics (GameAnalytics)
+
+Level analytics go to GameAnalytics only in the native Android app. Put both keys in `.env.local` (git-ignored) before building the APK; they are read at build time:
+
+    VITE_GA_GAME_KEY=...
+    VITE_GA_SECRET_KEY=...
+
+With both keys set, the app asks the player to agree to share play data on first launch and does not start the game until they do. Without the keys the SDK is never loaded and nothing is sent. `npm run dev` prints the events to the console instead.
+
 ## Architecture notes
 
 ### Scene transitions

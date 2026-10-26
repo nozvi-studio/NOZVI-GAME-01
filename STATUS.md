@@ -4,7 +4,7 @@
 > Last updated: 2026-10-26
 
 ## Branches
-- Last worked on: `fix/intro-fly-in-lag` (gameplay/UI polish; merged into `release/v1.0.0`, 2026-10-24). Before it: `feature/release-checklist-localization` (merged 2026-10-23)
+- Last worked on: `feature/game-analytics` (level tracking + GameAnalytics driver, cut from `feature/sentry-crash-reporting`, 2026-10-26). Before it: `fix/intro-fly-in-lag` (merged into `release/v1.0.0`, 2026-10-24)
 - Release branch: `release/v1.0.0` · Main: `main` · Development: `dev`
 
 ## Version
@@ -23,7 +23,7 @@
 - [ ] Monetization checklist (MON-01..06): see `docs/testing/release-checklist-monetization.md`. No ads/IAP/analytics SDK, so MON-01..05 are N/A; MON-06 (analytics events) left open for the owner.
 
 ## Next steps
-- Level tracking (on `feature/sentry-crash-reporting`): `LevelTracker` and the `PlayScene` hooks are in, tests green; no analytics driver yet, so no event leaves the device. Next: GameAnalytics driver (progression events: chapter / level, score = stars; decide how to map `level_abandon`, since the game has no lose state), check the current SDK docs and Capacitor/WebView support first. Then consent/opt-out and update Privacy Policy / Data Safety (COMP-01) and MON-06. Not yet run on a device or in the browser.
+- Analytics (`feature/game-analytics`, cut from `feature/sentry-crash-reporting`): `LevelTracker`, the GameAnalytics driver and a placeholder consent screen are in and tests are green. Still to do: real consent UI and wording (Vietnamese law requires consent for analytics), Privacy Policy / Data Safety (COMP-01), and an on-device check in the Capacitor WebView (confirm the events reach the GameAnalytics dashboard, and whether importing the SDK sends anything before the first event). The two GameAnalytics keys must be in `.env.local` when the APK is built.
 - Crash reporting (`feature/sentry-crash-reporting`): Sentry web driver is in; needs a DSN in `.env.local` to verify end to end with `__crashTest` (not yet verified against real Sentry). Still to do: CrazyGames SDK driver, `@sentry/capacitor` for Android/iOS, source maps upload (builds ship none, so stacks are minified), check CrazyGames' rules on outbound requests, update Privacy Policy / Data Safety (COMP-01).
 - Remaining unused params left on purpose: `Hud` `title`, `endlessCatalog` `chapter`.
 - Have a native speaker review the machine-drafted es, fr, de, ko, zh-CN strings.
