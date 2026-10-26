@@ -30,6 +30,7 @@
     "@capacitor/core": "8.5.2",
     "@capacitor/haptics": "8.0.2",
     "@sentry/browser": "11.9.0",
+    "gameanalytics": "5.0.0",
     "phaser": "3.90.0"
   },
   "devDependencies": {
