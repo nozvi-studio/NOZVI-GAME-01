@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { App } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 import { BackgroundScene } from './presentation/scenes/BackgroundScene.ts';
 import { LoadingScene } from './presentation/scenes/LoadingScene.ts';
 import { MenuScene } from './presentation/scenes/MenuScene.ts';
@@ -9,7 +10,8 @@ import { FixtureScene } from './presentation/scenes/FixtureScene.ts';
 import { setupAndroidLifecycle } from './infrastructure/lifecycle.ts';
 import { createPlatformServices, installGlobalErrorHandlers } from './infrastructure/platformServices.ts';
 import { createSentryCrashDriver } from './infrastructure/sentryCrashDriver.ts';
-import { createConsoleAnalyticsDriver } from './infrastructure/consoleAnalyticsDriver.ts';
+import { selectAnalyticsDriver } from './infrastructure/analyticsSetup.ts';
+import { requestAnalyticsConsent } from './presentation/consent/consentGate.ts';
 import { installCrashTest } from './devtools/crashTest.ts';
 import { APP_VERSION } from './appVersion.ts';
 import { LevelTracker } from './application/levelTracker.ts';
@@ -36,12 +38,18 @@ import './style.css';
 
 // Không có DSN thì không có driver: mọi lệnh là no-op, game chạy y như chưa gắn SDK.
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
+const analyticsSelection = selectAnalyticsDriver({
+  gameKey: import.meta.env.VITE_GA_GAME_KEY,
+  secretKey: import.meta.env.VITE_GA_SECRET_KEY,
+  isNative: Capacitor.isNativePlatform(),
+  isDev: import.meta.env.DEV,
+  build: APP_VERSION,
+});
 const platform = createPlatformServices({
   crash: sentryDsn
     ? createSentryCrashDriver({ dsn: sentryDsn, release: APP_VERSION, environment: import.meta.env.MODE })
     : null,
-  // Chỉ bản dev: in sự kiện ra console để xem thử. Bản release chưa có driver nào.
-  analytics: import.meta.env.DEV ? createConsoleAnalyticsDriver() : null,
+  analytics: analyticsSelection.driver,
 });
 installGlobalErrorHandlers(window, platform.crash);
 const levelTrackerService = new LevelTracker(platform.analytics);
@@ -136,6 +144,10 @@ export async function startGame(options: StartGameOptions = {}): Promise<void> {
   // Splash and first paint use chapter I; Menu, Map and Play switch it afterwards.
   setPcBackground(1);
   await waitForFonts();
+  // GameAnalytics bật thì người chơi phải đồng ý chia sẻ dữ liệu trước khi vào game.
+  if (analyticsSelection.requiresConsent) await requestAnalyticsConsent();
+  // Khởi tạo SDK ngay để phiên mở trước sự kiện đầu tiên (SDK bỏ sự kiện gửi trước khi phiên mở).
+  analyticsSelection.warmUp?.();
 
   // BackgroundScene đứng đầu nên tự khởi động và luôn vẽ dưới cùng; các scene
   // khác chỉ chạy khi SceneDirector gọi.
