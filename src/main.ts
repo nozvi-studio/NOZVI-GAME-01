@@ -9,8 +9,11 @@ import { FixtureScene } from './presentation/scenes/FixtureScene.ts';
 import { setupAndroidLifecycle } from './infrastructure/lifecycle.ts';
 import { createPlatformServices, installGlobalErrorHandlers } from './infrastructure/platformServices.ts';
 import { createSentryCrashDriver } from './infrastructure/sentryCrashDriver.ts';
+import { createConsoleAnalyticsDriver } from './infrastructure/consoleAnalyticsDriver.ts';
 import { installCrashTest } from './devtools/crashTest.ts';
 import { APP_VERSION } from './appVersion.ts';
+import { LevelTracker } from './application/levelTracker.ts';
+import { LEVEL_TRACKER_REGISTRY_KEY } from './presentation/levelTracking.ts';
 import { createProgressRepository } from './infrastructure/progressRepository.ts';
 import { getSafeStorage, memoryStorage } from './infrastructure/safeStorage.ts';
 import { campaignManifest } from './content/manifest.ts';
@@ -37,9 +40,15 @@ const platform = createPlatformServices({
   crash: sentryDsn
     ? createSentryCrashDriver({ dsn: sentryDsn, release: APP_VERSION, environment: import.meta.env.MODE })
     : null,
+  // Chỉ bản dev: in sự kiện ra console để xem thử. Bản release chưa có driver nào.
+  analytics: import.meta.env.DEV ? createConsoleAnalyticsDriver() : null,
 });
 installGlobalErrorHandlers(window, platform.crash);
-window.addEventListener('pagehide', () => platform.analytics.flush());
+const levelTrackerService = new LevelTracker(platform.analytics);
+window.addEventListener('pagehide', () => {
+  levelTrackerService.leave('app-exit');
+  platform.analytics.flush();
+});
 if (import.meta.env.DEV) installCrashTest(window, platform.crash);
 
 const launch = resolveLaunch(window.location.search, import.meta.env.DEV);
@@ -147,6 +156,8 @@ export async function startGame(options: StartGameOptions = {}): Promise<void> {
     },
     scene: [BackgroundScene, LoadingScene, MenuScene, PlayScene, LevelSelectScene, FixtureScene],
   });
+
+  game.registry.set(LEVEL_TRACKER_REGISTRY_KEY, levelTrackerService);
 
   if (import.meta.env.DEV) {
     (window as unknown as { __GAME__?: Phaser.Game }).__GAME__ = game;

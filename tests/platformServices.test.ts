@@ -9,7 +9,7 @@ import {
 import type { AnalyticsDriver, CrashDriver } from '../src/infrastructure/platformServices.ts';
 import type { TelemetryEvent } from '../src/application/telemetry.ts';
 
-const EVENT: TelemetryEvent = { type: 'level_start', levelId: '1-1', timestamp: 1 };
+const EVENT: TelemetryEvent = { type: 'level_start', levelId: '1-1', chapter: 1, mode: 'campaign', timestamp: 1 };
 
 afterEach(() => {
   vi.restoreAllMocks();

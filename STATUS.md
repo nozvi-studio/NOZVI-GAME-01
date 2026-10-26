@@ -1,7 +1,7 @@
 # STATUS
 
 > The *current* state of the project. Overwrite when things change; history lives in `CHANGELOG.md`.
-> Last updated: 2026-10-24
+> Last updated: 2026-10-26
 
 ## Branches
 - Last worked on: `fix/intro-fly-in-lag` (gameplay/UI polish; merged into `release/v1.0.0`, 2026-10-24). Before it: `feature/release-checklist-localization` (merged 2026-10-23)
@@ -23,6 +23,7 @@
 - [ ] Monetization checklist (MON-01..06): see `docs/testing/release-checklist-monetization.md`. No ads/IAP/analytics SDK, so MON-01..05 are N/A; MON-06 (analytics events) left open for the owner.
 
 ## Next steps
+- Level tracking (on `feature/sentry-crash-reporting`): `LevelTracker` and the `PlayScene` hooks are in, tests green; no analytics driver yet, so no event leaves the device. Next: GameAnalytics driver (progression events: chapter / level, score = stars; decide how to map `level_abandon`, since the game has no lose state), check the current SDK docs and Capacitor/WebView support first. Then consent/opt-out and update Privacy Policy / Data Safety (COMP-01) and MON-06. Not yet run on a device or in the browser.
 - Crash reporting (`feature/sentry-crash-reporting`): Sentry web driver is in; needs a DSN in `.env.local` to verify end to end with `__crashTest` (not yet verified against real Sentry). Still to do: CrazyGames SDK driver, `@sentry/capacitor` for Android/iOS, source maps upload (builds ship none, so stacks are minified), check CrazyGames' rules on outbound requests, update Privacy Policy / Data Safety (COMP-01).
 - Remaining unused params left on purpose: `Hud` `title`, `endlessCatalog` `chapter`.
 - Have a native speaker review the machine-drafted es, fr, de, ko, zh-CN strings.
