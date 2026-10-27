@@ -1,5 +1,5 @@
 import { chapterOfLevelId } from '../content/chapters.ts';
-import type { AnalyticsPort } from './platformPort.ts';
+import type { AnalyticsPort, CrashReporterPort } from './platformPort.ts';
 import type { PlayMode } from './telemetry.ts';
 
 type Run = {
@@ -22,7 +22,8 @@ export class LevelTracker {
 
   constructor(
     private readonly analytics: AnalyticsPort,
-    private readonly now: () => number = Date.now
+    private readonly now: () => number = Date.now,
+    private readonly crash?: CrashReporterPort
   ) {}
 
   /** `chapter` chỉ cần truyền khi mã màn không mang chương (endless). */
@@ -37,6 +38,11 @@ export class LevelTracker {
       rotateCount: 0,
       resetCount: 0,
     };
+    // Lỗi xảy ra trong lúc chơi sẽ mang theo màn, chương và chế độ để lọc trên Sentry.
+    this.crash?.setContext('level', levelId);
+    this.crash?.setContext('chapter', this.run.chapter);
+    this.crash?.setContext('mode', mode);
+    this.crash?.breadcrumb(`level_start ${levelId}`);
     this.analytics.track({
       type: 'level_start',
       levelId,

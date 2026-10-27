@@ -47,12 +47,17 @@ const analyticsSelection = selectAnalyticsDriver({
 });
 const platform = createPlatformServices({
   crash: sentryDsn
-    ? createSentryCrashDriver({ dsn: sentryDsn, release: APP_VERSION, environment: import.meta.env.MODE })
+    ? createSentryCrashDriver({
+        dsn: sentryDsn,
+        release: APP_VERSION,
+        environment: import.meta.env.MODE,
+        tags: { platform: Capacitor.getPlatform(), native: String(Capacitor.isNativePlatform()) },
+      })
     : null,
   analytics: analyticsSelection.driver,
 });
 installGlobalErrorHandlers(window, platform.crash);
-const levelTrackerService = new LevelTracker(platform.analytics);
+const levelTrackerService = new LevelTracker(platform.analytics, Date.now, platform.crash);
 window.addEventListener('pagehide', () => {
   levelTrackerService.leave('app-exit');
   platform.analytics.flush();

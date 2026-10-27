@@ -37,6 +37,16 @@ describe('createSentryCrashDriver', () => {
     expect(integrations([{ name: 'GlobalHandlers' }, { name: 'Dedupe' }]).map((i) => i.name)).toEqual(['Dedupe']);
   });
 
+  test('tag cấu hình được đưa vào initialScope, không có tag thì không thêm initialScope', async () => {
+    const withTags = fakeSentry();
+    await createSentryCrashDriver({ ...CONFIG, tags: { platform: 'android' } }, async () => withTags.sentry).capture(new Error('x'));
+    expect(withTags.options()).toMatchObject({ initialScope: { tags: { platform: 'android' } } });
+
+    const without = fakeSentry();
+    await createSentryCrashDriver(CONFIG, async () => without.sentry).capture(new Error('x'));
+    expect(without.options()).not.toHaveProperty('initialScope');
+  });
+
   test('lệnh gọi trước khi Sentry tải xong chạy sau, đúng thứ tự', async () => {
     const f = fakeSentry();
     let release!: (s: SentryLike) => void;

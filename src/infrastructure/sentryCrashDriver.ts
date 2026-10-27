@@ -5,6 +5,8 @@ export type SentryConfig = {
   dsn: string;
   release: string;
   environment: string;
+  /** Tag gắn vào mọi sự kiện (vd. platform), để lọc trên dashboard Sentry. */
+  tags?: Record<string, string>;
 };
 
 /** Phần của `@sentry/browser` mà game dùng; giữ hẹp để test thay bằng đồ giả. */
@@ -34,6 +36,7 @@ export function createSentryCrashDriver(
       release: config.release,
       environment: config.environment,
       sendDefaultPii: false,
+      ...(config.tags ? { initialScope: { tags: config.tags } } : {}),
       // Lỗi toàn cục đã đi qua `installGlobalErrorHandlers`; tắt cái của Sentry để không báo hai lần.
       integrations: (defaults: { name: string }[]) => defaults.filter((i) => i.name !== 'GlobalHandlers'),
     });

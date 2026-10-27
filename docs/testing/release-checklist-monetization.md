@@ -12,7 +12,7 @@ Status: `N/A` = feature does not exist · `OPEN` = to be handled later by the ow
 | MON-03 | Consent form (UMP) | N/A | No ads or personal-data SDK. Re-open together with MON-01 and COMP-01. |
 | MON-04 | Restore Purchases | N/A | No IAP, no purchase UI (see COMP-03). |
 | MON-05 | Play Billing acknowledge | N/A | No billing library, so no transactions to acknowledge or refund. |
-| MON-06 | Analytics events | **OPEN** | GameAnalytics is integrated for the Android build (progression + design events for level start / complete / abandon); `app_open`, `tutorial_complete`, `level_achieved` still do not exist. Stays open until the on-device check passes. |
+| MON-06 | Analytics events | **OPEN** | GameAnalytics is integrated for the Android build (progression + design events for level start / complete / abandon); `app_open`, `tutorial_complete`, `level_achieved` still do not exist. On-device check passed 2026-10-26 for campaign start, complete and abandon; endless mode not checked yet. |
 
 ## MON-06 detail
 
