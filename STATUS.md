@@ -4,6 +4,7 @@
 > Last updated: 2026-10-24
 
 ## Branches
+- Working on: `feature/placement-feedback-audio` (cut from `release/v1.0.0`): X/N matched counts only pieces on target; off-target drops are quiet (pluck), on-target gets the bell. Uncommitted, 2026-10-28. `fix/release-issues` is pushed and still open (not merged).
 - Last worked on: `fix/intro-fly-in-lag` (gameplay/UI polish; merged into `release/v1.0.0`, 2026-10-24). Before it: `feature/release-checklist-localization` (merged 2026-10-23)
 - Release branch: `release/v1.0.0` · Main: `main` · Development: `dev`
 

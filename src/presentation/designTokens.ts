@@ -400,6 +400,11 @@ export const DEPTH_TOKENS = {
 /** Audio levels and timings (spec G). Cue volumes are multiplied by the bus volume. */
 export const AUDIO_TOKENS = {
   musicVolume: 0.45,
+  /**
+   * Per-track level on top of `musicVolume`. The level track sits well under the effects so the notes a move
+   * makes are the loudest thing in play; menu and map keep full level.
+   */
+  trackLevel: { 'music-stele': 0.5 } as Readonly<Partial<Record<'music-sky' | 'music-stele', number>>>,
   sfxVolume: 0.8,
   maxVoices: 6,
   repeatGapMs: 40,
@@ -412,9 +417,10 @@ export const AUDIO_TOKENS = {
   duck: { level: 0.3, holdMs: 1500, downMs: 200, upMs: 800 },
   overlapDelayMs: 60,
   cues: {
-    lift: 0.35,
+    lift: 0.3,
     snap: 0.8,
-    snapWin: 0.9,
+    place: 0.55,
+    snapWin: 0.5,
     settle: 0.4,
     return: 0.3,
     rotate: 0.4,
@@ -422,7 +428,7 @@ export const AUDIO_TOKENS = {
     rotateBlocked: 0.6,
     overlap: 0.6,
     reset: 0.4,
-    stinger: 0.9,
+    stinger: 0.6,
     uiTap: 0.4,
     uiDialog: 0.35,
     uiNode: 0.5,

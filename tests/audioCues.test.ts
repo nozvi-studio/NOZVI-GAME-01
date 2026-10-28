@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { PuzzleState } from '../src/domain/model.ts';
+import type { Level, PuzzleState } from '../src/domain/model.ts';
 import type { AudioCue } from '../src/infrastructure/sfx.ts';
 import type { AudioServices } from '../src/presentation/audio/audioServices.ts';
 import { SILENT_AUDIO } from '../src/presentation/audio/audioServices.ts';
@@ -10,16 +10,17 @@ import {
   audioCues,
   pitchFor,
   playFeedbackAudio,
+  placeStep,
   playVictoryAudio,
   snappedCount,
 } from '../src/presentation/feedback/audioCues.ts';
 import type { FeedbackEvent } from '../src/presentation/feedback/feedbackEvents.ts';
 
 const C = AUDIO_TOKENS.cues;
-const snap: FeedbackEvent = { type: 'snap', pieceId: 'a', anchorId: 'A' };
+const snap: FeedbackEvent = { type: 'snap', pieceId: 'a', anchorId: 'A', onTarget: true, x: 0, y: 0 };
 const won: FeedbackEvent = { type: 'won' };
-const rateAt = (k: number) => audioCues([snap], { snappedCount: k })[0].rate;
-const one = (event: FeedbackEvent) => audioCues([event], { snappedCount: 1 });
+const rateAt = (k: number) => audioCues([snap], { matchedCount: k })[0].rate;
+const one = (event: FeedbackEvent) => audioCues([event], { matchedCount: 1 });
 
 describe('pitchFor', () => {
   test('major pentatonic around the root', () => {
@@ -51,12 +52,12 @@ describe('snap melody', () => {
   });
 
   test('the winning snap resolves to the octave root', () => {
-    expect(audioCues([snap, won], { snappedCount: 3 })).toEqual([{ key: 'bell', rate: 2, volume: C.snapWin, delayMs: 0 }]);
+    expect(audioCues([snap, won], { matchedCount: 3 })).toEqual([{ key: 'bell', rate: 2, volume: C.snapWin, delayMs: 0 }]);
   });
 
   test('linked rotation (several rotate events in one press) ticks once', () => {
     const events: FeedbackEvent[] = [{ type: 'rotate', pieceId: 'a', turns: 1 }, { type: 'rotate', pieceId: 'b', turns: 2 }];
-    expect(audioCues(events, { snappedCount: 0 })).toEqual([{ key: 'tick', rate: C.rotateRate, volume: C.rotate, delayMs: 0 }]);
+    expect(audioCues(events, { matchedCount: 0 })).toEqual([{ key: 'tick', rate: C.rotateRate, volume: C.rotate, delayMs: 0 }]);
   });
 
   test('snappedCount counts free-placement pieces (placed) as well as anchored ones', () => {
@@ -69,8 +70,29 @@ describe('snap melody', () => {
     expect(snappedCount(state)).toBe(2);
   });
 
+  test('a drop that is not on target is a soft pluck: it never rises and never rings the bell', () => {
+    const off: FeedbackEvent = { type: 'snap', pieceId: 'a', anchorId: null, onTarget: false, x: 16, y: 40 };
+    const cues = [0, 1, 3].map((k) => audioCues([off], { matchedCount: k }));
+    for (const c of cues) expect(c).toEqual([{ key: 'pluck', rate: pitchFor(placeStep(16, 40)), volume: C.place, delayMs: 0 }]);
+  });
+
+  test('the pluck note follows where the piece landed, stays in the pentatonic and leaves the octave to the bell', () => {
+    expect(placeStep(16, 40)).toBe(placeStep(16, 40));
+    const steps = new Set<number>();
+    for (let x = 0; x < 128; x += 8) {
+      for (let y = 0; y < 160; y += 8) {
+        const step = placeStep(x, y);
+        expect(step).toBeGreaterThanOrEqual(0);
+        expect(step).toBeLessThan(PENTATONIC_STEPS.length - 1);
+        steps.add(step);
+      }
+    }
+    expect(steps.size).toBe(PENTATONIC_STEPS.length - 1);
+    expect(placeStep(0, 0)).not.toBe(placeStep(8, 0));
+  });
+
   test('a normal snap is a bell at the snap volume', () => {
-    expect(audioCues([snap], { snappedCount: 3 })).toEqual([{ key: 'bell', rate: pitchFor(2), volume: C.snap, delayMs: 0 }]);
+    expect(audioCues([snap], { matchedCount: 3 })).toEqual([{ key: 'bell', rate: pitchFor(2), volume: C.snap, delayMs: 0 }]);
   });
 });
 
@@ -78,7 +100,7 @@ describe('other events', () => {
   const cue = (key: AudioCue['key'], volume: number, rate = 1, delayMs = 0): AudioCue => ({ key, rate, volume, delayMs });
 
   test.each<[FeedbackEvent, AudioCue[]]>([
-    [{ type: 'lift', pieceId: 'a' }, [cue('tick', C.lift)]],
+    [{ type: 'lift', pieceId: 'a' }, [cue('breath', C.lift)]],
     [{ type: 'settle-temporary', pieceId: 'a' }, [cue('tap-soft', C.settle)]],
     [{ type: 'return', pieceId: 'a' }, [cue('swish', C.return)]],
     [{ type: 'rotate', pieceId: 'a', turns: 1 }, [cue('tick', C.rotate, C.rotateRate)]],
@@ -96,12 +118,12 @@ describe('other events', () => {
       { type: 'return', pieceId: 'a' },
       { type: 'return', pieceId: 'b' },
     ];
-    expect(audioCues(events, { snappedCount: 0 })).toEqual([{ key: 'swish', rate: 1, volume: C.reset, delayMs: 0 }]);
+    expect(audioCues(events, { matchedCount: 0 })).toEqual([{ key: 'swish', rate: 1, volume: C.reset, delayMs: 0 }]);
   });
 
   test('same input, same output', () => {
     const events: FeedbackEvent[] = [snap, { type: 'overlap-hollow', layers: [] }];
-    expect(audioCues(events, { snappedCount: 2 })).toEqual(audioCues(events, { snappedCount: 2 }));
+    expect(audioCues(events, { matchedCount: 2 })).toEqual(audioCues(events, { matchedCount: 2 }));
   });
 });
 
@@ -117,14 +139,22 @@ describe('helpers', () => {
     },
   };
 
+  const piece = (id: string, anchorId: string, x: number) =>
+    ({ id, shapeKind: 'diamond', frameSize: 8, cells: [[0, 0]], anchors: [{ id: anchorId, x, y: 0 }] }) as const;
+  const level = {
+    pieces: [piece('a', 'A', 0), piece('d', 'D', 8)],
+    targetPlacements: [{ pieceId: 'a', x: 0, y: 0, turns: 0 }],
+  } as unknown as Level;
+
   test('snappedCount counts only snapped pieces', () => {
     expect(snappedCount(state)).toBe(2);
   });
 
   test('playFeedbackAudio uses the state after the move', () => {
     const played: AudioCue[][] = [];
-    playFeedbackAudio({ ...SILENT_AUDIO.sfx, play: (cues) => played.push([...cues]) }, [snap], state);
-    expect(played).toEqual([[{ key: 'bell', rate: pitchFor(1), volume: C.snap, delayMs: 0 }]]);
+    playFeedbackAudio({ ...SILENT_AUDIO.sfx, play: (cues) => played.push([...cues]) }, [snap], level, state);
+    // Two pieces rest on the board but only `a` stands on its target, so the melody is at its first step.
+    expect(played).toEqual([[{ key: 'bell', rate: pitchFor(0), volume: C.snap, delayMs: 0 }]]);
   });
 
   test('playVictoryAudio ducks the music and plays the stinger', () => {

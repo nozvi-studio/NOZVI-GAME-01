@@ -1,4 +1,6 @@
-import type { PuzzleState } from '../../domain/model.ts';
+import { GRID_STEP } from '../../domain/freePlacement.ts';
+import type { Level, PuzzleState } from '../../domain/model.ts';
+import { matchedPieceCount } from '../../domain/targetMatch.ts';
 import type { SfxKey } from '../../content/audio/index.ts';
 import type { AudioCue, SfxPort } from '../../infrastructure/sfx.ts';
 import type { AudioServices } from '../audio/audioServices.ts';
@@ -16,9 +18,18 @@ export function pitchFor(step: number): number {
   return 2 ** (PENTATONIC_STEPS[i] / 12);
 }
 
-/** Mảnh đã khớp: hít vào neo, hoặc (màn đặt tự do) đặt vào giao điểm lưới. */
+/** Pieces resting on the board (anchor or grid point), right or not. Not what the match bar counts. */
 export function snappedCount(state: PuzzleState): number {
   return Object.values(state.pieces).filter((p) => p.kind === 'snapped' || p.kind === 'placed').length;
+}
+
+/**
+ * A drop that is not on target plays one of the pentatonic notes below the octave, picked from the grid point it landed
+ * on: the same spot always gives the same note, neighbouring spots differ, and the octave stays the win's alone.
+ */
+export function placeStep(x: number, y: number): number {
+  const cell = Math.floor(x / GRID_STEP) + Math.floor(y / GRID_STEP) * 3;
+  return ((cell % WIN_STEP) + WIN_STEP) % WIN_STEP;
 }
 
 const cue = (key: SfxKey, volume: number, rate = 1, delayMs = 0): AudioCue => ({ key, rate, volume, delayMs });
@@ -31,7 +42,7 @@ export const STINGER_CUE: AudioCue = cue('stinger-win', AUDIO_TOKENS.cues.stinge
  * `reset` swallows the per-piece `return`s, and linked rotation (several `rotate`
  * events in one press) ticks once.
  */
-export function audioCues(events: readonly FeedbackEvent[], ctx: { snappedCount: number }): AudioCue[] {
+export function audioCues(events: readonly FeedbackEvent[], ctx: { matchedCount: number }): AudioCue[] {
   const c = AUDIO_TOKENS.cues;
   const won = events.some((e) => e.type === 'won');
   const reset = events.some((e) => e.type === 'reset');
@@ -40,14 +51,12 @@ export function audioCues(events: readonly FeedbackEvent[], ctx: { snappedCount:
   for (const event of events) {
     switch (event.type) {
       case 'lift':
-        out.push(cue('tick', c.lift));
+        out.push(cue('breath', c.lift));
         break;
       case 'snap':
-        out.push(
-          won
-            ? cue('bell', c.snapWin, pitchFor(WIN_STEP))
-            : cue('bell', c.snap, pitchFor(Math.min(ctx.snappedCount - 1, LAST_NORMAL_STEP)))
-        );
+        if (won) out.push(cue('bell', c.snapWin, pitchFor(WIN_STEP)));
+        else if (event.onTarget) out.push(cue('bell', c.snap, pitchFor(Math.min(ctx.matchedCount - 1, LAST_NORMAL_STEP))));
+        else out.push(cue('pluck', c.place, pitchFor(placeStep(event.x, event.y))));
         break;
       case 'settle-temporary':
         out.push(cue('tap-soft', c.settle));
@@ -79,8 +88,8 @@ export function audioCues(events: readonly FeedbackEvent[], ctx: { snappedCount:
   return out;
 }
 
-export function playFeedbackAudio(sfx: SfxPort, events: readonly FeedbackEvent[], state: PuzzleState): void {
-  sfx.play(audioCues(events, { snappedCount: snappedCount(state) }));
+export function playFeedbackAudio(sfx: SfxPort, events: readonly FeedbackEvent[], level: Level, state: PuzzleState): void {
+  sfx.play(audioCues(events, { matchedCount: matchedPieceCount(level, state) }));
 }
 
 export function playVictoryAudio(audio: AudioServices): void {

@@ -7,7 +7,9 @@
  */
 import type { Patch } from '../../audio-synth/patch.ts';
 import { bell } from './sources/bell.ts';
+import { breath } from './sources/breath.ts';
 import { hollow } from './sources/hollow.ts';
+import { pluck } from './sources/pluck.ts';
 import { shimmer } from './sources/shimmer.ts';
 import { stingerWin } from './sources/stingerWin.ts';
 import { swish } from './sources/swish.ts';
@@ -17,6 +19,8 @@ import { tick } from './sources/tick.ts';
 
 export type SfxKey =
   | 'bell'
+  | 'pluck'
+  | 'breath'
   | 'tick'
   | 'tap-soft'
   | 'thud'
@@ -27,6 +31,8 @@ export type SfxKey =
 
 export const SFX_KEYS: readonly SfxKey[] = [
   'bell',
+  'pluck',
+  'breath',
   'tick',
   'tap-soft',
   'thud',
@@ -40,6 +46,8 @@ export { MUSIC_ROOT_HZ } from './root.ts';
 
 export const SFX_PATCHES: Record<SfxKey, Patch> = {
   bell,
+  pluck,
+  breath,
   tick,
   'tap-soft': tapSoft,
   thud,

@@ -1,6 +1,7 @@
 import type { Level, Piece, PuzzleState, Transition } from '../domain/model.ts';
 import { applyCommand, createPuzzle, placementsOf } from '../domain/session.ts';
 import { evaluate } from '../domain/mask.ts';
+import { matchedPieceCount } from '../domain/targetMatch.ts';
 import type { ProgressRepository, ResultRecord } from './progressPort.ts';
 import type { DragSession, DragUpdate } from './drag.ts';
 import { beginDrag, cancelDrag, finishDrag, updateDrag } from './drag.ts';
@@ -22,13 +23,16 @@ export type DragInfo = {
   x: number;
   y: number;
   snapCandidateId: string | null;
+  /** Dropping here would put the piece on its target (see `isOnTarget`). */
+  onTarget: boolean;
 };
 
 export type PlayViewSnapshot = {
   levelId: string;
   phase: 'playing' | 'won';
   showTarget: boolean;
-  snappedCount: number;
+  /** Pieces standing on their target: what the "X/N matched" bar shows. */
+  matchedCount: number;
   totalPieces: number;
   canRotate: boolean;
   selectedPieceId: string | null;
@@ -77,15 +81,11 @@ export class PlayController {
   }
 
   getSnapshot(): PlayViewSnapshot {
-    const snappedCount = Object.values(this.puzzleState.pieces).filter(
-      (p) => p.kind === 'snapped' || p.kind === 'placed'
-    ).length;
-
     return {
       levelId: this.level.id,
       phase: this.puzzleState.phase,
       showTarget: this.showTarget,
-      snappedCount,
+      matchedCount: matchedPieceCount(this.level, this.puzzleState),
       totalPieces: this.level.pieces.length,
       canRotate: this.level.rotationEnabled && this.selectedPieceId !== null,
       selectedPieceId: this.selectedPieceId,
@@ -192,6 +192,7 @@ export class PlayController {
       x: pointerX - this.dragSession.pointerOffset.x,
       y: pointerY - this.dragSession.pointerOffset.y,
       snapCandidateId: this.dragUpdate.snapCandidateId,
+      onTarget: this.dragUpdate.onTarget,
     };
     return true;
   }
@@ -207,6 +208,7 @@ export class PlayController {
       x: pointerX - this.dragSession.pointerOffset.x,
       y: pointerY - this.dragSession.pointerOffset.y,
       snapCandidateId: this.dragUpdate.snapCandidateId,
+      onTarget: this.dragUpdate.onTarget,
     };
   }
 
@@ -297,7 +299,7 @@ export class PlayController {
         layout,
         { computePreviewMask: false }
       );
-      this.dragInfo = { ...info, snapCandidateId: this.dragUpdate.snapCandidateId };
+      this.dragInfo = { ...info, snapCandidateId: this.dragUpdate.snapCandidateId, onTarget: this.dragUpdate.onTarget };
     }
     return transition;
   }

@@ -26,6 +26,8 @@ const OUT_DIR = resolve(HERE, '../../docs/testing/audio');
 /** Spec G section 3.2. Kept here as well as in the test so the CLI can fail loudly. */
 const LIMIT_MS: Record<SfxKey, number> = {
   bell: 1500,
+  pluck: 1000,
+  breath: 300,
   tick: 150,
   'tap-soft': 300,
   thud: 400,

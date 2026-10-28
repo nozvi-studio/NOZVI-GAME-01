@@ -4,6 +4,21 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Fixed
+- "X/N pieces matched" counted any piece resting on the board. In free placement every drop snaps to a grid point, so a random drop read as a match (bar, ring, rising bell). It now counts only pieces on their sample-solution placement (`domain/targetMatch.ts`: `isOnTarget`, `matchedPieceCount`; identical pieces may swap, a won level counts all). `PlayViewSnapshot.snappedCount` is now `matchedCount`.
+- The "Release to snap" label and the magnet ring show only when the dragged piece is on its target (`DragUpdate.onTarget`, `DragInfo.onTarget`).
+
+### Changed
+- Feedback: a `snap` event carries `onTarget`, `x`, `y`. Off target the piece just glides in (no bounce, light, ring or counter pop). Audio: off target plays a soft `pluck` whose pentatonic note comes from the landing point (`placeStep`); the bell, rising with the matched count, is kept for a piece on its target. Lifting a piece plays the new `breath` instead of `tick`.
+
+### Changed (audio mix)
+- Level music (`music-stele`) plays at half level (`AUDIO_TOKENS.trackLevel`, new optional `MusicOptions.trackLevel`) so the move sounds stand out; menu and map music are unchanged.
+- Victory sound was shrill: `stinger-win` now lives around the root (293 to 587 Hz) with soft FM, a 30 ms attack, a lowpass and slower entries, peak 0.5; cue volumes `stinger` 0.9 to 0.6 and `snapWin` 0.9 to 0.5.
+- `pluck` gained a detuned twin and an inharmonic partial so it sounds struck, not synthesised.
+
+### Added
+- Sounds `pluck` (kalimba-like, one per landing spot) and `breath` (airy lift) in `content/audio/sources/`; cue volume `AUDIO_TOKENS.cues.place`.
+
 ### Added
 - `PlatformServices` seam (`application/platformPort.ts`, `infrastructure/platformServices.ts`): `CrashReporterPort` and `AnalyticsPort` with no-op defaults; driver errors are swallowed so an external SDK (Sentry, CrazyGames, Firebase) can never break the game. `main.ts` routes `error` / `unhandledrejection` through it (still logged to console).
 - `docs/testing/release-checklist-gameplay.md`: GAME-01..04 findings and device test plan.

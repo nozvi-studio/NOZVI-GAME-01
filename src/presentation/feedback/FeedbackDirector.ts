@@ -18,7 +18,7 @@ import { planVictoryDust, VictoryDust } from './victoryDust.ts';
 import type { Poseable } from '../transitions/choreography.ts';
 import type { HapticsPort } from '../../infrastructure/haptics.ts';
 import { type FeedbackEvent } from './feedbackEvents.ts';
-import { snappedCount } from './audioCues.ts';
+import { matchedPieceCount } from '../../domain/targetMatch.ts';
 import { HAPTIC_CUES, playCue } from './hapticCues.ts';
 import { perimeterSegment } from './parityDiff.ts';
 import { victoryPlan, type VictoryPlan } from './victorySequence.ts';
@@ -65,7 +65,7 @@ export class FeedbackDirector {
   }
 
   handle(events: readonly FeedbackEvent[]): void {
-    playFeedbackAudio(this.deps.audio.sfx, events, this.deps.getState());
+    playFeedbackAudio(this.deps.audio.sfx, events, this.deps.level, this.deps.getState());
     for (const event of events) {
       playCue(this.deps.haptics, HAPTIC_CUES[event.type]);
       this.visual(event);
@@ -126,12 +126,13 @@ export class FeedbackDirector {
         view.dropLiftNow();
         view.glideTo(board.targetPoseFor(piece, state, level.pieces.indexOf(piece)), scaleTiming(F.snapMs), 'cubicOut');
         if (reduced) return;
+        // Landing on the grid is quiet. Only a piece on its target gets the bounce, the light, the ring and the counter pop.
+        if (!event.onTarget) return;
         view.play('bounce', F.bounceMs);
         view.play('light', 320, 0.85);
         const target = board.targetPoseFor(piece, state, 0);
         this.snapRing(target, pieceRadiusPx(piece.frameSize, this.deps.layout));
-        const snapped = snappedCount(this.deps.getState());
-        this.deps.hud.popCounterIcon(snapped - 1);
+        this.deps.hud.popCounterIcon(matchedPieceCount(level, this.deps.getState()) - 1);
         return;
       }
       case 'settle-temporary':

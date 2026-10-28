@@ -449,7 +449,7 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
 
   private snapHintTarget(snapshot: PlayViewSnapshot): { x: number; y: number } | null {
     const drag = snapshot.dragInfo;
-    if (!this.snapAssist.dropLabel || !drag || drag.snapCandidateId === null) return null;
+    if (!this.snapAssist.dropLabel || !drag || !drag.onTarget) return null;
     const piece = this.level.pieces.find((p) => p.id === drag.pieceId);
     const radius = piece ? pieceRadiusPx(piece.frameSize, this.layout) : 120;
     return { x: drag.x + radius * 0.8, y: drag.y + radius * 0.5 };

@@ -13,6 +13,7 @@ import { freeSnapOrigin } from '../domain/freePlacement.ts';
 import { evaluate } from '../domain/mask.ts';
 import { occupiedAnchorCoords } from '../domain/pieceEquivalence.ts';
 import { applyCommand, placementsOf } from '../domain/session.ts';
+import { isOnTarget } from '../domain/targetMatch.ts';
 import type { LayoutMetrics } from '../presentation/board/layout.ts';
 import {
   canvasToGrid,
@@ -36,6 +37,8 @@ export type DragUpdate = {
   previewPlacement: Placement | null;
   previewMask: Uint8Array;
   snapCandidateId: string | null;
+  /** The preview sits exactly where a sample solution puts this piece; a grid snap alone does not count. */
+  onTarget: boolean;
 };
 
 export type UpdateDragOptions = {
@@ -152,6 +155,7 @@ export function updateDrag(
       previewPlacement: null,
       previewMask: evaluate(level, committedPlacements),
       snapCandidateId: null,
+      onTarget: false,
     };
   }
 
@@ -184,12 +188,13 @@ export function updateDrag(
   }
 
   const snapCandidateId = target ? target.candidateId : null;
+  const onTarget = previewPlacement !== null && isOnTarget(level, previewPlacement);
   if (options.computePreviewMask === false) {
-    return { previewPlacement, previewMask: EMPTY_PREVIEW_MASK, snapCandidateId };
+    return { previewPlacement, previewMask: EMPTY_PREVIEW_MASK, snapCandidateId, onTarget };
   }
   const previous = options.previous ?? null;
   if (previous && previous.previewMask.length > 0 && samePlacement(previous.previewPlacement, previewPlacement)) {
-    return { previewPlacement, previewMask: previous.previewMask, snapCandidateId };
+    return { previewPlacement, previewMask: previous.previewMask, snapCandidateId, onTarget };
   }
 
   // Tập hợp placement ngoại trừ piece đang drag
@@ -207,7 +212,7 @@ export function updateDrag(
     previewMask = evaluate(level, otherPlacements);
   }
 
-  return { previewPlacement, previewMask, snapCandidateId };
+  return { previewPlacement, previewMask, snapCandidateId, onTarget };
 }
 
 export function finishDrag(

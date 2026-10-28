@@ -10,6 +10,8 @@ const SR = 44100;
 /** The sound brief in spec G section 3.2, as a check rather than a promise. */
 const LIMIT_MS: Record<SfxKey, { min?: number; max: number }> = {
   bell: { max: 1500 },
+  pluck: { max: 1000 },
+  breath: { max: 300 },
   tick: { max: 150 },
   'tap-soft': { max: 300 },
   thud: { max: 400 },
@@ -22,7 +24,7 @@ const LIMIT_MS: Record<SfxKey, { min?: number; max: number }> = {
 describe('Mirror sfx patches', () => {
   test('one patch per key, no extras', () => {
     expect(Object.keys(SFX_PATCHES).sort()).toEqual([...SFX_KEYS].sort());
-    expect(SFX_KEYS).toHaveLength(8);
+    expect(SFX_KEYS).toHaveLength(10);
   });
 
   test('every patch is valid', () => {
@@ -82,7 +84,8 @@ describe('Mirror sfx patches', () => {
     expect([...starts].sort((a, b) => a - b)).toEqual(starts);
     const last = stinger.layers[stinger.layers.length - 1].source;
     if (last.kind !== 'fm') throw new Error('the stinger voices are fm');
-    // The final voice is the octave above the root.
-    expect(last.carrierHz / MUSIC_ROOT_HZ).toBeCloseTo(4, 2);
+    // The final voice is the octave above the root, in the warm register around it (no shrill top).
+    expect(last.carrierHz / MUSIC_ROOT_HZ).toBeCloseTo(2, 2);
+    for (const layer of stinger.layers) expect(layer.filter?.kind).toBe('lowpass');
   });
 });

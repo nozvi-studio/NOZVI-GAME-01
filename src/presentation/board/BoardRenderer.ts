@@ -602,7 +602,7 @@ export class BoardRenderer {
   private syncMagnetRing(snapshot: PlayViewSnapshot, pieces: Readonly<Record<string, PieceState>>): void {
     this.magnetRingGraphics.clear();
     const drag = snapshot.dragInfo;
-    if (!this.assist.ring || !drag || !drag.snapCandidateId) return;
+    if (!this.assist.ring || !drag || !drag.snapCandidateId || !drag.onTarget) return;
     const piece = this.level.pieces.find((p) => p.id === drag.pieceId);
     if (!piece) return;
     const turns = (pieces[piece.id] ?? { turns: 0 }).turns;
