@@ -4,8 +4,8 @@
 > Last updated: 2026-10-28
 
 ## Branches
-- Working on: `feature/placement-feedback-audio` (cut from `release/v1.0.0`): X/N matched counts only pieces on target (done, approved); the off-target pluck / breath, softer victory stinger and half-level gameplay music are drafts still being tuned by ear. Committed locally, 2026-10-28.
-- Last worked on: `fix/release-issues` (no Sentry/GA; 10% tighter star time, 3-star hint in tutorial 1-1, Sound switch in Pause; merged into local `release/v1.0.0`, 2026-10-28; not pushed there yet). Before it: `fix/intro-fly-in-lag` (merged 2026-10-24). Before it: `feature/release-checklist-localization` (merged 2026-10-23)
+- Last worked on: `feature/placement-feedback-audio` (X/N matched counts only pieces on target; kalimba piece sounds with a note per piece and a slow victory run; level music at half level; music no longer ducks with effects off; double-tap sound fix; merged into local `release/v1.0.0`, 2026-10-28, not pushed). Audio values are tuned by ear and may still move (`designTokens.ts`, Audio Lab).
+- Before it: `fix/release-issues` (no Sentry/GA; 10% tighter star time, 3-star hint in tutorial 1-1, Sound switch in Pause; pushed with `release/v1.0.0`, 2026-10-28). Before it: `fix/intro-fly-in-lag` (merged 2026-10-24). Before it: `feature/release-checklist-localization` (merged 2026-10-23)
 - Release branch: `release/v1.0.0` · Main: `main` · Development: `dev`
 
 ## Version

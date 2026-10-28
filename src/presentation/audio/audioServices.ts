@@ -10,7 +10,7 @@ export const AUDIO_REGISTRY_KEY = 'audio';
 /** Used before main.ts has registered audio (harness, FixtureScene) — every call is a no-op. */
 export const SILENT_AUDIO: AudioServices = {
   music: { setTrack() {}, duck() {}, pause() {}, resume() {}, setEnabled() {} },
-  sfx: { play() {}, setEnabled() {} },
+  sfx: { play() {}, setEnabled() {}, isEnabled: () => false },
 };
 
 export function audioServices(scene: Phaser.Scene): AudioServices {

@@ -385,7 +385,16 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
       const turnedByHold = this.holdRotate.end();
       const pieceId = this.controller.getSnapshot().dragInfo?.pieceId ?? null;
       const prev = this.controller.getPuzzleState();
-      this.commit(prev, this.controller.onPointerUp(pointer.worldX, pointer.worldY, layout), { command: 'move', pieceId });
+      // The second tap of a double tap is about to turn the piece, and the turn has its own sound; the drop
+      // under it would sound at the same instant, so it stays quiet.
+      const press = this.pressStart;
+      const turnsNext =
+        !turnedByHold &&
+        press !== null &&
+        this.level.rotationEnabled &&
+        this.doubleTap.wouldComplete(press.pieceId, press, { x: pointer.worldX, y: pointer.worldY }, this.time.now) &&
+        this.tutorialAllows({ type: 'rotate-gesture' }, false);
+      this.commit(prev, this.controller.onPointerUp(pointer.worldX, pointer.worldY, layout), { command: 'move', pieceId }, turnsNext);
       this.returnWrongDrop(pieceId);
       if (turnedByHold) {
         // The hold already turned the piece: this release is a drop, not a tap.
@@ -505,7 +514,7 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
   }
 
   /** Áp kết quả một lệnh: phát phản hồi rồi cập nhật HUD */
-  private commit(prev: PuzzleState, transition: Transition | null, subject: FeedbackSubject): void {
+  private commit(prev: PuzzleState, transition: Transition | null, subject: FeedbackSubject, silent = false): void {
     if (!transition) return;
     if (transition.becameWon) {
       const result = this.controller.getResult();
@@ -515,7 +524,7 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
         saveEndlessLevelNumber(this.endlessChapter, this.endlessLevel + 1);
       }
     }
-    this.feedback.handle(feedbackEvents(prev, transition, this.level, subject));
+    this.feedback.handle(feedbackEvents(prev, transition, this.level, subject), { silent });
     this.refreshView();
     this.syncHint();
   }

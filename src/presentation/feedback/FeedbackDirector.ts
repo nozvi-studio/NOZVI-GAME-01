@@ -64,8 +64,9 @@ export class FeedbackDirector {
     this.deps = deps;
   }
 
-  handle(events: readonly FeedbackEvent[]): void {
-    playFeedbackAudio(this.deps.audio.sfx, events, this.deps.level, this.deps.getState());
+  /** `silent` skips the sound only (haptics and visuals still run): the caller has a better sound for this moment. */
+  handle(events: readonly FeedbackEvent[], opts: { silent?: boolean } = {}): void {
+    if (!opts.silent) playFeedbackAudio(this.deps.audio.sfx, events, this.deps.level);
     for (const event of events) {
       playCue(this.deps.haptics, HAPTIC_CUES[event.type]);
       this.visual(event);
@@ -313,7 +314,7 @@ export class FeedbackDirector {
 
     tl.call(plan.burstAtMs, () => {
       this.deps.haptics.notify('success');
-      playVictoryAudio(this.deps.audio);
+      playVictoryAudio(this.deps.audio, level);
       if (plan.cameraFlash) scene.cameras.main.flash(VICTORY_TOKENS.flashMs, 249, 199, 79, false);
     });
     if (plan.rings || plan.particles > 0) this.burst(tl, plan);

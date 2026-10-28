@@ -10,8 +10,8 @@ const SR = 44100;
 /** The sound brief in spec G section 3.2, as a check rather than a promise. */
 const LIMIT_MS: Record<SfxKey, { min?: number; max: number }> = {
   bell: { max: 1500 },
-  pluck: { max: 1000 },
-  breath: { max: 300 },
+  kalimba: { max: 1000 },
+  'kalimba-ring': { max: 3700 },
   tick: { max: 150 },
   'tap-soft': { max: 300 },
   thud: { max: 400 },

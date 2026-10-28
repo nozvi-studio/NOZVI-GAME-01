@@ -6,20 +6,22 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ### Fixed
 - "X/N pieces matched" counted any piece resting on the board. In free placement every drop snaps to a grid point, so a random drop read as a match (bar, ring, rising bell). It now counts only pieces on their sample-solution placement (`domain/targetMatch.ts`: `isOnTarget`, `matchedPieceCount`; identical pieces may swap, a won level counts all). `PlayViewSnapshot.snappedCount` is now `matchedCount`.
+- With Sound Effects off, the level music no longer ducks when a level is won: `playVictoryAudio` ducks only if `SfxPort.isEnabled()` (new; false when the setting is off or there is no driver).
+- Double tap on a piece (rotation levels): the drop under the second tap no longer sounds together with the turn; only the turn's sound plays (`DoubleTap.wouldComplete`, `FeedbackDirector.handle(..., { silent })`).
 - The "Release to snap" label and the magnet ring show only when the dragged piece is on its target (`DragUpdate.onTarget`, `DragInfo.onTarget`).
 
 ### Changed
-- Feedback: a `snap` event carries `onTarget`, `x`, `y`. Off target the piece just glides in (no bounce, light, ring or counter pop). Audio: off target plays a soft `pluck` whose pentatonic note comes from the landing point (`placeStep`); the bell, rising with the matched count, is kept for a piece on its target. Lifting a piece plays the new `breath` instead of `tick`.
+- Feedback: a `snap` event carries `onTarget`, `x`, `y`. Off target the piece just glides in (no bounce, light, ring or counter pop).
 - Star rating: `THREE_STAR_PAR_RATIO` 1.25 to 1.125, so every level's time budget and star windows are 10% tighter (no level data touched; `parMs` unchanged).
 - Star rating: on top of the 10% above, levels with up to 3 pieces are tightened another 10% and levels with 4+ pieces another 5% (`threeStarRatio(pieceCount)`; `timeBudget` and `parInfo` now take the piece count).
 
-### Changed (audio mix)
+### Changed (audio)
+- Piece sounds are one instrument, a kalimba, and each piece has its own note (`PIECE_NOTES`, a D major triad then up; `pieceSemitones`). Lift: a light touch of the note. Set down short of the target (or dropped without snapping): the same note, short. On target: the note rings (`kalimba-ring`) and a soft echo of it follows, two notes in all. Handed back to the tray: the note an octave down. Victory (`victoryCues`): the level's piece notes run up, then the root chord (root, fifth, octave) rolls out. This replaces the bell that rose with the match count, the separate `stinger-win` in play (the patch stays for the Audio Lab and `bell` for UI cues) and the `tick` on lift.
 - Level music (`music-stele`) plays at half level (`AUDIO_TOKENS.trackLevel`, new optional `MusicOptions.trackLevel`) so the move sounds stand out; menu and map music are unchanged.
-- Victory sound was shrill: `stinger-win` now lives around the root (293 to 587 Hz) with soft FM, a 30 ms attack, a lowpass and slower entries, peak 0.5; cue volumes `stinger` 0.9 to 0.6 and `snapWin` 0.9 to 0.5.
-- `pluck` gained a detuned twin and an inharmonic partial so it sounds struck, not synthesised.
+- `AUDIO_TOKENS.maxVoices` 6 to 12: ringing notes and the victory run overlap.
 
 ### Added
-- Sounds `pluck` (kalimba-like, one per landing spot) and `breath` (airy lift) in `content/audio/sources/`; cue volume `AUDIO_TOKENS.cues.place`.
+- Sounds `kalimba` (short) and `kalimba-ring` (about 3.5 s) in `content/audio/sources/`; cue tokens `place`, `victoryNote`, `victoryEnd`, `victoryStepMs`, `victoryChordGapMs`, `echo`, `echoDelayMs`.
 - Pause dialog: Background Music and Sound Effects switches under the title (same settings as the Settings dialog); Resume stands alone and Restart / Level Select share one row. The Language picker is also in Pause (`onLanguageChange`). Hidden when `audio` is not passed.
 - Tutorial 1-1: a new first step (now 3 steps) that spotlights the time bar and stars with a pulsing frame; tap the card to continue. The clock starts on the first press, so reading it costs no time. New keys `tutorial_time_title/body/chip` in all ten locales; `tutorial_drag_body` is back to its original text.
 - `PlatformServices` seam (`application/platformPort.ts`, `infrastructure/platformServices.ts`): `CrashReporterPort` and `AnalyticsPort` with no-op defaults; driver errors are swallowed so an external SDK (Sentry, CrazyGames, Firebase) can never break the game. `main.ts` routes `error` / `unhandledrejection` through it (still logged to console).
