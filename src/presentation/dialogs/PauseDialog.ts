@@ -1,14 +1,28 @@
 import Phaser from 'phaser';
 import { COLOR_NUMBERS, COLOR_TOKENS, TYPO_TOKENS } from '../designTokens.ts';
 import { designViewBounds } from '../designViewport.ts';
-import { t } from '../i18n.ts';
+import { getLocale, t } from '../i18n.ts';
 import { playUiCue } from '../audio/uiCues.ts';
+import { LOCALE_REGISTRY } from '../../localization/localizationConfig.ts';
+import type { SupportedLocale } from '../../localization/types.ts';
 import { createDialogPanelInput } from './dialogInput.ts';
+import { LanguageSelectDialog } from './LanguageSelectDialog.ts';
 
 export type PauseCallbacks = {
   onResume: () => void;
   onRestart: () => void;
   onLevelSelect: () => void;
+  /** Music and effects switches under the title; both rows are hidden when omitted. */
+  audio?: PauseAudio;
+  /** Shows the language row first; called after the player picks a language. */
+  onLanguageChange?: () => void;
+};
+
+export type PauseAudio = {
+  isMusicOn: () => boolean;
+  isSfxOn: () => boolean;
+  setMusic: (on: boolean) => void;
+  setSfx: (on: boolean) => void;
 };
 
 export class PauseDialog {
@@ -35,7 +49,11 @@ export class PauseDialog {
 
     // 2. Astrological card panel, with room for full-width touch targets.
     const modalW = 600;
-    const modalH = 480;
+    // Language and the two switches sit in rows between the title and the buttons.
+    const ROW_H = 72;
+    const rows = (this.callbacks.onLanguageChange ? 1 : 0) + (this.callbacks.audio ? 2 : 0);
+    const audioH = rows ? 22 + rows * ROW_H : 0;
+    const modalH = 330 + audioH;
     const panel = this.scene.add.graphics();
     const panelInput = createDialogPanelInput(this.scene, backdrop, modalW, modalH, () => this.close());
 
@@ -68,7 +86,7 @@ export class PauseDialog {
     const btnW = 500;
 
     // A. Nút 1: Tiếp tục chơi (Khối vàng hổ phách 3D tactile)
-    const btn1Y = -62;
+    const btn1Y = -modalH / 2 + 128 + audioH;
     const btn1H = 88;
     const btn1Container = this.scene.add.container(0, btn1Y);
 
@@ -137,35 +155,40 @@ export class PauseDialog {
 
     btn1Container.add([btn1Shadow, btn1Face, playIcon, btn1Text, btn1Zone]);
 
+    // Restart and level select share one row under Resume.
+    const rowGap = 12;
+    const halfW = (btnW - rowGap) / 2;
     // B. Nút 2: Chơi lại màn này (Khối kính băng lam ngọc 3D)
-    const btn2Y = 50;
+    const btn2Y = btn1Y + 112;
     const btn2H = 88;
-    const btn2Container = this.scene.add.container(0, btn2Y);
+    const btn2Container = this.scene.add.container(-halfW / 2 - rowGap / 2, btn2Y);
 
     const btn2Shadow = this.scene.add.graphics();
     btn2Shadow.fillStyle(0x0e1438, 1.0);
-    btn2Shadow.fillRoundedRect(-btnW / 2, -btn2H / 2 + 4, btnW, btn2H, 18);
+    btn2Shadow.fillRoundedRect(-halfW / 2, -btn2H / 2 + 4, halfW, btn2H, 18);
 
     const btn2Face = this.scene.add.graphics();
     btn2Face.fillStyle(COLOR_NUMBERS.boardSurfaceTop, 0.92);
-    btn2Face.fillRoundedRect(-btnW / 2, -btn2H / 2, btnW, btn2H - 2, 18);
+    btn2Face.fillRoundedRect(-halfW / 2, -btn2H / 2, halfW, btn2H - 2, 18);
     btn2Face.fillStyle(0xffffff, 0.14);
-    btn2Face.fillRoundedRect(-btnW / 2 + 10, -btn2H / 2 + 3, btnW - 20, 10, 5);
+    btn2Face.fillRoundedRect(-halfW / 2 + 10, -btn2H / 2 + 3, halfW - 20, 10, 5);
     btn2Face.lineStyle(2.0, COLOR_NUMBERS.icePrimary, 0.95);
-    btn2Face.strokeRoundedRect(-btnW / 2, -btn2H / 2, btnW, btn2H - 2, 18);
+    btn2Face.strokeRoundedRect(-halfW / 2, -btn2H / 2, halfW, btn2H - 2, 18);
 
     const btn2Text = this.scene.add
       .text(0, -1, t('pause_restart'), {
         fontFamily: TYPO_TOKENS.fontFamily.display,
-        fontSize: '26px',
+        fontSize: '24px',
         color: '#FFFFFF',
         stroke: '#141C48',
         strokeThickness: 2,
+        align: 'center',
+        wordWrap: { width: halfW - 36, useAdvancedWrap: true },
       })
       .setOrigin(0.5);
 
     const btn2Zone = this.scene.add
-      .zone(0, 0, btnW, btn2H)
+      .zone(0, 0, halfW, btn2H)
       .setInteractive({ useHandCursor: true });
 
     btn2Zone.on('pointerdown', () => {
@@ -197,26 +220,28 @@ export class PauseDialog {
     btn2Container.add([btn2Shadow, btn2Face, btn2Text, btn2Zone]);
 
     // C. Nút 3: Về chọn màn (Khối kính tím mờ trang nhã)
-    const btn3Y = 162;
+    const btn3Y = btn2Y;
     const btn3H = 88;
-    const btn3Container = this.scene.add.container(0, btn3Y);
+    const btn3Container = this.scene.add.container(halfW / 2 + rowGap / 2, btn3Y);
 
     const btn3Face = this.scene.add.graphics();
     btn3Face.fillStyle(0x161e44, 0.85);
-    btn3Face.fillRoundedRect(-btnW / 2, -btn3H / 2, btnW, btn3H, 16);
+    btn3Face.fillRoundedRect(-halfW / 2, -btn3H / 2, halfW, btn3H, 16);
     btn3Face.lineStyle(2.5, COLOR_NUMBERS.icePrimary, 0.95);
-    btn3Face.strokeRoundedRect(-btnW / 2, -btn3H / 2, btnW, btn3H, 16);
+    btn3Face.strokeRoundedRect(-halfW / 2, -btn3H / 2, halfW, btn3H, 16);
 
     const btn3Text = this.scene.add
       .text(0, 0, t('pause_level_select'), {
         fontFamily: TYPO_TOKENS.fontFamily.display,
-        fontSize: '26px',
+        fontSize: '24px',
         color: COLOR_TOKENS.text.primary,
+        align: 'center',
+        wordWrap: { width: halfW - 36, useAdvancedWrap: true },
       })
       .setOrigin(0.5);
 
     const btn3Zone = this.scene.add
-      .zone(0, 0, btnW, btn3H)
+      .zone(0, 0, halfW, btn3H)
       .setInteractive({ useHandCursor: true });
 
     btn3Zone.on('pointerdown', () => {
@@ -248,6 +273,116 @@ export class PauseDialog {
     btn3Container.add([btn3Face, btn3Text, btn3Zone]);
 
     this.container.add([backdrop, panel, panelInput, title, btn1Container, btn2Container, btn3Container]);
+    let rowY = -modalH / 2 + 58 + ROW_H;
+    if (this.callbacks.onLanguageChange) {
+      this.addLanguageRow(rowY);
+      rowY += ROW_H;
+    }
+    const audio = this.callbacks.audio;
+    if (audio) {
+      this.addToggleRow(rowY, t('setting_music'), audio.isMusicOn(), audio.setMusic);
+      this.addToggleRow(rowY + ROW_H, t('setting_sfx'), audio.isSfxOn(), audio.setSfx);
+    }
+  }
+
+  /** Label on the left and the current language on the right; tapping opens the picker. */
+  private addLanguageRow(y: number): void {
+    if (!this.container) return;
+    const meta = LOCALE_REGISTRY[getLocale() as SupportedLocale] ?? LOCALE_REGISTRY['en-US'];
+    const label = this.scene.add
+      .text(-230, y, t('setting_language'), {
+        fontFamily: TYPO_TOKENS.fontFamily.display,
+        fontSize: '26px',
+        color: COLOR_TOKENS.text.primary,
+      })
+      .setOrigin(0, 0.5);
+    const btnW = 270;
+    const btnH = 52;
+    const btnX = 115;
+    const bg = this.scene.add.graphics();
+    bg.fillStyle(0x0e153b, 1.0);
+    bg.fillRoundedRect(btnX - btnW / 2, y - btnH / 2, btnW, btnH, 16);
+    bg.lineStyle(1.5, 0x3b4a82, 0.85);
+    bg.strokeRoundedRect(btnX - btnW / 2, y - btnH / 2, btnW, btnH, 16);
+    const flag = this.scene.add.text(btnX - btnW / 2 + 26, y, meta.flagEmoji, { fontSize: '24px' }).setOrigin(0.5);
+    const name = this.scene.add
+      .text(btnX - btnW / 2 + 54, y, meta.nativeName, {
+        fontFamily: TYPO_TOKENS.fontFamily.display,
+        fontSize: '20px',
+        color: '#FFD54F',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0, 0.5);
+    const chevron = this.scene.add
+      .text(btnX + btnW / 2 - 24, y, '›', {
+        fontFamily: TYPO_TOKENS.fontFamily.display,
+        fontSize: '28px',
+        color: '#7A89B8',
+      })
+      .setOrigin(0.5);
+    const hit = this.scene.add.zone(btnX, y, btnW, 64).setInteractive({ useHandCursor: true });
+    hit.on('pointerdown', () => {
+      playUiCue(this.scene, 'tap');
+      new LanguageSelectDialog(this.scene, () => {
+        // Rebuild so this dialog's own labels switch language too.
+        this.close();
+        this.open();
+        this.callbacks.onLanguageChange?.();
+      }).open();
+    });
+    this.container.add([label, bg, flag, name, chevron, hit]);
+  }
+
+  /** Label on the left and a switch on the right, like the rows in Settings. */
+  private addToggleRow(y: number, labelText: string, initial: boolean, onChange: (on: boolean) => void): void {
+    if (!this.container) return;
+    let on = initial;
+    const label = this.scene.add
+      .text(-230, y, labelText, {
+        fontFamily: TYPO_TOKENS.fontFamily.display,
+        fontSize: '26px',
+        color: COLOR_TOKENS.text.primary,
+      })
+      .setOrigin(0, 0.5);
+    const trackW = 76;
+    const trackH = 42;
+    const switchX = 212;
+    const track = this.scene.add.graphics();
+    const thumb = this.scene.add.graphics();
+    const draw = () => {
+      track.clear();
+      thumb.clear();
+      if (on) {
+        track.fillStyle(0xffa800, 1.0);
+        track.fillRoundedRect(switchX - trackW / 2, y - trackH / 2, trackW, trackH, 16);
+        track.fillStyle(0xffd54f, 0.95);
+        track.fillRoundedRect(switchX - trackW / 2 + 2, y - trackH / 2 + 2, trackW - 4, trackH * 0.55, 14);
+        track.lineStyle(2.0, 0x3b2779, 1.0);
+        track.strokeRoundedRect(switchX - trackW / 2, y - trackH / 2, trackW, trackH, 16);
+        thumb.fillStyle(0x22145a, 1.0);
+        thumb.fillCircle(switchX + 17, y, 16);
+        thumb.fillStyle(0xffffff, 0.75);
+        thumb.fillCircle(switchX + 13, y - 4, 4);
+      } else {
+        track.fillStyle(0x0e153b, 1.0);
+        track.fillRoundedRect(switchX - trackW / 2, y - trackH / 2, trackW, trackH, 16);
+        track.lineStyle(1.8, 0x3b4a82, 0.85);
+        track.strokeRoundedRect(switchX - trackW / 2, y - trackH / 2, trackW, trackH, 16);
+        thumb.fillStyle(0x6d7ca8, 1.0);
+        thumb.fillCircle(switchX - 17, y, 16);
+        thumb.fillStyle(0xffffff, 0.5);
+        thumb.fillCircle(switchX - 21, y - 4, 4);
+      }
+    };
+    draw();
+    const hit = this.scene.add.zone(0, y, 520, 64).setInteractive({ useHandCursor: true });
+    hit.on('pointerdown', () => {
+      on = !on;
+      draw();
+      onChange(on);
+      playUiCue(this.scene, 'tap');
+    });
+    this.container.add([label, track, thumb, hit]);
   }
 
   public close(): void {

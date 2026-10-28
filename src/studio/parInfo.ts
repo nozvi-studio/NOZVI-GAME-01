@@ -7,8 +7,8 @@ export type ParInfo = {
   starWindowsMs: readonly [number, number, number];
 };
 
-export function parInfo(parMs: number): ParInfo {
-  const budgetMs = timeBudget(parMs);
+export function parInfo(parMs: number, pieceCount: number): ParInfo {
+  const budgetMs = timeBudget(parMs, pieceCount);
   const window = (percent: number) => (budgetMs * percent) / 100;
   return {
     parMs,

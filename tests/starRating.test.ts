@@ -4,6 +4,7 @@ import {
   STAR_PERCENTS,
   starsFor,
   THREE_STAR_PAR_RATIO,
+  threeStarRatio,
   timeBudget,
 } from '../src/domain/starRating.ts';
 
@@ -18,19 +19,30 @@ describe('parFromSolution', () => {
 });
 
 describe('timeBudget', () => {
-  test('3-star window is par x THREE_STAR_PAR_RATIO', () => {
-    expect(timeBudget(4000)).toBe(33_333);
-    expect(timeBudget(16_000)).toBe(133_333);
+  test('3-star window is par x the ratio for the piece count', () => {
+    expect(timeBudget(4000, 4)).toBe(28_500);
+    expect(timeBudget(16_000, 4)).toBe(114_000);
+    expect(timeBudget(4000, 2)).toBe(27_000);
+  });
+  test('levels up to 3 pieces are tightened by 10 %, bigger ones by 5 %, on top of the base ratio', () => {
+    expect(threeStarRatio(1)).toBeCloseTo(THREE_STAR_PAR_RATIO * 0.9, 10);
+    expect(threeStarRatio(3)).toBeCloseTo(THREE_STAR_PAR_RATIO * 0.9, 10);
+    expect(threeStarRatio(4)).toBeCloseTo(THREE_STAR_PAR_RATIO * 0.95, 10);
+    expect(threeStarRatio(8)).toBeCloseTo(THREE_STAR_PAR_RATIO * 0.95, 10);
   });
   test('the 3-star window grows with par instead of hitting a ceiling', () => {
-    const window3 = (par: number) => (timeBudget(par) * STAR_PERCENTS[0]) / 100;
-    expect(window3(9000)).toBeCloseTo(9000 * THREE_STAR_PAR_RATIO, -1);
-    expect(window3(22_000)).toBeCloseTo(22_000 * THREE_STAR_PAR_RATIO, -1);
+    const window3 = (par: number) => (timeBudget(par, 4) * STAR_PERCENTS[0]) / 100;
+    expect(window3(9000)).toBeCloseTo(9000 * threeStarRatio(4), -1);
+    expect(window3(22_000)).toBeCloseTo(22_000 * threeStarRatio(4), -1);
     expect(window3(22_000)).toBeGreaterThan(window3(9000));
   });
   test('a solver at par earns 3 stars on a 4-piece level', () => {
     const par = parFromSolution([{ turns: 0 }, { turns: 0 }, { turns: 0 }, { turns: 0 }]);
-    expect(starsFor(par, timeBudget(par))).toBe(3);
+    expect(starsFor(par, timeBudget(par, 4))).toBe(3);
+  });
+  test('a solver at par earns 3 stars on a 2-piece level', () => {
+    const par = parFromSolution([{ turns: 0 }, { turns: 0 }]);
+    expect(starsFor(par, timeBudget(par, 2))).toBe(3);
   });
 });
 

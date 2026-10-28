@@ -116,48 +116,67 @@ describe('createTutorial', () => {
   });
 });
 
-describe('TutorialController, level 1-1 (drag twice)', () => {
+describe('TutorialController, level 1-1 (time, then drag twice)', () => {
   const make = () => {
     const storage = memoryStorage();
     const store = createTutorialSeenStore(storage);
     const controller = createTutorial({ levelId: '1-1', mode: 'campaign', pieceIds: ['D1', 'D2'], store })!;
     return { controller, store, storage };
   };
+  const acked = () => {
+    const made = make();
+    made.controller.sync(observed());
+    made.controller.onEvent('time-ack');
+    return made;
+  };
 
-  it('starts at step 1 on the first piece', () => {
-    expect(make().controller.sync(observed())).toEqual({ step: 1, total: 2, id: 'drag-first', pieceId: 'D1' });
+  it('starts with the time and stars step, before anything is dragged', () => {
+    expect(make().controller.sync(observed())).toEqual({ step: 1, total: 3, id: 'time', pieceId: 'D1' });
   });
 
-  it('moves to step 2 on the remaining piece once one is at its target', () => {
+  it('stays on the time step until it is acknowledged', () => {
     const { controller } = make();
+    controller.sync(observed());
+    expect(controller.sync(observed())?.id).toBe('time');
+    controller.onEvent('time-ack');
+    expect(controller.sync(observed())).toEqual({ step: 2, total: 3, id: 'drag-first', pieceId: 'D1' });
+  });
+
+  it('moves to the last step on the remaining piece once one is at its target', () => {
+    const { controller } = acked();
     expect(controller.sync(observed({ correct: ['D1'] }))).toEqual({
-      step: 2,
-      total: 2,
+      step: 3,
+      total: 3,
       id: 'drag-second',
       pieceId: 'D2',
     });
   });
 
   it('points at the remaining piece even when the player got D2 right first', () => {
-    const { controller } = make();
+    const { controller } = acked();
     expect(controller.sync(observed({ correct: ['D2'] }))).toEqual({
-      step: 2,
-      total: 2,
+      step: 3,
+      total: 3,
       id: 'drag-second',
       pieceId: 'D1',
     });
   });
 
   it('finishes and marks seen when both pieces are at their targets', () => {
-    const { controller, store } = make();
+    const { controller, store } = acked();
     expect(controller.sync(observed({ correct: ['D1', 'D2'] }))).toBeNull();
     expect(store.isSeen()).toBe(true);
   });
 
-  it('goes back to step 1 after a reset while unfinished', () => {
-    const { controller } = make();
+  it('goes back to the first drag step after a reset, without showing the time step again', () => {
+    const { controller } = acked();
     controller.sync(observed({ correct: ['D1'] }));
-    expect(controller.sync(observed())).toEqual({ step: 1, total: 2, id: 'drag-first', pieceId: 'D1' });
+    expect(controller.sync(observed())).toEqual({ step: 2, total: 3, id: 'drag-first', pieceId: 'D1' });
+  });
+
+  it('keeps the first drag step after the acknowledgement', () => {
+    const { controller } = acked();
+    expect(controller.sync(observed())?.id).toBe('drag-first');
   });
 
   it('stays finished after skip and marks seen', () => {
@@ -167,8 +186,18 @@ describe('TutorialController, level 1-1 (drag twice)', () => {
     expect(controller.sync(observed())).toBeNull();
   });
 
-  it('locks everything except pressing the step piece', () => {
+  it('locks everything in the time step, including pressing a piece', () => {
     const { controller } = make();
+    controller.sync(observed());
+    expect(controller.allows(press('D1'))).toBe(false);
+    expect(controller.allows(press('D2'))).toBe(false);
+    expect(controller.allows(hud)).toBe(false);
+    expect(controller.allows(button)).toBe(false);
+    expect(controller.allows(gesture)).toBe(false);
+  });
+
+  it('locks everything except pressing the step piece in the drag steps', () => {
+    const { controller } = acked();
     controller.sync(observed());
     expect(controller.allows(press('D1'))).toBe(true);
     expect(controller.allows(press('D2'))).toBe(false);
@@ -177,13 +206,8 @@ describe('TutorialController, level 1-1 (drag twice)', () => {
     expect(controller.allows(gesture)).toBe(false);
   });
 
-  it('counts a piece only at its target, not anywhere on the grid', () => {
-    const { controller } = make();
-    expect(controller.sync(observed())).toEqual({ step: 1, total: 2, id: 'drag-first', pieceId: 'D1' });
-  });
-
   it('accepts a drop only when it is the step piece at its target', () => {
-    const { controller } = make();
+    const { controller } = acked();
     controller.sync(observed());
     expect(controller.acceptsDrop('D1', true)).toBe(true);
     expect(controller.acceptsDrop('D1', false)).toBe(false);
