@@ -1,9 +1,11 @@
 import type {
+  AdsPort,
   AnalyticsPort,
   CrashContext,
   CrashReporterPort,
   CrashValue,
   PlatformServices,
+  RewardedOutcome,
 } from '../application/platformPort.ts';
 import type { TelemetryEvent } from '../application/telemetry.ts';
 
@@ -18,9 +20,20 @@ export type AnalyticsDriver = {
   track(event: TelemetryEvent): void | Promise<void>;
 };
 
+export type AdsDriver = {
+  init(): Promise<void>;
+  showBanner(): void | Promise<void>;
+  hideBanner(): void | Promise<void>;
+  showRewarded(): Promise<RewardedOutcome>;
+  rewardedReady(): boolean;
+  privacyOptionsRequired(): boolean;
+  showPrivacyOptions(): Promise<void>;
+};
+
 export type PlatformDrivers = {
   crash?: CrashDriver | null;
   analytics?: AnalyticsDriver | null;
+  ads?: AdsDriver | null;
 };
 
 /** SDK ngoài chỉ là phụ: mọi lỗi (thiếu SDK, mạng, bị chặn trong iframe) bị nuốt im lặng. */
@@ -55,11 +68,61 @@ export function createAnalytics(driver: AnalyticsDriver | null | undefined): Ana
   };
 }
 
+export function createAds(driver: AdsDriver | null | undefined): AdsPort {
+  return {
+    async init() {
+      if (!driver) return;
+      try {
+        await driver.init();
+      } catch {
+        // SDK lỗi: game chạy tiếp không quảng cáo
+      }
+    },
+    showBanner() {
+      if (driver) safely(() => driver.showBanner());
+    },
+    hideBanner() {
+      if (driver) safely(() => driver.hideBanner());
+    },
+    async showRewarded() {
+      if (!driver) return 'unavailable';
+      try {
+        return await driver.showRewarded();
+      } catch {
+        return 'unavailable';
+      }
+    },
+    rewardedReady() {
+      try {
+        return driver?.rewardedReady() ?? false;
+      } catch {
+        return false;
+      }
+    },
+    privacyOptionsRequired() {
+      try {
+        return driver?.privacyOptionsRequired() ?? false;
+      } catch {
+        return false;
+      }
+    },
+    async showPrivacyOptions() {
+      if (!driver) return;
+      try {
+        await driver.showPrivacyOptions();
+      } catch {
+        // form không mở được: bỏ qua
+      }
+    },
+  };
+}
+
 /** Không truyền driver nào thì mọi lệnh là no-op: game chạy y hệt khi chưa gắn SDK. */
 export function createPlatformServices(drivers: PlatformDrivers = {}): PlatformServices {
   return {
     crash: createCrashReporter(drivers.crash),
     analytics: createAnalytics(drivers.analytics),
+    ads: createAds(drivers.ads),
   };
 }
 

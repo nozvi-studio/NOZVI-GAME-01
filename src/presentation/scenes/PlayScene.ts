@@ -30,6 +30,9 @@ import { DEPTH_TOKENS, FEEDBACK_TOKENS, TYPO_TOKENS, VICTORY_TOKENS } from '../d
 import { TextureFactory } from '../TextureFactory.ts';
 
 import { PauseDialog } from '../dialogs/PauseDialog.ts';
+import { HintDialog } from '../dialogs/HintDialog.ts';
+import { HintButton } from '../hud/HintButton.ts';
+import { adsServices } from '../adsServices.ts';
 import { TargetBadge } from '../board/TargetBadge.ts';
 import { t, getChapterTagline } from '../i18n.ts';
 import { LevelHintLabel } from '../hud/LevelHintLabel.ts';
@@ -83,6 +86,10 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
   private hud!: Hud;
   private timeBar!: TimeBar;
   private pauseDialog!: PauseDialog;
+  private hintDialog!: HintDialog;
+  private hintButton!: HintButton;
+  /** True while a rewarded ad is on screen: the level clock stands still. */
+  private hintAdShowing = false;
   private previewCompletedThrough?: string;
   private cachedVictoryVerse: string | null = null;
   private idleNudge: IdleNudgeState = IDLE_NUDGE_START;
@@ -308,6 +315,15 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
 
     this.timeBar = new TimeBar(this, layout);
     this.events.once('shutdown', () => this.timeBar.destroy());
+
+    // Stuck hint: at 0 stars a button flies in; it opens a dialog that offers one piece for a rewarded ad.
+    this.hintAdShowing = false;
+    this.hintDialog = new HintDialog(this, { onWatch: () => void this.watchForHint(), onCancel: () => {} });
+    this.hintButton = new HintButton(this, layout, () => this.openHintDialog());
+    this.events.once('shutdown', () => {
+      this.hintDialog.close();
+      this.hintButton.destroy();
+    });
     if (this.mode === 'campaign') this.hud.setSubtitleY(layout.headerBounds.y + TIME_BAR.subtitleY);
 
     const haptics = createHaptics(
@@ -450,8 +466,9 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
     this.textureCache.bakeNext();
     this.feedback.tick(delta);
     const snapshot = this.controller.getSnapshot();
-    if (!this.pauseDialog.isOpen()) this.controller.tickClock(delta);
+    if (!this.pauseDialog.isOpen() && !this.hintDialog.isOpen() && !this.hintAdShowing) this.controller.tickClock(delta);
     this.timeBar.update(this.controller.getSnapshot().timer);
+    this.syncHintButton(this.controller.getSnapshot());
     this.idleNudge = stepIdleNudge(this.idleNudge, delta, {
       activity: this.sawActivity,
       blocked:
@@ -467,6 +484,49 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
     this.boardRenderer.tick(delta, snapshot, this.controller.getPuzzleState().pieces);
     this.hud.tickSnapHint(delta, this.snapHintTarget(snapshot));
     this.syncTutorial();
+  }
+
+  /**
+   * The button shows once every star is gone and hides again after a reset or a win. It needs a ready ad SDK
+   * (so never on web); the dev server shows it anyway so the flow can be tried without ads.
+   */
+  private syncHintButton(snapshot: PlayViewSnapshot): void {
+    const stuck = snapshot.timer !== null && snapshot.timer.stars === 0 && snapshot.phase === 'playing';
+    const adsReady = adsServices(this).rewardedReady() || import.meta.env.DEV;
+    const wanted = stuck && adsReady && this.tutorial === null;
+    if (wanted) this.hintButton.show();
+    else {
+      this.hintButton.hide();
+      if (this.hintDialog.isOpen() && snapshot.phase === 'won') this.hintDialog.close();
+    }
+  }
+
+  private openHintDialog(): void {
+    if (this.pauseDialog.isOpen() || this.hintDialog.isOpen() || this.controller.getSnapshot().phase === 'won') return;
+    this.hintDialog.open();
+  }
+
+  /** The player agreed: show the rewarded ad, and place one piece only if the reward was earned. */
+  private async watchForHint(): Promise<void> {
+    if (this.hintAdShowing) return;
+    this.hintAdShowing = true;
+    const outcome = await adsServices(this).showRewarded();
+    this.hintAdShowing = false;
+    if (!this.sys.isActive()) return;
+    // The dev server has no ads: an unavailable ad still grants the hint so the flow can be tried.
+    const earned = outcome === 'rewarded' || (import.meta.env.DEV && outcome === 'unavailable');
+    if (earned) {
+      this.hintDialog.close();
+      this.grantHint();
+    } else if (outcome === 'unavailable') {
+      this.hintDialog.showNoAd();
+    }
+  }
+
+  private grantHint(): void {
+    const prev = this.controller.getPuzzleState();
+    const hint = this.controller.onHint();
+    if (hint) this.commit(prev, hint.transition, { command: 'move', pieceId: hint.pieceId });
   }
 
   private snapHintTarget(snapshot: PlayViewSnapshot): { x: number; y: number } | null {
@@ -743,6 +803,10 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
 
   public onHardwareBack(): void {
     if (!this.tutorialAllows({ type: 'hud' })) return;
+    if (this.hintDialog.isOpen()) {
+      this.hintDialog.close();
+      return;
+    }
     if (this.pauseDialog.isOpen()) {
       this.pauseDialog.close();
     } else {

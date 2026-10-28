@@ -8,6 +8,7 @@ import { beginDrag, cancelDrag, finishDrag, updateDrag } from './drag.ts';
 import type { LayoutMetrics } from '../presentation/board/layout.ts';
 import { pieceBoardOrigin, pieceHitbox, piecePolygonCanvas, pointNearPolygon } from '../presentation/board/layout.ts';
 import { LevelClock } from './levelClock.ts';
+import { applyHint, type HintResult } from '../domain/hintPlacement.ts';
 import { parFromSolution, starsFor, timeBudget, type Stars } from '../domain/starRating.ts';
 
 /** Bound resumed-frame spikes without changing normal frame timing. */
@@ -245,6 +246,16 @@ export class PlayController {
     if (!transition.accepted) return null;
     this.commitState(transition.state, transition.mask);
     return transition;
+  }
+
+  /** Hint: put one piece on its target. Null while a piece is in hand, once won, or when nothing is left to place. */
+  onHint(): HintResult | null {
+    if (this.dragSession) return null;
+    const hint = applyHint(this.level, this.puzzleState);
+    if (!hint) return null;
+    this.commitState(hint.transition.state, hint.transition.mask);
+    if (hint.transition.becameWon) this.recordWin();
+    return hint;
   }
 
   onRotate(): Transition | null {

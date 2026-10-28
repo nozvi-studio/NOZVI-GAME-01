@@ -1,5 +1,9 @@
 import Phaser from 'phaser';
 import { App } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
+import { AdMob } from '@capacitor-community/admob';
+import { createAdMobDriver, resolveAdMobConfig } from './infrastructure/admobDriver.ts';
+import { ADS_REGISTRY_KEY } from './presentation/adsServices.ts';
 import { BackgroundScene } from './presentation/scenes/BackgroundScene.ts';
 import { LoadingScene } from './presentation/scenes/LoadingScene.ts';
 import { MenuScene } from './presentation/scenes/MenuScene.ts';
@@ -28,8 +32,15 @@ import type { AudioServices } from './presentation/audio/audioServices.ts';
 import { AUDIO_TOKENS } from './presentation/designTokens.ts';
 import './style.css';
 
-// Chưa gắn SDK nào: mọi lệnh là no-op. Gắn Sentry/CrazyGames bằng cách truyền driver vào đây.
-const platform = createPlatformServices();
+// Quảng cáo chỉ có trên app native (AdMob). Web và test: no-op. Crash/analytics chưa gắn SDK:
+// gắn Sentry/CrazyGames bằng cách truyền driver vào đây.
+const adMobConfig = Capacitor.isNativePlatform() ? resolveAdMobConfig(import.meta.env) : null;
+if (Capacitor.isNativePlatform() && !adMobConfig) {
+  console.warn('[ads] VITE_ADMOB_USE_TEST_ADS=false nhưng thiếu VITE_ADMOB_BANNER_ID / VITE_ADMOB_REWARDED_ID: tắt quảng cáo');
+}
+const platform = createPlatformServices({
+  ads: adMobConfig ? createAdMobDriver(AdMob, adMobConfig) : null,
+});
 installGlobalErrorHandlers(window, platform.crash);
 
 const launch = resolveLaunch(window.location.search, import.meta.env.DEV);
@@ -142,6 +153,10 @@ export async function startGame(options: StartGameOptions = {}): Promise<void> {
   if (import.meta.env.DEV) {
     (window as unknown as { __GAME__?: Phaser.Game }).__GAME__ = game;
   }
+
+  game.registry.set(ADS_REGISTRY_KEY, platform.ads);
+  // Consent (UMP) rồi mới khởi tạo SDK; không chặn việc dựng game.
+  void platform.ads.init();
 
   director.setHost(new PhaserSceneHost(game));
   director.setMusic(music);

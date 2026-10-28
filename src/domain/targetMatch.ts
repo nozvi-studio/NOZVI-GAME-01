@@ -3,7 +3,7 @@ import { arePiecesEquivalent } from './pieceEquivalence.ts';
 import { placementsOf } from './session.ts';
 
 /** Index of the sample-solution placement this one fills (an identical piece may stand in), or -1. */
-function targetIndex(level: Level, placement: Placement, taken: ReadonlySet<number>): number {
+export function targetIndex(level: Level, placement: Placement, taken: ReadonlySet<number>): number {
   const piece = level.pieces.find((p) => p.id === placement.pieceId);
   if (!piece) return -1;
   const targets = level.targetPlacements ?? [];

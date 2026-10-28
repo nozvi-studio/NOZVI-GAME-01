@@ -15,6 +15,7 @@ import { walkedLinkAlpha } from '../galaxy/constellationMotion.ts';
 import { isReducedMotion } from '../transitions/motion.ts';
 import { NODE_SILHOUETTE_FIT, drawTargetSilhouette } from '../board/targetSilhouette.ts';
 import { t, getChapterLabel, getChapterName, getGalaxyType } from '../i18n.ts';
+import { adsServices } from '../adsServices.ts';
 import { director } from '../transitions/SceneDirector.ts';
 import type { Choreographed, TransitionContext } from '../transitions/SceneDirector.ts';
 import type { TransitionTimeline } from '../transitions/TransitionTimeline.ts';
@@ -169,6 +170,11 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
       const idealY = Phaser.Math.Clamp(540 - currentNode.y, this.minY, this.maxY);
       this.mapContainer.y = idealY;
     }
+
+    // Banner chỉ ở bản đồ: hiện khi vào, ẩn khi scene tắt (không chen vào lúc chơi).
+    const ads = adsServices(this);
+    ads.showBanner();
+    this.events.once('shutdown', () => ads.hideBanner());
 
     director.attach(this);
   }

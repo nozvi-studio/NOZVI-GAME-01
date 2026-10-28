@@ -305,6 +305,8 @@ export const FEEDBACK_TOKENS = {
   /** Second press of a double tap held in place: after `delayMs` the piece turns, then again every `stepMs` (turn, pause, turn). */
   holdRotate: { delayMs: 280, stepMs: 640 },
   hintMs: 120,
+  /** Stuck-hint button (shown at 0 stars): flies in from the right edge, then pulses until tapped. */
+  hintButton: { flyInMs: 420, flyOutMs: 180, startOffset: 160, pulseMs: 800, pulseScale: 1.08 },
   snapMs: 120,
   bounceMs: 180,
   bounceFrom: 1.08,

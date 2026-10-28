@@ -4,6 +4,14 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Added (ads)
+- Google AdMob via `@capacitor-community/admob` 8.2.1 (Android only; web and tests stay no-op). `AdsPort` in `application/platformPort.ts` (`init`, `showBanner`, `hideBanner`, `showRewarded`, `privacyOptionsRequired`, `showPrivacyOptions`), `createAds` in `infrastructure/platformServices.ts` swallows driver errors, `infrastructure/admobDriver.ts` runs the UMP consent flow before SDK init and only requests ads when UMP allows it.
+- Banner at the bottom of the level map (`LevelSelectScene` shows it on create, hides it on shutdown). Rewarded is used by the stuck hint below.
+- Test ads by default. Real ads need `VITE_ADMOB_USE_TEST_ADS=false` plus `VITE_ADMOB_BANNER_ID` and `VITE_ADMOB_REWARDED_ID`; missing IDs turn ads off instead of falling back to test ads. Manifest App ID comes from `-PADMOB_APP_ID` (default: Google test App ID).
+- Settings: a "Privacy settings" row (`setting_privacy`, all ten locales) that reopens the UMP consent form. It shows only when `AdsPort.privacyOptionsRequired()` is true (EEA/UK), so players can always withdraw consent.
+- Stuck hint (rewarded ad): once every star is gone (`timer.stars === 0`, 75 % of the time budget) a `?` button flies in at the top right (`HintButton`, `FEEDBACK_TOKENS.hintButton`). It opens `HintDialog` ("Stuck? Watch a short ad and we will place one piece for you"); the ad starts only after Watch. A completed ad puts one piece on its sample-solution spot (`domain/hintPlacement.ts` `applyHint`, `PlayController.onHint`), clearing wrong pieces that sit on those cells, and plays the normal snap feedback. Early close gives nothing; no ad shows "No ad is available right now" and keeps the button. The level clock stops while the dialog or the ad is open. The button needs `AdsPort.rewardedReady()` (never on web); the dev server shows it and grants the hint without an ad. Strings `hint_title/body/watch/no_ad` in all ten locales.
+- `tests/admobDriver.test.ts`, `tests/hintPlacement.test.ts` (hints win every approved campaign level, also with a wrong piece on a target), `tests/playControllerHint.test.ts`, cases in `tests/dialogsInput.test.ts`.
+
 ### Fixed
 - "X/N pieces matched" counted any piece resting on the board. In free placement every drop snaps to a grid point, so a random drop read as a match (bar, ring, rising bell). It now counts only pieces on their sample-solution placement (`domain/targetMatch.ts`: `isOnTarget`, `matchedPieceCount`; identical pieces may swap, a won level counts all). `PlayViewSnapshot.snappedCount` is now `matchedCount`.
 - With Sound Effects off, the level music no longer ducks when a level is won: `playVictoryAudio` ducks only if `SfxPort.isEnabled()` (new; false when the setting is off or there is no driver).
