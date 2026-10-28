@@ -110,12 +110,12 @@ it('makes the full pause buttons touchable with comfortable gaps', () => {
   ui.pause.open();
   const buttons = ui.root().children.filter(i => i.kind === 'container');
   expect(buttons).toHaveLength(3);
-  for (const [index, button] of buttons.entries()) {
-    const zone = button.children.find(i => i.interactive)!;
-    expect(zone.width).toBe(500);
-    expect(zone.height).toBe(88);
-    if (index) expect(button.y - buttons[index - 1].y - 88).toBe(24);
-  }
+  const zones = buttons.map(b => b.children.find(i => i.interactive)!);
+  // Resume stands alone at full width; restart and level select share the row under it.
+  expect(zones.map(z => [z.width, z.height])).toEqual([[500, 88], [244, 88], [244, 88]]);
+  expect(buttons[1].y).toBe(buttons[2].y);
+  expect(buttons[1].y - buttons[0].y - 88).toBe(24);
+  expect(buttons[2].x - buttons[1].x - 244).toBe(12);
   ui.tap(245, buttons[0].y);
   expect(ui.callbacks.onResume).toHaveBeenCalledOnce();
 });

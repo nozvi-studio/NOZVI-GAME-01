@@ -1,11 +1,11 @@
 # STATUS
 
 > The *current* state of the project. Overwrite when things change; history lives in `CHANGELOG.md`.
-> Last updated: 2026-10-24
+> Last updated: 2026-10-28
 
 ## Branches
-- Working on: `feature/placement-feedback-audio` (cut from `release/v1.0.0`): X/N matched counts only pieces on target; off-target drops are quiet (pluck), on-target gets the bell. Uncommitted, 2026-10-28. `fix/release-issues` is pushed and still open (not merged).
-- Last worked on: `fix/intro-fly-in-lag` (gameplay/UI polish; merged into `release/v1.0.0`, 2026-10-24). Before it: `feature/release-checklist-localization` (merged 2026-10-23)
+- Working on: `feature/placement-feedback-audio` (cut from `release/v1.0.0`): X/N matched counts only pieces on target (done, approved); the off-target pluck / breath, softer victory stinger and half-level gameplay music are drafts still being tuned by ear. Committed locally, 2026-10-28.
+- Last worked on: `fix/release-issues` (no Sentry/GA; 10% tighter star time, 3-star hint in tutorial 1-1, Sound switch in Pause; merged into local `release/v1.0.0`, 2026-10-28; not pushed there yet). Before it: `fix/intro-fly-in-lag` (merged 2026-10-24). Before it: `feature/release-checklist-localization` (merged 2026-10-23)
 - Release branch: `release/v1.0.0` · Main: `main` · Development: `dev`
 
 ## Version

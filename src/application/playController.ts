@@ -71,7 +71,7 @@ export class PlayController {
     this.puzzleState = createPuzzle(level);
     this.committedMask = evaluate(level, placementsOf(level, this.puzzleState));
     this.showTarget = initialShowTarget;
-    this.budgetMs = timeBudget(level.parMs ?? parFromSolution(level.targetPlacements ?? []));
+    this.budgetMs = timeBudget(level.parMs ?? parFromSolution(level.targetPlacements ?? []), level.pieces.length);
   }
 
   /** Mọi thay đổi trạng thái đi qua đây để mask cache luôn khớp */

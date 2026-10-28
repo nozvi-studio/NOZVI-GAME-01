@@ -528,7 +528,7 @@ export function createInspector(options: InspectorOptions): Inspector {
       metrics.appendChild(provenRow);
 
       if (latestCheck.doc.parMs !== undefined) {
-        const par = parInfo(latestCheck.doc.parMs);
+        const par = parInfo(latestCheck.doc.parMs, latestCheck.doc.pieces.length);
         const [s3, s2, s1] = par.starWindowsMs;
         const parRow = document.createElement('div');
         parRow.textContent = `Par: ${formatSeconds(par.parMs)} · 3★ < ${formatSeconds(s3)} · 2★ < ${formatSeconds(s2)} · 1★ < ${formatSeconds(s1)}`;

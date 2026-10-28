@@ -10,6 +10,8 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ### Changed
 - Feedback: a `snap` event carries `onTarget`, `x`, `y`. Off target the piece just glides in (no bounce, light, ring or counter pop). Audio: off target plays a soft `pluck` whose pentatonic note comes from the landing point (`placeStep`); the bell, rising with the matched count, is kept for a piece on its target. Lifting a piece plays the new `breath` instead of `tick`.
+- Star rating: `THREE_STAR_PAR_RATIO` 1.25 to 1.125, so every level's time budget and star windows are 10% tighter (no level data touched; `parMs` unchanged).
+- Star rating: on top of the 10% above, levels with up to 3 pieces are tightened another 10% and levels with 4+ pieces another 5% (`threeStarRatio(pieceCount)`; `timeBudget` and `parInfo` now take the piece count).
 
 ### Changed (audio mix)
 - Level music (`music-stele`) plays at half level (`AUDIO_TOKENS.trackLevel`, new optional `MusicOptions.trackLevel`) so the move sounds stand out; menu and map music are unchanged.
@@ -18,8 +20,8 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ### Added
 - Sounds `pluck` (kalimba-like, one per landing spot) and `breath` (airy lift) in `content/audio/sources/`; cue volume `AUDIO_TOKENS.cues.place`.
-
-### Added
+- Pause dialog: Background Music and Sound Effects switches under the title (same settings as the Settings dialog); Resume stands alone and Restart / Level Select share one row. The Language picker is also in Pause (`onLanguageChange`). Hidden when `audio` is not passed.
+- Tutorial 1-1: a new first step (now 3 steps) that spotlights the time bar and stars with a pulsing frame; tap the card to continue. The clock starts on the first press, so reading it costs no time. New keys `tutorial_time_title/body/chip` in all ten locales; `tutorial_drag_body` is back to its original text.
 - `PlatformServices` seam (`application/platformPort.ts`, `infrastructure/platformServices.ts`): `CrashReporterPort` and `AnalyticsPort` with no-op defaults; driver errors are swallowed so an external SDK (Sentry, CrazyGames, Firebase) can never break the game. `main.ts` routes `error` / `unhandledrejection` through it (still logged to console).
 - `docs/testing/release-checklist-gameplay.md`: GAME-01..04 findings and device test plan.
 - `gate_locked` string ("Locked") in all ten locales for the locked chapter 1 Endless gate badge, replacing "Coming Soon" there.

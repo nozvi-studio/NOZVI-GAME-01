@@ -224,6 +224,19 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
       onLevelSelect: () => {
         this.openLevelSelect();
       },
+      onLanguageChange: () => {},
+      audio: {
+        isMusicOn: () => progressRepo.read().progress.settings.music,
+        isSfxOn: () => progressRepo.read().progress.settings.sfx,
+        setMusic: (on) => {
+          progressRepo.setMusic(on);
+          audioServices(this).music.setEnabled(on);
+        },
+        setSfx: (on) => {
+          progressRepo.setSfx(on);
+          audioServices(this).sfx.setEnabled(on);
+        },
+      },
     });
 
     this.hud = new Hud(
@@ -540,7 +553,13 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
       force: this.forceTutorial,
     });
     if (!controller) return;
-    const coach = new TutorialCoach(this, this.level, layout, () => this.skipTutorial());
+    const coach = new TutorialCoach(
+      this,
+      this.level,
+      layout,
+      () => this.skipTutorial(),
+      () => this.tutorial?.controller.onEvent('time-ack')
+    );
     this.tutorial = { controller, coach };
     this.events.once('shutdown', () => {
       this.tutorial?.coach.destroy();
@@ -580,7 +599,7 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
     const key = `${view.id}:${view.pieceId}`;
     if (key === this.tutorialKey) return;
     this.tutorialKey = key;
-    active.coach.show(view, spot, { rotateButton: this.hud.rotateButtonBounds() });
+    active.coach.show(view, spot, { rotateButton: this.hud.rotateButtonBounds(), timeBar: this.timeBar.bounds() });
   }
 
   /**
