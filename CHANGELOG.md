@@ -4,6 +4,21 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Added (visuals & interactions)
+- Ethereal Observatory theme & interaction upgrade (Direction 2):
+  - 3-layer parallax sky in `SkyBackdrop` (deep cosmos tile layer + midfield + twinkling stars) with subtle pointer parallax response.
+  - Dedicated discrete 3-layer dynamic parallax containers on `MenuScene` and `LevelSelectScene`:
+    - Deepest background starfield (`deepStarsContainer` / `mapDeepStarsContainer`): 160-360 tiny, rich-tinted stars (amber, star sapphire, young star magenta, starlight) sweeping fastest at `tilt * 46px` to produce unmistakable celestial depth.
+    - Middle celestial layer (`midStarsContainer` & `galaxy` / `mapMidStarsContainer` & `galaxyLayers`): glowing mid-tier stars, nebulae, and chapter galaxy artwork drifting at medium speed (`tilt * 20px`).
+    - Outermost foreground layer (`emblem` & motes / constellation nodes, lines & chapter cards): subtle, grounded anchor (`tilt * 6px` counter-drift) keeping tactile UI solid.
+    - Cleaned static stars previously baked into `galaxyGradient` and `galaxyMapGradient` canvases, ensuring every star on screen is dynamically responsive to tilt/motion.
+  - Calibrated 3-layer Parallax speeds per user feedback: outermost foreground (emblems/UI) moves slowest (0.25x), middle layer (main stars & galaxy art) moves at medium speed (0.75x), and deepest background layer (tiny rich-tinted stars) sweeps fastest (1.35x).
+  - Soft luminous starlight aura ripples (`ethereal:ripple`) on touch/click across BackgroundScene, MenuScene, LevelSelectScene, and PauseDialog.
+  - Ambient orbiting starlight motes and interactive touch resonance for the MenuScene hero emblem.
+  - Chapter-specific atmosphere effects (sparkling stars, meteors, tinted dust) across all chapters in `LevelSelectScene`.
+  - Celestial snap resonance: snapping a piece on target triggers background starlight ripple (`FeedbackDirector`).
+  - Smooth arrival and exit animations for `PauseDialog` with soft scale & fade easing.
+
 ### Fixed
 - "X/N pieces matched" counted any piece resting on the board. In free placement every drop snaps to a grid point, so a random drop read as a match (bar, ring, rising bell). It now counts only pieces on their sample-solution placement (`domain/targetMatch.ts`: `isOnTarget`, `matchedPieceCount`; identical pieces may swap, a won level counts all). `PlayViewSnapshot.snappedCount` is now `matchedCount`.
 - With Sound Effects off, the level music no longer ducks when a level is won: `playVictoryAudio` ducks only if `SfxPort.isEnabled()` (new; false when the setting is off or there is no driver).

@@ -133,6 +133,7 @@ export class FeedbackDirector {
         view.play('light', 320, 0.85);
         const target = board.targetPoseFor(piece, state, 0);
         this.snapRing(target, pieceRadiusPx(piece.frameSize, this.deps.layout));
+        this.deps.background()?.spawnRipple(target.x, target.y, COLOR_NUMBERS.gridFine, 130);
         this.deps.hud.popCounterIcon(matchedPieceCount(level, this.deps.getState()) - 1);
         return;
       }

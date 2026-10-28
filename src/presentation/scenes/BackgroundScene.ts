@@ -18,10 +18,28 @@ export class BackgroundScene extends Phaser.Scene implements MoodTarget {
   create(): void {
     applyDesignViewport(this);
     this.sky = new SkyBackdrop(this, { seed: 1, driftSpeed: 0 });
+
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      this.sky.spawnRipple(pointer.x, pointer.y);
+    });
+
+    this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+      this.sky.setPointerOffset(pointer.x, pointer.y);
+    });
+
+    this.game.events.on('ethereal:ripple', (x: number, y: number, color?: number, maxR?: number) => {
+      this.sky.spawnRipple(x, y, color, maxR);
+    });
   }
 
   update(_time: number, delta: number): void {
     this.sky.update(delta);
+  }
+
+  spawnRipple(x: number, y: number, color?: number, maxR?: number): void {
+    if (this.sky) {
+      this.sky.spawnRipple(x, y, color, maxR);
+    }
   }
 
   setMood(mood: SkyMood, durationMs: number): void {

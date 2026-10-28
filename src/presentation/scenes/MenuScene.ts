@@ -30,6 +30,8 @@ import type { GalaxyTheme } from '../galaxy/galaxyTheme.ts';
 import { computeMenuLayout, type MenuLayout } from '../menu/menuLayout.ts';
 import { addGalaxyArtwork, galaxyGradient, preloadGalaxyArtwork } from '../galaxy/GalaxyArtwork.ts';
 import { setPcBackground } from '../sky/pcBackground.ts';
+import { deviceTilt } from '../sky/deviceTilt.ts';
+import { mulberry32 } from '../sky/starField.ts';
 
 /** The surface MenuScene drives on whichever hero emblem the chapter uses. */
 type MenuEmblem = Pick<DualJewelEmblem, 'graphics' | 'setRingSpeed' | 'update'>;
@@ -59,9 +61,12 @@ export class MenuScene extends Phaser.Scene implements Choreographed {
   private galaxy!: Phaser.GameObjects.Container;
   private galaxySky!: Phaser.GameObjects.Image;
 
+  private deepStarsContainer?: Phaser.GameObjects.Container;
+  private midStarsContainer?: Phaser.GameObjects.Container;
   private blockOffsetY = 0;
   private layout!: MenuLayout;
   private safe = { top: 0, right: 0, bottom: 0, left: 0 };
+  private ambientMotes: Array<{ graphics: Phaser.GameObjects.Graphics; angle: number; dist: number; speed: number; yOffset: number }> = [];
 
   constructor() {
     super({ key: 'MenuScene' });
@@ -96,7 +101,8 @@ export class MenuScene extends Phaser.Scene implements Choreographed {
     const theme = this.currentTheme(progress.completed);
     setPcBackground(theme.chapter);
     this.galaxySky = this.add.image(0, 0, galaxyGradient(this, theme))
-      .setOrigin(0).setDisplaySize(view.width, view.height).setDepth(-2);
+      .setOrigin(0).setDisplaySize(view.width, view.height).setDepth(-3);
+    this.createMenuParallaxLayers(view.width, view.height, theme);
     this.galaxy = addGalaxyArtwork(this, theme, 360, this.layout.emblemY, 900, { rx: 314, ry: 425 }).setDepth(-1);
 
     // 2. Biểu tượng Ngọc Đôi (Dual Jewels XOR) lơ lửng ở trung tâm
@@ -109,6 +115,8 @@ export class MenuScene extends Phaser.Scene implements Choreographed {
       : new DualJewelEmblem(this, 360, this.layout.emblemY, heroChapterOne ? theme.colors.accent : undefined);
     const emblemBaseScale = heroStatic ? CHAPTER_ONE_HERO_SCALE : 1.35;
     this.emblem.graphics().forEach(graphic => graphic.setScale(emblemBaseScale * this.layout.emblemScale));
+    this.setupAmbientMotes(theme);
+    this.setupEmblemInteraction(theme);
 
     // 3. UI Container chính
     this.uiContainer = this.add.container(0, this.blockOffsetY);
@@ -673,6 +681,7 @@ export class MenuScene extends Phaser.Scene implements Choreographed {
    * Tạo chùm bụi sao và sóng lượng tử tỏa ra từ điểm chạm
    */
   private spawnCosmicInteraction(x: number, y: number): void {
+    this.game?.events?.emit('ethereal:ripple', x, y, COLOR_NUMBERS.gridFine);
     // 1. Sóng lượng tử (Cosmic Ripple) lan tỏa hình thoi (Diamond motif, glowTier 1)
     const tier1 = glowTier(1);
     const ripple = this.add.graphics().setDepth(DEPTH_TOKENS.backgroundSky + 4);
@@ -794,6 +803,14 @@ export class MenuScene extends Phaser.Scene implements Choreographed {
     this.galaxy.setAlpha(0);
     tl.at(250, this.galaxySky, { alpha: 1 }, 450, 'cubicOut');
     tl.at(250, this.galaxy, { alpha: 1 }, 550, 'cubicOut');
+    if (this.deepStarsContainer) {
+      this.deepStarsContainer.setAlpha(0);
+      tl.at(250, this.deepStarsContainer, { alpha: 1 }, 550, 'cubicOut');
+    }
+    if (this.midStarsContainer) {
+      this.midStarsContainer.setAlpha(0);
+      tl.at(250, this.midStarsContainer, { alpha: 1 }, 550, 'cubicOut');
+    }
     if (ctx.from === 'LevelSelectScene' && !isReducedMotion()) {
       const cam = this.cameras.main;
       const baseZoom = cam.zoom;
@@ -805,6 +822,8 @@ export class MenuScene extends Phaser.Scene implements Choreographed {
 
   playOut(tl: TransitionTimeline, ctx: TransitionContext): void {
     tl.at(100, this.galaxySky, { alpha: 0 }, 400, 'cubicInOut');
+    if (this.deepStarsContainer) tl.at(100, this.deepStarsContainer, { alpha: 0 }, 400, 'cubicInOut');
+    if (this.midStarsContainer) tl.at(100, this.midStarsContainer, { alpha: 0 }, 400, 'cubicInOut');
     tl.at(0, this.galaxy, { alpha: 0, scaleX: 1.4, scaleY: 1.4 }, 500, 'cubicInOut');
     if (ctx.route === 'menu-to-play') {
       applySteps(tl, MENU_OUT_TO_PLAY, this.transitionParts(), 'exit');
@@ -825,5 +844,120 @@ export class MenuScene extends Phaser.Scene implements Choreographed {
 
   override update(_time: number, delta: number): void {
     this.emblem.update(delta);
+    const tilt = deviceTilt.getTilt();
+    // 1. Lớp xa nhất (Deepest Layer): Những ngôi sao nhỏ nhỏ đậm màu di chuyển NHANH NHẤT
+    if (this.deepStarsContainer) {
+      this.deepStarsContainer.setPosition(tilt.x * 46, tilt.y * 38);
+    }
+
+    // 2. Lớp giữa (Middle Layer): Vùng thiên hà và sao tầm trung di chuyển NHANH HƠN CHÚT
+    if (this.midStarsContainer) {
+      this.midStarsContainer.setPosition(tilt.x * 20, tilt.y * 18);
+    }
+    if (this.galaxy) {
+      this.galaxy.setPosition(360 + tilt.x * 20, this.layout.emblemY + tilt.y * 18);
+    }
+    // Lớp ngoài cùng: di chuyển chậm, đầm tay và ổn định
+    const ex = 360 - tilt.x * 6;
+    const ey = this.layout.emblemY - tilt.y * 5;
+    this.emblem.graphics().forEach((g) => g.setPosition(ex, ey));
+
+    for (const mote of this.ambientMotes) {
+      mote.angle += mote.speed * (delta / 1000);
+      const mx = ex + Math.cos(mote.angle) * mote.dist;
+      const my = ey + Math.sin(mote.angle) * (mote.dist * 0.45) + mote.yOffset;
+      mote.graphics.setPosition(mx, my);
+    }
+    return;
+  }
+
+  private createMenuParallaxLayers(width: number, height: number, theme: GalaxyTheme): void {
+    // 1. Lớp xa nhất: 160 ngôi sao nhỏ xíu, giàu sắc độ thiên hà (amber, xanh lam, tím hồng), quét nhanh nhất
+    this.deepStarsContainer = this.add.container(0, 0).setDepth(-2);
+    const deepGraphics = this.add.graphics();
+    const deepRand = mulberry32(1103 + theme.chapter * 59);
+    const deepColors = [
+      COLOR_NUMBERS.amberSolid,
+      0x7fb8ff,
+      0xcfe6ff,
+      0xff8fc8,
+      0x5c7cfa,
+      theme.colors.accent,
+      0xffffff,
+    ];
+    const pad = 60;
+    for (let i = 0; i < 160; i++) {
+      const sx = -pad + deepRand() * (width + pad * 2);
+      const sy = -pad + deepRand() * (height + pad * 2);
+      const rad = 0.7 + deepRand() * 0.9;
+      const color = deepColors[Math.floor(deepRand() * deepColors.length)];
+      const alpha = 0.45 + deepRand() * 0.5;
+      deepGraphics.fillStyle(color, alpha);
+      deepGraphics.fillCircle(sx, sy, rad);
+      if (deepRand() > 0.65) {
+        deepGraphics.fillStyle(0xffffff, Math.min(1, alpha + 0.3));
+        deepGraphics.fillCircle(sx, sy, rad * 0.45);
+      }
+    }
+    this.deepStarsContainer.add(deepGraphics);
+
+    // 2. Lớp giữa: 48 ngôi sao sáng tầm trung có quầng sáng nhẹ
+    this.midStarsContainer = this.add.container(0, 0).setDepth(-1.2);
+    const midGraphics = this.add.graphics();
+    const midRand = mulberry32(5071 + theme.chapter * 17);
+    const midColors = [theme.colors.accent, COLOR_NUMBERS.amberSolid, 0xffffff, 0xcfe6ff];
+    for (let i = 0; i < 48; i++) {
+      const mx = -pad + midRand() * (width + pad * 2);
+      const my = -pad + midRand() * (height + pad * 2);
+      const mRad = 1.6 + midRand() * 1.6;
+      const mCol = midColors[i % midColors.length];
+      const mAlpha = 0.55 + midRand() * 0.4;
+      midGraphics.fillStyle(mCol, mAlpha * 0.35);
+      midGraphics.fillCircle(mx, my, mRad * 2.2);
+      midGraphics.fillStyle(mCol, mAlpha);
+      midGraphics.fillCircle(mx, my, mRad);
+      midGraphics.fillStyle(0xffffff, 0.9);
+      midGraphics.fillCircle(mx, my, mRad * 0.4);
+    }
+    this.midStarsContainer.add(midGraphics);
+  }
+
+  private setupAmbientMotes(theme: GalaxyTheme): void {
+    const colors = [theme.colors.accent, COLOR_NUMBERS.amberSolid, 0xffffff, COLOR_NUMBERS.iceHighlight];
+    for (let i = 0; i < 14; i++) {
+      const g = this.add.graphics().setDepth(-0.5);
+      const r = 1.6 + Math.random() * 2.2;
+      const col = colors[i % colors.length];
+      g.fillStyle(col, 0.65 + Math.random() * 0.35);
+      g.fillCircle(0, 0, r);
+      g.fillStyle(0xffffff, 0.85);
+      g.fillCircle(0, 0, r * 0.4);
+
+      const dist = 110 + (i * 12) + Math.random() * 25;
+      const angle = (i / 14) * Math.PI * 2 + Math.random() * 0.4;
+      const speed = (0.2 + Math.random() * 0.25) * (i % 2 === 0 ? 1 : -1);
+      const yOffset = (Math.random() - 0.5) * 30;
+
+      this.ambientMotes.push({ graphics: g, dist, angle, speed, yOffset });
+    }
+  }
+
+  private setupEmblemInteraction(theme: GalaxyTheme): void {
+    const zone = this.add.zone(360, this.layout.emblemY, 260, 260).setInteractive({ useHandCursor: true });
+    zone.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      playUiCue(this, 'tap');
+      this.game?.events?.emit('ethereal:ripple', pointer.worldX, pointer.worldY, theme.colors.accent, 160);
+
+      // Nhịp thở đàn hồi nhẹ của biểu tượng
+      const graphics = this.emblem.graphics();
+      this.tweens.add({
+        targets: graphics,
+        scaleX: '*=1.06',
+        scaleY: '*=1.06',
+        duration: 220,
+        yoyo: true,
+        ease: 'Sine.easeOut',
+      });
+    });
   }
 }
