@@ -12,6 +12,7 @@ import {
   tiltDeg,
 } from './pieceMotion.ts';
 import type { Pose, PoseTau } from './pieceMotion.ts';
+import { sheenFrameName, sheenLook } from './pieceSheen.ts';
 import { EASES } from '../transitions/motion.ts';
 import type { EaseName } from '../transitions/motion.ts';
 
@@ -39,6 +40,9 @@ export class PieceView {
   readonly offset: Phaser.GameObjects.Container;
   private readonly shadow: Phaser.GameObjects.Image;
   private readonly body: Phaser.GameObjects.Image;
+  private readonly sheen: Phaser.GameObjects.Image;
+  private sheenFrame = -1;
+  private sheenKey = '';
   private readonly light: Phaser.GameObjects.Image;
   private readonly linkMark: Phaser.GameObjects.Graphics;
   private linkMarkKey = '';
@@ -54,9 +58,11 @@ export class PieceView {
   constructor(scene: Phaser.Scene) {
     this.shadow = scene.add.image(0, 0, '__DEFAULT');
     this.body = scene.add.image(0, 0, '__DEFAULT');
+    // Normal blend on purpose: an ADD image between normal ones splits the batch once per piece.
+    this.sheen = scene.add.image(0, 0, '__DEFAULT').setVisible(false);
     this.light = scene.add.image(0, 0, '__DEFAULT').setBlendMode(Phaser.BlendModes.ADD).setAlpha(0);
     this.linkMark = scene.add.graphics().setVisible(false);
-    this.offset = scene.add.container(0, 0, [this.shadow, this.body, this.light, this.linkMark]);
+    this.offset = scene.add.container(0, 0, [this.shadow, this.body, this.sheen, this.light, this.linkMark]);
     this.root = scene.add.container(0, 0, [this.offset]).setVisible(false);
   }
 
@@ -66,6 +72,9 @@ export class PieceView {
     this.body.setTexture(keys.body);
     this.shadow.setTexture(keys.shadow);
     this.light.setTexture(keys.light);
+    this.sheenKey = '';
+    this.sheenFrame = -1;
+    this.sheen.setVisible(false);
   }
 
   /**
@@ -202,6 +211,20 @@ export class PieceView {
       .setPosition(lerp(rest.x, lifted.x, this.lift), lerp(rest.y, lifted.y, this.lift))
       .setAlpha(FEEDBACK_TOKENS.shadowAlpha * this.lift);
     this.light.setScale(silScale).setAlpha(flash);
+    // The strip bakes after the piece itself, so it joins the view once it exists.
+    if (this.keys.sheen) {
+      if (this.sheenKey !== this.keys.sheen) {
+        this.sheenKey = this.keys.sheen;
+        this.sheenFrame = -1;
+        this.sheen.setTexture(this.keys.sheen).setVisible(true);
+      }
+      const look = sheenLook(opts.reduced);
+      if (look.frame !== this.sheenFrame) {
+        this.sheenFrame = look.frame;
+        this.sheen.setFrame(sheenFrameName(look.frame));
+      }
+      this.sheen.setScale((silScale * this.light.width) / this.sheen.width).setAlpha(look.alpha);
+    }
   }
 
   destroy(): void {
