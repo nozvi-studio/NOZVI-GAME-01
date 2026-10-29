@@ -519,9 +519,11 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
   private async watchForHint(): Promise<void> {
     if (this.hintAdShowing) return;
     this.hintAdShowing = true;
+    this.hintDialog.setLoading(true);
     const outcome = await adsServices(this).showRewarded();
     this.hintAdShowing = false;
     if (!this.sys.isActive()) return;
+    this.hintDialog.setLoading(false);
     // The dev server has no ads: an unavailable ad still grants the hint so the flow can be tried.
     const earned = outcome === 'rewarded' || (import.meta.env.DEV && outcome === 'unavailable');
     if (earned) {

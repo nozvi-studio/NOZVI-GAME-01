@@ -53,7 +53,15 @@ export type AdMobLike = Pick<
 
 type BannerState = 'none' | 'shown' | 'hidden';
 
-export function createAdMobDriver(admob: AdMobLike, config: AdMobConfig): AdsDriver {
+/** Quá hạn này mà quảng cáo chưa bắt đầu chiếu (tải chậm hoặc không phản hồi) thì coi như không có quảng cáo. */
+export const REWARDED_START_TIMEOUT_MS = 10_000;
+
+export function createAdMobDriver(
+  admob: AdMobLike,
+  config: AdMobConfig,
+  options: { startTimeoutMs?: number } = {}
+): AdsDriver {
+  const startTimeoutMs = options.startTimeoutMs ?? REWARDED_START_TIMEOUT_MS;
   let ready: Promise<boolean> | null = null;
   let sdkReady = false;
   let privacyRequired = false;
@@ -117,11 +125,17 @@ export function createAdMobDriver(admob: AdMobLike, config: AdMobConfig): AdsDri
       if (rewardedBusy || !(await init())) return 'unavailable';
       rewardedBusy = true;
       let rewarded = false;
+      let settled = false;
       let finish: (outcome: RewardedOutcome) => void = () => {};
       const done = new Promise<RewardedOutcome>((resolve) => {
-        finish = resolve;
+        finish = (outcome) => {
+          settled = true;
+          resolve(outcome);
+        };
       });
       const handles: { remove(): Promise<void> }[] = [];
+      // Đồng hồ chạy từ lúc bắt đầu tải đến lúc quảng cáo thật sự chiếu; xem quảng cáo lâu không bị tính.
+      const startTimer = setTimeout(() => finish('unavailable'), startTimeoutMs);
       try {
         handles.push(
           await admob.addListener(RewardAdPluginEvents.Rewarded, () => {
@@ -129,15 +143,23 @@ export function createAdMobDriver(admob: AdMobLike, config: AdMobConfig): AdsDri
           }),
           // Thưởng đến trước lúc đóng; đợi đóng rồi mới trả kết quả để người chơi về lại game.
           await admob.addListener(RewardAdPluginEvents.Dismissed, () => finish(rewarded ? 'rewarded' : 'dismissed')),
-          await admob.addListener(RewardAdPluginEvents.FailedToShow, () => finish('unavailable'))
+          await admob.addListener(RewardAdPluginEvents.FailedToShow, () => finish('unavailable')),
+          await admob.addListener(RewardAdPluginEvents.Showed, () => clearTimeout(startTimer))
         );
-        await admob.prepareRewardVideoAd({ adId: config.rewarded, isTesting: config.testing });
-        // Plugin chỉ resolve lời gọi này khi có thưởng; đóng sớm thì nó treo, nên không await.
-        admob.showRewardVideoAd().catch(() => finish(rewarded ? 'rewarded' : 'unavailable'));
+        // Không await: tải treo thì để đồng hồ ở trên cắt, và quảng cáo đến muộn sau đó không được bật lên nữa.
+        admob
+          .prepareRewardVideoAd({ adId: config.rewarded, isTesting: config.testing })
+          .then(() => {
+            if (settled) return;
+            // Plugin chỉ resolve lời gọi này khi có thưởng; đóng sớm thì nó treo, nên không await.
+            admob.showRewardVideoAd().catch(() => finish(rewarded ? 'rewarded' : 'unavailable'));
+          })
+          .catch(() => finish('unavailable'));
         return await done;
       } catch {
         return 'unavailable';
       } finally {
+        clearTimeout(startTimer);
         rewardedBusy = false;
         for (const handle of handles) void handle.remove();
       }
