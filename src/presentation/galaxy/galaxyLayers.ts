@@ -15,6 +15,8 @@ export type GalaxyLayerHost = {
   ring?: { rx: number; ry: number };
   /** Intro tweens are created paused and parked here until the art scrolls into view. */
   heldIntro?: Phaser.Tweens.Tween[];
+  /** Layers keep their final state, as under reduced motion (the map's later visits). */
+  skipIntro?: boolean;
 };
 
 const kit = (host: GalaxyLayerHost) => host.size / 350;
@@ -33,8 +35,8 @@ function layer(host: GalaxyLayerHost, parent: Phaser.GameObjects.Container, stem
 }
 
 /** Under reduced motion layers keep their final state (never left at alpha 0); otherwise run the intro. */
-function intro(play: () => void): void {
-  if (!isReducedMotion()) play();
+function intro(host: GalaxyLayerHost, play: () => void): void {
+  if (!isReducedMotion() && !host.skipIntro) play();
 }
 
 /** An intro tween; held (paused) when the host defers intros until the art is on screen. */
@@ -45,7 +47,7 @@ function introTween(host: GalaxyLayerHost, config: Phaser.Types.Tweens.TweenBuil
 
 function fadeIn(host: GalaxyLayerHost, image: Phaser.GameObjects.Image | null, delay: number, duration = 700): void {
   if (!image) return;
-  intro(() => {
+  intro(host, () => {
     image.setAlpha(0);
     introTween(host, { targets: image, alpha: 1, delay, duration, ease: 'Sine.easeOut' });
   });
@@ -87,7 +89,7 @@ function buildRing(host: GalaxyLayerHost): void {
   // The ring turns into place and fades in; its core and orbiting dots keep looping underneath.
   if (body) {
     const bodyScale = body.scaleX;
-    intro(() => {
+    intro(host, () => {
       body.setAlpha(0).setScale(bodyScale * 0.8).setAngle(-50);
       introTween(host, { targets: body, alpha: 1, scaleX: bodyScale, scaleY: bodyScale, angle: 0, duration: 1800, ease: 'Cubic.easeOut' });
     });
@@ -138,14 +140,14 @@ function buildPrism(host: GalaxyLayerHost): void {
   const glass = layer(host, host.root, 'prism-glass', { x: 175, y: 247 });
   if (beam) {
     const beamScale = beam.scaleX;
-    intro(() => {
+    intro(host, () => {
       beam.setScale(0);
       introTween(host, { targets: beam, scaleX: beamScale, scaleY: beamScale, duration: 900, ease: 'Sine.easeOut' });
     });
   }
   if (fan) {
     const fanScaleY = fan.scaleY;
-    intro(() => {
+    intro(host, () => {
       fan.setScale(fan.scaleX, 0).setAlpha(0);
       introTween(host, {
         targets: fan, scaleY: fanScaleY, alpha: 1, delay: 800, duration: 1300, ease: 'Cubic.easeOut',
@@ -155,7 +157,7 @@ function buildPrism(host: GalaxyLayerHost): void {
   }
   if (glass) {
     const glassScale = glass.scaleX;
-    intro(() => {
+    intro(host, () => {
       glass.setScale(glassScale * 0.82).setAlpha(0);
       introTween(host, { targets: glass, scaleX: glassScale, scaleY: glassScale, alpha: 1, delay: 500, duration: 1400, ease: 'Cubic.easeOut' });
     });

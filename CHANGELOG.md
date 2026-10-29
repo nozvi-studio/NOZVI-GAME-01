@@ -4,6 +4,23 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Removed (cleanup)
+- `LevelSelectScene`: the unused chapter-one FX (`chapterOneFx`, `addChapterOneFx`, `updateChapterOneFx`); chapter atmosphere now lives only in `chapterAtmosphereFx`.
+- `public/assets/studio.svg`: an old logo that nothing referenced. `public/icon.svg` is also unreferenced but kept (likely the source for the PNG icons).
+
+### Fixed (cleanup)
+- `BackgroundScene` now removes its `ethereal:ripple` listener from `game.events` on shutdown, so a scene restart no longer stacks a second listener.
+
+### Changed (performance, level map intro)
+- The level map plays its arrival animations (galaxy fade-ins and layer intros, chapter title cards) only on the first visit of a session (`galaxy/mapIntroSeen.ts`, in memory, so it resets on each launch). Later visits show the artwork at rest: `addGalaxyArtwork(..., skipIntro)` / `GalaxyLayerHost.skipIntro` skip the layer tweens, title cards never play, and art slots fill after 200 ms instead of 600 ms. Textures stay in Phaser's texture manager, so nothing is loaded again either. `tests/mapIntroSeen.test.ts`. Not yet measured on a weak device.
+
+### Added (gameplay tilt)
+- `PlayTiltMotes` (`sky/PlayTiltMotes.ts`): 10 very faint motes (one shared soft-dot texture) between the sky and the board in `PlayScene`, leaning with `deviceTilt` (gyroscope on device, mouse on desktop) by up to 7 design units, with a slow bob and twinkle. Board, tray and pieces never move, so drag hit-testing is unchanged. Still at rest under reduced motion. The shared sky already followed the tilt in play.
+- Glass pieces catch a soft streak of light that slides across them as the device tilts (`board/pieceSheen.ts`). Each (piece x turn) bakes a strip of 7 frames of the streak clipped to the piece outline (`PieceTextureKeys.sheen`, optional) at half the silhouette size; `PieceView` swaps the frame from `deviceTilt`, alpha 0.08 at rest up to 0.3 leaning. Made cheap after it stuttered: normal blend (an ADD image between normal ones split the batch once per piece), strips bake lazily one per frame only when the piece queue is empty (`PieceTextureCache.sheenQueue`, never inside `ensure`, so turning a piece no longer bakes), and a quarter of the earlier pixels. Only the pieces shine; the board and tray frames and drags are untouched. Not yet measured on a weak device.
+
+### Changed (performance, level select)
+- `LevelSelectScene` no longer loads every galaxy theme in `preload` (5 themes, 23 SVGs rasterised at 1024 px, about 90 MB of textures, all at the moment of the Menu to map transition, which froze weak devices). Each artwork place is now an empty slot container and `fillArtSlots` loads one theme at a time in the background (starting 600 ms after the scene is up, 150 ms apart) and fills its slots. A slot that scrolled into view before its theme was ready plays its arrival once filled. Not yet measured on a weak device.
+
 ### Added (ads)
 - Google AdMob via `@capacitor-community/admob` 8.2.1 (Android only; web and tests stay no-op). `AdsPort` in `application/platformPort.ts` (`init`, `showBanner`, `hideBanner`, `showRewarded`, `privacyOptionsRequired`, `showPrivacyOptions`), `createAds` in `infrastructure/platformServices.ts` swallows driver errors, `infrastructure/admobDriver.ts` runs the UMP consent flow before SDK init and only requests ads when UMP allows it.
 - Banner at the bottom of the level map (`LevelSelectScene` shows it on create, hides it on shutdown). Rewarded is used by the stuck hint below.

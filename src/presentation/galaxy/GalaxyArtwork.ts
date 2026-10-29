@@ -133,6 +133,8 @@ export function addGalaxyArtwork(
   look?: { tint?: number; spin?: 1 | -1 },
   /** Hold the arrival animation until `playGalaxyIntro(root)`. */
   deferIntro = false,
+  /** Show the artwork at rest: no arrival animation at all. */
+  skipIntro = false,
 ): Phaser.GameObjects.Container {
   const root = scene.add.container(x, y);
   // Content sits on a stage so the scene's own fades on `root` do not fight the arrival fade.
@@ -142,7 +144,7 @@ export function addGalaxyArtwork(
   const frame: Array<(elapsedMs: number) => void> = [];
   if (isLayeredGalaxy(theme.id)) {
     const heldIntro: Phaser.Tweens.Tween[] | undefined = deferIntro ? [] : undefined;
-    buildGalaxyLayers({ scene, root: stage, size, motion, frame, ring, heldIntro }, theme.id);
+    buildGalaxyLayers({ scene, root: stage, size, motion, frame, ring, heldIntro, skipIntro }, theme.id);
     if (heldIntro) root.setData(HELD_INTRO_KEY, heldIntro);
   } else {
     const key = `galaxy-${theme.id === 'spiral' ? 'spiral' : 'dwarf'}`;
