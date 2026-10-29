@@ -15,13 +15,16 @@
 - [x] AI onboarding setup: `CLAUDE.md`, `AGENT.md`
 - [x] Project log setup: `STATUS.md`, `CHANGELOG.md`
 - [x] Add 5 languages: es, fr, de, ko, zh-CN (now 10 locales)
+- [x] Ethereal Observatory theme & interaction upgrade (Direction 2): discrete 3-layer dynamic parallax on MenuScene & LevelSelectScene (deepest tiny rich-tinted stars sweep fastest at ±46px, mid-tier stars & galaxy artwork drift at ±20px, foreground emblems/nodes anchored at ±6px), gentle touch ripples, hero emblem ambient motes & tap resonance, full-chapter atmosphere FX, celestial snap feedback, smooth dialog transitions, and gyroscope device tilt/shake parallax.
 
+- [ ] `feature/ethereal-ui` perf pass (merged into local `release/v1.0.0` with `feature/admob-ads`, 2026-10-29, not pushed): parallax stars baked to textures; typecheck + tests pass, but frame rate not yet measured on laptop/Android. Possible next steps: `ethereal:ripple` listener in `BackgroundScene` is never removed (leaks on scene restart); consider lower density on low-end devices.
 - [x] Localization release checklist (LOC-01..05) on `feature/release-checklist-localization`: see `docs/testing/release-checklist-localization.md`. Scope locked; device evidence not collected yet. LOC-05 is N/A (no IAP). Chapter 2 Endless gate removed; chapters 4/5 "Coming soon" kept pending the leader.
 
 - [x] Compliance checklist (COMP-01..05): see `docs/testing/release-checklist-compliance.md`. Blocker: no Privacy Policy / Terms link or URL yet (COMP-01). COMP-03 and COMP-05 are N/A (no IAP, no accounts).
 
 - [x] Gameplay checklist (GAME-01..04): see `docs/testing/release-checklist-gameplay.md`. No lose state or currency reward in the game (confirm with the leader); no network code, so GAME-03 is N/A; device evidence still to collect.
-- [ ] Monetization checklist (MON-01..06): see `docs/testing/release-checklist-monetization.md`. No ads/IAP/analytics SDK, so MON-01..05 are N/A; MON-06 (analytics events) left open for the owner.
+
+- [ ] Monetization checklist (MON-01..06): see `docs/testing/release-checklist-monetization.md`. No ads/IAP/analytics SDK, so MON-01..05 are N/A; MON-06 (analytics events) left open for the owner.
 
 ## Next steps
 - Ads (AdMob, banner + privacy row + stuck hint done, test ads only; branch `feature/admob-ads`, worktree `../NOZVI-GAME-01-ads`): create the AdMob account/app, real App ID + banner/rewarded unit IDs, UMP message in Privacy & messaging, Privacy Policy URL (COMP-01), Data Safety + "Contains ads" in Play Console. Privacy settings row in Settings is done (hidden outside EEA/UK; check it on a device with UMP debug geography EEA). The stuck hint (rewarded ad) is built and checked in the dev server with the headless browser; still to check on a device with real test ads: the `?` button spot (top right, where the retired eye button was), the ad actually starting from Watch, and the clock staying paused through the ad. Hint on linked-rotation levels (chapter 3) puts a piece straight onto its turns without rotating its group, so rotating a driver afterwards turns the driven piece away; judge on device. The banner overlays the bottom of the level map; check on device. `npm run android:build` calls `gradlew` without `.` and fails on Windows; run `gradlew.bat assembleDebug` in `android/`.

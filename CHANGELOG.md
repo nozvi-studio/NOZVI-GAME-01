@@ -12,6 +12,26 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 - Stuck hint (rewarded ad): once every star is gone (`timer.stars === 0`, 75 % of the time budget) a `?` button flies in at the top right (`HintButton`, `FEEDBACK_TOKENS.hintButton`). It opens `HintDialog` ("Stuck? Watch a short ad and we will place one piece for you"); the ad starts only after Watch. A completed ad puts one piece on its sample-solution spot (`domain/hintPlacement.ts` `applyHint`, `PlayController.onHint`), clearing wrong pieces that sit on those cells, and plays the normal snap feedback. Early close gives nothing; no ad shows "No ad is available right now" and keeps the button. The level clock stops while the dialog or the ad is open. The button needs `AdsPort.rewardedReady()` (never on web); the dev server shows it and grants the hint without an ad. Strings `hint_title/body/watch/no_ad` in all ten locales.
 - `tests/admobDriver.test.ts`, `tests/hintPlacement.test.ts` (hints win every approved campaign level, also with a wrong piece on a target), `tests/playControllerHint.test.ts`, cases in `tests/dialogsInput.test.ts`.
 
+### Changed (performance)
+- Ethereal parallax star layers are baked into textures once (`sky/parallaxStars.ts`) instead of Phaser `Graphics` with hundreds or thousands of `fillCircle` calls, which were re-triangulated (earcut) every frame: menu deep/mid layers are Images, the level map deep layer is a repeating `TileSprite` tile (was 360 circles per 2048 px of map height).
+- `SkyBackdrop` twinkling stars are 30 tinted sprites with per-frame alpha (was a Graphics cleared and refilled each frame, parsing hex colours per star); the ripple layer is only redrawn while ripples exist.
+- Menu ambient motes are sprites sharing one soft-dot texture (were 14 Graphics).
+
+### Added (visuals & interactions)
+- Ethereal Observatory theme & interaction upgrade (Direction 2):
+  - 3-layer parallax sky in `SkyBackdrop` (deep cosmos tile layer + midfield + twinkling stars) with subtle pointer parallax response.
+  - Dedicated discrete 3-layer dynamic parallax containers on `MenuScene` and `LevelSelectScene`:
+    - Deepest background starfield (`deepStarsContainer` / `mapDeepStarsContainer`): 160-360 tiny, rich-tinted stars (amber, star sapphire, young star magenta, starlight) sweeping fastest at `tilt * 46px` to produce unmistakable celestial depth.
+    - Middle celestial layer (`midStarsContainer` & `galaxy` / `mapMidStarsContainer` & `galaxyLayers`): glowing mid-tier stars, nebulae, and chapter galaxy artwork drifting at medium speed (`tilt * 20px`).
+    - Outermost foreground layer (`emblem` & motes / constellation nodes, lines & chapter cards): subtle, grounded anchor (`tilt * 6px` counter-drift) keeping tactile UI solid.
+    - Cleaned static stars previously baked into `galaxyGradient` and `galaxyMapGradient` canvases, ensuring every star on screen is dynamically responsive to tilt/motion.
+  - Calibrated 3-layer Parallax speeds per user feedback: outermost foreground (emblems/UI) moves slowest (0.25x), middle layer (main stars & galaxy art) moves at medium speed (0.75x), and deepest background layer (tiny rich-tinted stars) sweeps fastest (1.35x).
+  - Soft luminous starlight aura ripples (`ethereal:ripple`) on touch/click across BackgroundScene, MenuScene, LevelSelectScene, and PauseDialog.
+  - Ambient orbiting starlight motes and interactive touch resonance for the MenuScene hero emblem.
+  - Chapter-specific atmosphere effects (sparkling stars, meteors, tinted dust) across all chapters in `LevelSelectScene`.
+  - Celestial snap resonance: snapping a piece on target triggers background starlight ripple (`FeedbackDirector`).
+  - Smooth arrival and exit animations for `PauseDialog` with soft scale & fade easing.
+
 ### Fixed
 - "X/N pieces matched" counted any piece resting on the board. In free placement every drop snaps to a grid point, so a random drop read as a match (bar, ring, rising bell). It now counts only pieces on their sample-solution placement (`domain/targetMatch.ts`: `isOnTarget`, `matchedPieceCount`; identical pieces may swap, a won level counts all). `PlayViewSnapshot.snappedCount` is now `matchedCount`.
 - With Sound Effects off, the level music no longer ducks when a level is won: `playVictoryAudio` ducks only if `SfxPort.isEnabled()` (new; false when the setting is off or there is no driver).

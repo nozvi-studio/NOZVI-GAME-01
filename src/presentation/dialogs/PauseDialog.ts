@@ -41,6 +41,7 @@ export class PauseDialog {
 
     const view = designViewBounds(this.scene);
     this.container = this.scene.add.container(view.width / 2, view.height / 2).setDepth(150);
+    this.scene.game?.events?.emit('ethereal:ripple', view.width / 2, view.height / 2, 0x7fd8ff, 140);
 
     // 1. Lớp phủ đen mờ 65%
     const backdrop = this.scene.add
@@ -383,13 +384,33 @@ export class PauseDialog {
       playUiCue(this.scene, 'tap');
     });
     this.container.add([label, track, thumb, hit]);
+    this.container.setScale(0.94);
+    this.container.setAlpha(0);
+    this.scene.tweens.add({
+      targets: this.container,
+      scaleX: 1,
+      scaleY: 1,
+      alpha: 1,
+      duration: 180,
+      ease: 'Back.easeOut',
+    });
   }
 
   public close(): void {
     if (this.container) {
       playUiCue(this.scene, 'close');
-      this.container.destroy();
+      const target = this.container;
       this.container = undefined;
+      this.scene.tweens.add({
+        targets: target,
+        scaleX: 0.94,
+        scaleY: 0.94,
+        alpha: 0,
+        duration: 120,
+        ease: 'Cubic.easeIn',
+        onComplete: () => target.destroy(),
+      });
+      return;
     }
   }
 
