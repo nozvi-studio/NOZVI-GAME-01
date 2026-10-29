@@ -2,6 +2,8 @@ import type Phaser from 'phaser';
 import type { Level, Piece } from '../../domain/model.ts';
 import { drawJewelPolygon } from './JewelShape.ts';
 import { piecePolygonAround } from './layout.ts';
+import type { CanvasPoint } from './layout.ts';
+import { bakePieceSheen, SHEEN_SCALE } from './pieceSheen.ts';
 
 /** Lề mỗi phía so với cạnh khung: hào quang tam giác tràn ~0.165 cạnh */
 export const TEXTURE_PAD_RATIO = 0.25;
@@ -10,7 +12,8 @@ export const SILHOUETTE_SCALE = 0.5;
 /** Ngưỡng F3 P-06 */
 export const TEXTURE_BUDGET_BYTES = 24 * 1024 * 1024;
 
-export type PieceTextureKeys = { body: string; shadow: string; light: string; resolution: number };
+/** `sheen` is a strip of tilt-light frames clipped to the piece; absent when it could not be baked. */
+export type PieceTextureKeys = { body: string; shadow: string; light: string; sheen?: string; resolution: number };
 
 export interface PieceTextureSource {
   keys(pieceId: string, turns: number): PieceTextureKeys | null;
@@ -53,6 +56,8 @@ export class PieceTextureCache implements PieceTextureSource {
   private readonly resolution: 1 | 0.75;
   private readonly baked = new Map<string, PieceTextureKeys>();
   private readonly queue: Array<{ pieceId: string; turns: number }> = [];
+  /** Sheen strips bake only when nothing else is waiting, one per frame, never inside `ensure`. */
+  private readonly sheenQueue: Array<{ keys: PieceTextureKeys; key: string; outline: CanvasPoint[]; size: number }> = [];
   private bytes = 0;
 
   constructor(scene: Phaser.Scene, level: Level, cellPixel: number) {
@@ -71,7 +76,7 @@ export class PieceTextureCache implements PieceTextureSource {
 
   bakeNext(): boolean {
     const next = this.queue.shift();
-    if (!next) return false;
+    if (!next) return this.bakeSheen();
     this.ensure(next.pieceId, next.turns);
     return true;
   }
@@ -96,13 +101,25 @@ export class PieceTextureCache implements PieceTextureSource {
 
   destroy(): void {
     for (const keys of this.baked.values()) {
-      for (const key of [keys.body, keys.shadow, keys.light]) {
-        if (this.scene.textures.exists(key)) this.scene.textures.remove(key);
+      for (const key of [keys.body, keys.shadow, keys.light, keys.sheen]) {
+        if (key && this.scene.textures.exists(key)) this.scene.textures.remove(key);
       }
     }
     this.baked.clear();
     this.queue.length = 0;
+    this.sheenQueue.length = 0;
     this.bytes = 0;
+  }
+
+  private bakeSheen(): boolean {
+    const job = this.sheenQueue.shift();
+    if (!job) return false;
+    const bytes = bakePieceSheen(this.scene, job.key, job.outline, job.size);
+    if (bytes !== null) {
+      job.keys.sheen = job.key;
+      this.bytes += bytes;
+    }
+    return true;
   }
 
   private id(pieceId: string, turns: number): string {
@@ -137,6 +154,15 @@ export class PieceTextureCache implements PieceTextureSource {
     }
     g.destroy();
     this.bytes += pieceTurnBytes(piece.frameSize, this.cellPixel, this.resolution);
+    if (typeof this.scene.textures.createCanvas === 'function') {
+      const size = Math.ceil(sil * SHEEN_SCALE);
+      this.sheenQueue.push({
+        keys,
+        key: `${prefix}:sheen`,
+        outline: outline.map((p) => ({ x: p.x * SHEEN_SCALE, y: p.y * SHEEN_SCALE })),
+        size,
+      });
+    }
     return keys;
   }
 }
