@@ -4,6 +4,11 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Changed (performance)
+- Ethereal parallax star layers are baked into textures once (`sky/parallaxStars.ts`) instead of Phaser `Graphics` with hundreds or thousands of `fillCircle` calls, which were re-triangulated (earcut) every frame: menu deep/mid layers are Images, the level map deep layer is a repeating `TileSprite` tile (was 360 circles per 2048 px of map height).
+- `SkyBackdrop` twinkling stars are 30 tinted sprites with per-frame alpha (was a Graphics cleared and refilled each frame, parsing hex colours per star); the ripple layer is only redrawn while ripples exist.
+- Menu ambient motes are sprites sharing one soft-dot texture (were 14 Graphics).
+
 ### Added (visuals & interactions)
 - Ethereal Observatory theme & interaction upgrade (Direction 2):
   - 3-layer parallax sky in `SkyBackdrop` (deep cosmos tile layer + midfield + twinkling stars) with subtle pointer parallax response.

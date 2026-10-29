@@ -411,7 +411,6 @@ export class PauseDialog {
         onComplete: () => target.destroy(),
       });
       return;
-      this.container = undefined;
     }
   }
 

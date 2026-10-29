@@ -8,6 +8,7 @@ import { advanceDrift } from './skyMood.ts';
 import type { MoodState } from './skyMood.ts';
 import { milkyWayBlobs, MILKY_WAY_SEED } from '../galaxy/milkyWay.ts';
 import { deviceTilt } from './deviceTilt.ts';
+import { ensureSoftDotTexture } from './parallaxStars.ts';
 
 /**
  * Quầng sáng tròn mờ dần ra mép, dùng gradient thật của canvas 2D.
@@ -51,7 +52,7 @@ interface EtherealRipple {
  * - Lớp trời (gradient, nebula, trăng) -> RenderTexture
  * - Lớp sao sâu Parallax (Deep Cosmos) -> TileSprite chậm
  * - Lớp sao chính tĩnh -> TileSprite
- * - Lớp sao nhấp nháy -> Graphics
+ * - Lớp sao nhấp nháy -> Image dùng chung một texture chấm sáng (đổi alpha, không vẽ lại)
  * - Lớp sóng xúc giác ánh quang (Ethereal Aura Ripples) -> Graphics
  */
 export class SkyBackdrop {
@@ -61,7 +62,7 @@ export class SkyBackdrop {
   private readonly skyLayer: Phaser.GameObjects.RenderTexture;
   private readonly deepStarLayer: Phaser.GameObjects.TileSprite;
   private readonly starLayer: Phaser.GameObjects.TileSprite;
-  private readonly twinkleLayer: Phaser.GameObjects.Graphics;
+  private readonly twinkleSprites: Phaser.GameObjects.Image[];
   private readonly auraLayer: Phaser.GameObjects.Graphics;
   private readonly twinklingStars: Star[];
   private readonly staticStars: Star[];
@@ -73,6 +74,8 @@ export class SkyBackdrop {
   private pointerParallaxX = 0;
   private pointerParallaxY = 0;
   private ripples: EtherealRipple[] = [];
+  /** True while the aura layer still holds a drawing that must be cleared. */
+  private auraDirty = false;
 
   constructor(scene: Phaser.Scene, options: SkyBackdropOptions) {
     this.scene = scene;
@@ -106,7 +109,15 @@ export class SkyBackdrop {
       .setOrigin(0, 0)
       .setDepth(DEPTH_TOKENS.backgroundSky + 1);
 
-    this.twinkleLayer = scene.add.graphics().setDepth(DEPTH_TOKENS.backgroundSky + 2);
+    // Sprites instead of a Graphics cleared and refilled every frame (30 circles re-triangulated).
+    const dotKey = ensureSoftDotTexture(scene);
+    this.twinkleSprites = this.twinklingStars.map((star) =>
+      scene.add
+        .image(star.x, star.y, dotKey)
+        .setDepth(DEPTH_TOKENS.backgroundSky + 2)
+        .setDisplaySize(star.r * 2.6, star.r * 2.6)
+        .setTint(Phaser.Display.Color.HexStringToColor(star.color).color)
+    );
     this.auraLayer = scene.add.graphics().setDepth(DEPTH_TOKENS.backgroundSky + 2.5);
 
     this.moodState = { driftSpeed: options.driftSpeed, dim: 0 };
@@ -227,20 +238,27 @@ export class SkyBackdrop {
     this.starLayer.tilePositionY = -offset + totalParallaxY * 0.75;
     this.starLayer.tilePositionX = totalParallaxX * 0.75;
 
-    this.twinkleLayer.clear();
-    for (const star of this.twinklingStars) {
-      const y = (star.y + offset + totalParallaxY * 0.75) % height;
-      const x = star.x + totalParallaxX * 0.75;
-      const alpha = twinkleAlpha(star, this.elapsedMs);
-      this.twinkleLayer.fillStyle(
-        Phaser.Display.Color.HexStringToColor(star.color).color,
-        alpha
-      );
-      this.twinkleLayer.fillCircle(x, y, star.r);
+    for (let i = 0; i < this.twinklingStars.length; i++) {
+      const star = this.twinklingStars[i];
+      this.twinkleSprites[i]
+        .setPosition(
+          star.x + totalParallaxX * 0.75,
+          (star.y + offset + totalParallaxY * 0.75) % height
+        )
+        .setAlpha(twinkleAlpha(star, this.elapsedMs));
     }
 
     // Vẽ và cập nhật các gợn sóng xúc giác thiền định (Aura Ripples)
+    if (this.ripples.length > 0 || this.auraDirty) {
+      this.drawRipples(deltaMs);
+    }
+
+    this.dimLayer.setAlpha(this.moodState.dim);
+  }
+
+  private drawRipples(deltaMs: number): void {
     this.auraLayer.clear();
+    this.auraDirty = this.ripples.length > 0;
     for (let i = this.ripples.length - 1; i >= 0; i--) {
       const rip = this.ripples[i];
       rip.r += (rip.maxR - rip.r) * Math.min(1, deltaMs * 0.0035);
@@ -257,8 +275,7 @@ export class SkyBackdrop {
       this.auraLayer.fillStyle(rip.color, rip.alpha * 0.15);
       this.auraLayer.fillCircle(rip.x, rip.y, rip.r * 0.65);
     }
-
-    this.dimLayer.setAlpha(this.moodState.dim);
+    this.auraDirty = this.ripples.length > 0;
   }
 
   public destroy(): void {
@@ -266,7 +283,7 @@ export class SkyBackdrop {
     this.skyLayer.destroy();
     this.deepStarLayer.destroy();
     this.starLayer.destroy();
-    this.twinkleLayer.destroy();
+    this.twinkleSprites.forEach((sprite) => sprite.destroy());
     this.auraLayer.destroy();
     if (this.scene.textures.exists(this.starTextureKey)) {
       this.scene.textures.remove(this.starTextureKey);

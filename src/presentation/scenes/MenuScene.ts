@@ -31,7 +31,7 @@ import { computeMenuLayout, type MenuLayout } from '../menu/menuLayout.ts';
 import { addGalaxyArtwork, galaxyGradient, preloadGalaxyArtwork } from '../galaxy/GalaxyArtwork.ts';
 import { setPcBackground } from '../sky/pcBackground.ts';
 import { deviceTilt } from '../sky/deviceTilt.ts';
-import { mulberry32 } from '../sky/starField.ts';
+import { ensureParallaxStarTexture, ensureSoftDotTexture } from '../sky/parallaxStars.ts';
 
 /** The surface MenuScene drives on whichever hero emblem the chapter uses. */
 type MenuEmblem = Pick<DualJewelEmblem, 'graphics' | 'setRingSpeed' | 'update'>;
@@ -66,7 +66,7 @@ export class MenuScene extends Phaser.Scene implements Choreographed {
   private blockOffsetY = 0;
   private layout!: MenuLayout;
   private safe = { top: 0, right: 0, bottom: 0, left: 0 };
-  private ambientMotes: Array<{ graphics: Phaser.GameObjects.Graphics; angle: number; dist: number; speed: number; yOffset: number }> = [];
+  private ambientMotes: Array<{ graphics: Phaser.GameObjects.Image; angle: number; dist: number; speed: number; yOffset: number }> = [];
 
   constructor() {
     super({ key: 'MenuScene' });
@@ -868,70 +868,55 @@ export class MenuScene extends Phaser.Scene implements Choreographed {
       const my = ey + Math.sin(mote.angle) * (mote.dist * 0.45) + mote.yOffset;
       mote.graphics.setPosition(mx, my);
     }
-    return;
   }
 
   private createMenuParallaxLayers(width: number, height: number, theme: GalaxyTheme): void {
-    // 1. Lớp xa nhất: 160 ngôi sao nhỏ xíu, giàu sắc độ thiên hà (amber, xanh lam, tím hồng), quét nhanh nhất
-    this.deepStarsContainer = this.add.container(0, 0).setDepth(-2);
-    const deepGraphics = this.add.graphics();
-    const deepRand = mulberry32(1103 + theme.chapter * 59);
-    const deepColors = [
-      COLOR_NUMBERS.amberSolid,
-      0x7fb8ff,
-      0xcfe6ff,
-      0xff8fc8,
-      0x5c7cfa,
-      theme.colors.accent,
-      0xffffff,
-    ];
+    // Both layers are baked into textures once; a Graphics with hundreds of circles is
+    // re-triangulated every frame, an Image only moves.
     const pad = 60;
-    for (let i = 0; i < 160; i++) {
-      const sx = -pad + deepRand() * (width + pad * 2);
-      const sy = -pad + deepRand() * (height + pad * 2);
-      const rad = 0.7 + deepRand() * 0.9;
-      const color = deepColors[Math.floor(deepRand() * deepColors.length)];
-      const alpha = 0.45 + deepRand() * 0.5;
-      deepGraphics.fillStyle(color, alpha);
-      deepGraphics.fillCircle(sx, sy, rad);
-      if (deepRand() > 0.65) {
-        deepGraphics.fillStyle(0xffffff, Math.min(1, alpha + 0.3));
-        deepGraphics.fillCircle(sx, sy, rad * 0.45);
-      }
-    }
-    this.deepStarsContainer.add(deepGraphics);
+    const texW = width + pad * 2;
+    const texH = height + pad * 2;
+
+    // 1. Lớp xa nhất: 160 ngôi sao nhỏ xíu, giàu sắc độ thiên hà (amber, xanh lam, tím hồng), quét nhanh nhất
+    const deepKey = ensureParallaxStarTexture(this, `menu_deep_stars_${theme.chapter}_${texW}x${texH}`, texW, texH, {
+      count: 160,
+      seed: 1103 + theme.chapter * 59,
+      colors: [COLOR_NUMBERS.amberSolid, 0x7fb8ff, 0xcfe6ff, 0xff8fc8, 0x5c7cfa, theme.colors.accent, 0xffffff],
+      minRadius: 0.7,
+      maxRadius: 1.6,
+      minAlpha: 0.45,
+      maxAlpha: 0.95,
+      coreChance: 0.35,
+    });
+    this.deepStarsContainer = this.add.container(0, 0).setDepth(-2);
+    this.deepStarsContainer.add(this.add.image(-pad, -pad, deepKey).setOrigin(0));
 
     // 2. Lớp giữa: 48 ngôi sao sáng tầm trung có quầng sáng nhẹ
+    const midKey = ensureParallaxStarTexture(this, `menu_mid_stars_${theme.chapter}_${texW}x${texH}`, texW, texH, {
+      count: 48,
+      seed: 5071 + theme.chapter * 17,
+      colors: [theme.colors.accent, COLOR_NUMBERS.amberSolid, 0xffffff, 0xcfe6ff],
+      minRadius: 1.6,
+      maxRadius: 3.2,
+      minAlpha: 0.55,
+      maxAlpha: 0.95,
+      halo: true,
+      coreChance: 1,
+    });
     this.midStarsContainer = this.add.container(0, 0).setDepth(-1.2);
-    const midGraphics = this.add.graphics();
-    const midRand = mulberry32(5071 + theme.chapter * 17);
-    const midColors = [theme.colors.accent, COLOR_NUMBERS.amberSolid, 0xffffff, 0xcfe6ff];
-    for (let i = 0; i < 48; i++) {
-      const mx = -pad + midRand() * (width + pad * 2);
-      const my = -pad + midRand() * (height + pad * 2);
-      const mRad = 1.6 + midRand() * 1.6;
-      const mCol = midColors[i % midColors.length];
-      const mAlpha = 0.55 + midRand() * 0.4;
-      midGraphics.fillStyle(mCol, mAlpha * 0.35);
-      midGraphics.fillCircle(mx, my, mRad * 2.2);
-      midGraphics.fillStyle(mCol, mAlpha);
-      midGraphics.fillCircle(mx, my, mRad);
-      midGraphics.fillStyle(0xffffff, 0.9);
-      midGraphics.fillCircle(mx, my, mRad * 0.4);
-    }
-    this.midStarsContainer.add(midGraphics);
+    this.midStarsContainer.add(this.add.image(-pad, -pad, midKey).setOrigin(0));
   }
 
   private setupAmbientMotes(theme: GalaxyTheme): void {
     const colors = [theme.colors.accent, COLOR_NUMBERS.amberSolid, 0xffffff, COLOR_NUMBERS.iceHighlight];
+    const dotKey = ensureSoftDotTexture(this);
     for (let i = 0; i < 14; i++) {
-      const g = this.add.graphics().setDepth(-0.5);
       const r = 1.6 + Math.random() * 2.2;
-      const col = colors[i % colors.length];
-      g.fillStyle(col, 0.65 + Math.random() * 0.35);
-      g.fillCircle(0, 0, r);
-      g.fillStyle(0xffffff, 0.85);
-      g.fillCircle(0, 0, r * 0.4);
+      const g = this.add.image(0, 0, dotKey)
+        .setDepth(-0.5)
+        .setDisplaySize(r * 2.6, r * 2.6)
+        .setTint(colors[i % colors.length])
+        .setAlpha(0.65 + Math.random() * 0.35);
 
       const dist = 110 + (i * 12) + Math.random() * 25;
       const angle = (i / 14) * Math.PI * 2 + Math.random() * 0.4;

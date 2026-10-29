@@ -17,12 +17,14 @@
 - [x] Add 5 languages: es, fr, de, ko, zh-CN (now 10 locales)
 - [x] Ethereal Observatory theme & interaction upgrade (Direction 2): discrete 3-layer dynamic parallax on MenuScene & LevelSelectScene (deepest tiny rich-tinted stars sweep fastest at ±46px, mid-tier stars & galaxy artwork drift at ±20px, foreground emblems/nodes anchored at ±6px), gentle touch ripples, hero emblem ambient motes & tap resonance, full-chapter atmosphere FX, celestial snap feedback, smooth dialog transitions, and gyroscope device tilt/shake parallax.
 
+- [ ] `feature/ethereal-ui` perf pass (uncommitted): parallax stars baked to textures; typecheck + tests pass, but frame rate not yet measured on laptop/Android. Possible next steps: `ethereal:ripple` listener in `BackgroundScene` is never removed (leaks on scene restart); consider lower density on low-end devices.
 - [x] Localization release checklist (LOC-01..05) on `feature/release-checklist-localization`: see `docs/testing/release-checklist-localization.md`. Scope locked; device evidence not collected yet. LOC-05 is N/A (no IAP). Chapter 2 Endless gate removed; chapters 4/5 "Coming soon" kept pending the leader.
 
 - [x] Compliance checklist (COMP-01..05): see `docs/testing/release-checklist-compliance.md`. Blocker: no Privacy Policy / Terms link or URL yet (COMP-01). COMP-03 and COMP-05 are N/A (no IAP, no accounts).
 
 - [x] Gameplay checklist (GAME-01..04): see `docs/testing/release-checklist-gameplay.md`. No lose state or currency reward in the game (confirm with the leader); no network code, so GAME-03 is N/A; device evidence still to collect.
-- [ ] Monetization checklist (MON-01..06): see `docs/testing/release-checklist-monetization.md`. No ads/IAP/analytics SDK, so MON-01..05 are N/A; MON-06 (analytics events) left open for the owner.
+
+- [ ] Monetization checklist (MON-01..06): see `docs/testing/release-checklist-monetization.md`. No ads/IAP/analytics SDK, so MON-01..05 are N/A; MON-06 (analytics events) left open for the owner.
 
 ## Next steps
 - Crash reporting / tracking: plug real drivers into `createPlatformServices()` in `main.ts` (web: CrazyGames SDK, native: `@sentry/capacitor`); check CrazyGames' rules on outbound requests first. Update Privacy Policy / Data Safety (COMP-01).

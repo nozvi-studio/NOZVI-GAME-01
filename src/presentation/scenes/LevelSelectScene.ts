@@ -37,7 +37,7 @@ import { createSparkles, meteorPose, sparkleAlpha, type Sparkle } from '../galax
 import { setPcBackground } from '../sky/pcBackground.ts';
 import { deviceTilt } from '../sky/deviceTilt.ts';
 import { starTexture } from '../sky/starTexture.ts';
-import { mulberry32 } from '../sky/starField.ts';
+import { ensureParallaxStarTexture } from '../sky/parallaxStars.ts';
 import { formatStarTotal, nodeStarRow, starTotals, type StarTotal } from '../galaxy/levelStars.ts';
 import type { LevelResult } from '../../application/progressPort.ts';
 
@@ -992,34 +992,24 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
 
   /** Twinkling stars and an occasional shooting star over the chapter 1 haze. */
   private createMapParallaxLayers(totalHeight: number, _chapters: readonly ChapterBand[]): void {
-    // 1. Lớp xa nhất (Depth -2): 360 ngôi sao nhỏ xíu, màu sắc phong phú quét nhanh nhất
-    this.mapDeepStarsContainer = this.add.container(0, 0).setDepth(-2);
-    const deepGraphics = this.add.graphics();
-    const rand = mulberry32(4096);
-    const deepColors = [
-      COLOR_NUMBERS.amberSolid,
-      0x7fb8ff,
-      0xcfe6ff,
-      0xff8fc8,
-      0x5c7cfa,
-      0xffffff,
-    ];
+    // 1. Lớp xa nhất (Depth -2): sao nhỏ xíu, màu sắc phong phú quét nhanh nhất.
+    // One 840x2048 tile baked once and repeated down the map: a Graphics with thousands of
+    // circles is re-triangulated (earcut) every frame, a TileSprite is a single quad.
     const pad = 60;
-    const starCount = Math.round(360 * Math.max(1, totalHeight / 2048));
-    for (let i = 0; i < starCount; i++) {
-      const sx = -pad + rand() * (720 + pad * 2);
-      const sy = -pad + rand() * (totalHeight + pad * 2);
-      const rad = 0.7 + rand() * 0.9;
-      const color = deepColors[Math.floor(rand() * deepColors.length)];
-      const alpha = 0.4 + rand() * 0.55;
-      deepGraphics.fillStyle(color, alpha);
-      deepGraphics.fillCircle(sx, sy, rad);
-      if (rand() > 0.65) {
-        deepGraphics.fillStyle(0xffffff, Math.min(1, alpha + 0.35));
-        deepGraphics.fillCircle(sx, sy, rad * 0.45);
-      }
-    }
-    this.mapDeepStarsContainer.add(deepGraphics);
+    const tileKey = ensureParallaxStarTexture(this, 'map_deep_stars_tile', 720 + pad * 2, 2048, {
+      count: 360,
+      seed: 4096,
+      colors: [COLOR_NUMBERS.amberSolid, 0x7fb8ff, 0xcfe6ff, 0xff8fc8, 0x5c7cfa, 0xffffff],
+      minRadius: 0.7,
+      maxRadius: 1.6,
+      minAlpha: 0.4,
+      maxAlpha: 0.95,
+      coreChance: 0.35,
+    });
+    this.mapDeepStarsContainer = this.add.container(0, 0).setDepth(-2);
+    this.mapDeepStarsContainer.add(
+      this.add.tileSprite(-pad, -pad, 720 + pad * 2, totalHeight + pad * 2, tileKey).setOrigin(0)
+    );
     this.mapContainer.add(this.mapDeepStarsContainer);
     this.backdropParts.push(this.mapDeepStarsContainer);
 
