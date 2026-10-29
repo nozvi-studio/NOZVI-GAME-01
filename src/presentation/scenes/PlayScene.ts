@@ -63,6 +63,7 @@ import { Capacitor } from '@capacitor/core';
 import type { BackgroundScene } from './BackgroundScene.ts';
 import { audioServices } from '../audio/audioServices.ts';
 import { chapterOfLevelId, setPcBackground } from '../sky/pcBackground.ts';
+import { PlayTiltMotes } from '../sky/PlayTiltMotes.ts';
 
 export class PlayScene extends Phaser.Scene implements Choreographed {
   readonly directorKey = 'PlayScene' as const;
@@ -80,6 +81,7 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
   private boardRenderer!: BoardRenderer;
   private snapAssist: SnapAssist = NO_ASSIST;
   private textureCache!: PieceTextureCache;
+  private tiltMotes?: PlayTiltMotes;
   private feedback!: FeedbackDirector;
   private layout!: LayoutMetrics;
   private targetBadge!: TargetBadge;
@@ -218,6 +220,12 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
     this.textureCache = new PieceTextureCache(this, this.level, layout.cellPixel);
     for (const piece of this.level.pieces) this.textureCache.enqueue(piece.id, 0);
     this.events.once('shutdown', () => this.textureCache.destroy());
+
+    this.tiltMotes = new PlayTiltMotes(this);
+    this.events.once('shutdown', () => {
+      this.tiltMotes?.destroy();
+      this.tiltMotes = undefined;
+    });
 
     this.snapAssist = snapAssistFor(this.level.id, this.mode);
     this.boardRenderer = new BoardRenderer(this, layout, this.level, this.textureCache, this.snapAssist);
@@ -464,6 +472,7 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
   update(_time: number, delta: number): void {
     if (this.loadFailed) return;
     this.textureCache.bakeNext();
+    this.tiltMotes?.update(delta);
     this.feedback.tick(delta);
     const snapshot = this.controller.getSnapshot();
     if (!this.pauseDialog.isOpen() && !this.hintDialog.isOpen() && !this.hintAdShowing) this.controller.tickClock(delta);
