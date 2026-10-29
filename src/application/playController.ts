@@ -1,12 +1,14 @@
 import type { Level, Piece, PuzzleState, Transition } from '../domain/model.ts';
 import { applyCommand, createPuzzle, placementsOf } from '../domain/session.ts';
 import { evaluate } from '../domain/mask.ts';
+import { matchedPieceCount } from '../domain/targetMatch.ts';
 import type { ProgressRepository, ResultRecord } from './progressPort.ts';
 import type { DragSession, DragUpdate } from './drag.ts';
 import { beginDrag, cancelDrag, finishDrag, updateDrag } from './drag.ts';
 import type { LayoutMetrics } from '../presentation/board/layout.ts';
 import { pieceBoardOrigin, pieceHitbox, piecePolygonCanvas, pointNearPolygon } from '../presentation/board/layout.ts';
 import { LevelClock } from './levelClock.ts';
+import { applyHint, type HintResult } from '../domain/hintPlacement.ts';
 import { parFromSolution, starsFor, timeBudget, type Stars } from '../domain/starRating.ts';
 
 /** Bound resumed-frame spikes without changing normal frame timing. */
@@ -22,13 +24,16 @@ export type DragInfo = {
   x: number;
   y: number;
   snapCandidateId: string | null;
+  /** Dropping here would put the piece on its target (see `isOnTarget`). */
+  onTarget: boolean;
 };
 
 export type PlayViewSnapshot = {
   levelId: string;
   phase: 'playing' | 'won';
   showTarget: boolean;
-  snappedCount: number;
+  /** Pieces standing on their target: what the "X/N matched" bar shows. */
+  matchedCount: number;
   totalPieces: number;
   canRotate: boolean;
   selectedPieceId: string | null;
@@ -67,7 +72,7 @@ export class PlayController {
     this.puzzleState = createPuzzle(level);
     this.committedMask = evaluate(level, placementsOf(level, this.puzzleState));
     this.showTarget = initialShowTarget;
-    this.budgetMs = timeBudget(level.parMs ?? parFromSolution(level.targetPlacements ?? []));
+    this.budgetMs = timeBudget(level.parMs ?? parFromSolution(level.targetPlacements ?? []), level.pieces.length);
   }
 
   /** Mọi thay đổi trạng thái đi qua đây để mask cache luôn khớp */
@@ -77,15 +82,11 @@ export class PlayController {
   }
 
   getSnapshot(): PlayViewSnapshot {
-    const snappedCount = Object.values(this.puzzleState.pieces).filter(
-      (p) => p.kind === 'snapped' || p.kind === 'placed'
-    ).length;
-
     return {
       levelId: this.level.id,
       phase: this.puzzleState.phase,
       showTarget: this.showTarget,
-      snappedCount,
+      matchedCount: matchedPieceCount(this.level, this.puzzleState),
       totalPieces: this.level.pieces.length,
       canRotate: this.level.rotationEnabled && this.selectedPieceId !== null,
       selectedPieceId: this.selectedPieceId,
@@ -192,6 +193,7 @@ export class PlayController {
       x: pointerX - this.dragSession.pointerOffset.x,
       y: pointerY - this.dragSession.pointerOffset.y,
       snapCandidateId: this.dragUpdate.snapCandidateId,
+      onTarget: this.dragUpdate.onTarget,
     };
     return true;
   }
@@ -207,6 +209,7 @@ export class PlayController {
       x: pointerX - this.dragSession.pointerOffset.x,
       y: pointerY - this.dragSession.pointerOffset.y,
       snapCandidateId: this.dragUpdate.snapCandidateId,
+      onTarget: this.dragUpdate.onTarget,
     };
   }
 
@@ -243,6 +246,16 @@ export class PlayController {
     if (!transition.accepted) return null;
     this.commitState(transition.state, transition.mask);
     return transition;
+  }
+
+  /** Hint: put one piece on its target. Null while a piece is in hand, once won, or when nothing is left to place. */
+  onHint(): HintResult | null {
+    if (this.dragSession) return null;
+    const hint = applyHint(this.level, this.puzzleState);
+    if (!hint) return null;
+    this.commitState(hint.transition.state, hint.transition.mask);
+    if (hint.transition.becameWon) this.recordWin();
+    return hint;
   }
 
   onRotate(): Transition | null {
@@ -297,7 +310,7 @@ export class PlayController {
         layout,
         { computePreviewMask: false }
       );
-      this.dragInfo = { ...info, snapCandidateId: this.dragUpdate.snapCandidateId };
+      this.dragInfo = { ...info, snapCandidateId: this.dragUpdate.snapCandidateId, onTarget: this.dragUpdate.onTarget };
     }
     return transition;
   }

@@ -58,6 +58,13 @@ export class TimeBar {
     }
   }
 
+  /** Design-space bounds of the bar and its stars (for the tutorial spotlight); null when it is hidden. */
+  bounds(): { x: number; y: number; width: number; height: number } | null {
+    if (!this.root.visible) return null;
+    const height = Math.max(TIME_BAR.height, TIME_BAR.starSize);
+    return { x: this.root.x - TIME_BAR.width / 2, y: this.root.y - height / 2, width: TIME_BAR.width, height };
+  }
+
   update(timer: PlayViewSnapshot['timer']): void {
     this.root.setVisible(timer !== null);
     if (!timer) return;

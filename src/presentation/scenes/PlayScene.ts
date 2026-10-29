@@ -30,6 +30,9 @@ import { DEPTH_TOKENS, FEEDBACK_TOKENS, TYPO_TOKENS, VICTORY_TOKENS } from '../d
 import { TextureFactory } from '../TextureFactory.ts';
 
 import { PauseDialog } from '../dialogs/PauseDialog.ts';
+import { HintDialog } from '../dialogs/HintDialog.ts';
+import { HintButton } from '../hud/HintButton.ts';
+import { adsServices } from '../adsServices.ts';
 import { TargetBadge } from '../board/TargetBadge.ts';
 import { t, getChapterTagline } from '../i18n.ts';
 import { LevelHintLabel } from '../hud/LevelHintLabel.ts';
@@ -87,6 +90,10 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
   private hud!: Hud;
   private timeBar!: TimeBar;
   private pauseDialog!: PauseDialog;
+  private hintDialog!: HintDialog;
+  private hintButton!: HintButton;
+  /** True while a rewarded ad is on screen: the level clock stands still. */
+  private hintAdShowing = false;
   private previewCompletedThrough?: string;
   private cachedVictoryVerse: string | null = null;
   private idleNudge: IdleNudgeState = IDLE_NUDGE_START;
@@ -230,6 +237,19 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
       onLevelSelect: () => {
         this.openLevelSelect();
       },
+      onLanguageChange: () => {},
+      audio: {
+        isMusicOn: () => progressRepo.read().progress.settings.music,
+        isSfxOn: () => progressRepo.read().progress.settings.sfx,
+        setMusic: (on) => {
+          progressRepo.setMusic(on);
+          audioServices(this).music.setEnabled(on);
+        },
+        setSfx: (on) => {
+          progressRepo.setSfx(on);
+          audioServices(this).sfx.setEnabled(on);
+        },
+      },
     });
 
     this.hud = new Hud(
@@ -301,6 +321,15 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
 
     this.timeBar = new TimeBar(this, layout);
     this.events.once('shutdown', () => this.timeBar.destroy());
+
+    // Stuck hint: at 0 stars a button flies in; it opens a dialog that offers one piece for a rewarded ad.
+    this.hintAdShowing = false;
+    this.hintDialog = new HintDialog(this, { onWatch: () => void this.watchForHint(), onCancel: () => {} });
+    this.hintButton = new HintButton(this, layout, () => this.openHintDialog());
+    this.events.once('shutdown', () => {
+      this.hintDialog.close();
+      this.hintButton.destroy();
+    });
     if (this.mode === 'campaign') this.hud.setSubtitleY(layout.headerBounds.y + TIME_BAR.subtitleY);
 
     const haptics = createHaptics(
@@ -378,7 +407,16 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
       const turnedByHold = this.holdRotate.end();
       const pieceId = this.controller.getSnapshot().dragInfo?.pieceId ?? null;
       const prev = this.controller.getPuzzleState();
-      this.commit(prev, this.controller.onPointerUp(pointer.worldX, pointer.worldY, layout), { command: 'move', pieceId });
+      // The second tap of a double tap is about to turn the piece, and the turn has its own sound; the drop
+      // under it would sound at the same instant, so it stays quiet.
+      const press = this.pressStart;
+      const turnsNext =
+        !turnedByHold &&
+        press !== null &&
+        this.level.rotationEnabled &&
+        this.doubleTap.wouldComplete(press.pieceId, press, { x: pointer.worldX, y: pointer.worldY }, this.time.now) &&
+        this.tutorialAllows({ type: 'rotate-gesture' }, false);
+      this.commit(prev, this.controller.onPointerUp(pointer.worldX, pointer.worldY, layout), { command: 'move', pieceId }, turnsNext);
       this.returnWrongDrop(pieceId);
       if (turnedByHold) {
         // The hold already turned the piece: this release is a drop, not a tap.
@@ -434,8 +472,9 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
     this.textureCache.bakeNext();
     this.feedback.tick(delta);
     const snapshot = this.controller.getSnapshot();
-    if (!this.pauseDialog.isOpen()) this.controller.tickClock(delta);
+    if (!this.pauseDialog.isOpen() && !this.hintDialog.isOpen() && !this.hintAdShowing) this.controller.tickClock(delta);
     this.timeBar.update(this.controller.getSnapshot().timer);
+    this.syncHintButton(this.controller.getSnapshot());
     this.idleNudge = stepIdleNudge(this.idleNudge, delta, {
       activity: this.sawActivity,
       blocked:
@@ -453,9 +492,52 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
     this.syncTutorial();
   }
 
+  /**
+   * The button shows once every star is gone and hides again after a reset or a win. It needs a ready ad SDK
+   * (so never on web); the dev server shows it anyway so the flow can be tried without ads.
+   */
+  private syncHintButton(snapshot: PlayViewSnapshot): void {
+    const stuck = snapshot.timer !== null && snapshot.timer.stars === 0 && snapshot.phase === 'playing';
+    const adsReady = adsServices(this).rewardedReady() || import.meta.env.DEV;
+    const wanted = stuck && adsReady && this.tutorial === null;
+    if (wanted) this.hintButton.show();
+    else {
+      this.hintButton.hide();
+      if (this.hintDialog.isOpen() && snapshot.phase === 'won') this.hintDialog.close();
+    }
+  }
+
+  private openHintDialog(): void {
+    if (this.pauseDialog.isOpen() || this.hintDialog.isOpen() || this.controller.getSnapshot().phase === 'won') return;
+    this.hintDialog.open();
+  }
+
+  /** The player agreed: show the rewarded ad, and place one piece only if the reward was earned. */
+  private async watchForHint(): Promise<void> {
+    if (this.hintAdShowing) return;
+    this.hintAdShowing = true;
+    const outcome = await adsServices(this).showRewarded();
+    this.hintAdShowing = false;
+    if (!this.sys.isActive()) return;
+    // The dev server has no ads: an unavailable ad still grants the hint so the flow can be tried.
+    const earned = outcome === 'rewarded' || (import.meta.env.DEV && outcome === 'unavailable');
+    if (earned) {
+      this.hintDialog.close();
+      this.grantHint();
+    } else if (outcome === 'unavailable') {
+      this.hintDialog.showNoAd();
+    }
+  }
+
+  private grantHint(): void {
+    const prev = this.controller.getPuzzleState();
+    const hint = this.controller.onHint();
+    if (hint) this.commit(prev, hint.transition, { command: 'move', pieceId: hint.pieceId });
+  }
+
   private snapHintTarget(snapshot: PlayViewSnapshot): { x: number; y: number } | null {
     const drag = snapshot.dragInfo;
-    if (!this.snapAssist.dropLabel || !drag || drag.snapCandidateId === null) return null;
+    if (!this.snapAssist.dropLabel || !drag || !drag.onTarget) return null;
     const piece = this.level.pieces.find((p) => p.id === drag.pieceId);
     const radius = piece ? pieceRadiusPx(piece.frameSize, this.layout) : 120;
     return { x: drag.x + radius * 0.8, y: drag.y + radius * 0.5 };
@@ -519,7 +601,7 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
   }
 
   /** Áp kết quả một lệnh: phát phản hồi rồi cập nhật HUD */
-  private commit(prev: PuzzleState, transition: Transition | null, subject: FeedbackSubject): void {
+  private commit(prev: PuzzleState, transition: Transition | null, subject: FeedbackSubject, silent = false): void {
     if (!transition) return;
     this.trackCommand(prev, subject);
     if (transition.becameWon) {
@@ -531,7 +613,7 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
         saveEndlessLevelNumber(this.endlessChapter, this.endlessLevel + 1);
       }
     }
-    this.feedback.handle(feedbackEvents(prev, transition, this.level, subject));
+    this.feedback.handle(feedbackEvents(prev, transition, this.level, subject), { silent });
     this.refreshView();
     this.syncHint();
   }
@@ -569,7 +651,13 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
       force: this.forceTutorial,
     });
     if (!controller) return;
-    const coach = new TutorialCoach(this, this.level, layout, () => this.skipTutorial());
+    const coach = new TutorialCoach(
+      this,
+      this.level,
+      layout,
+      () => this.skipTutorial(),
+      () => this.tutorial?.controller.onEvent('time-ack')
+    );
     this.tutorial = { controller, coach };
     this.events.once('shutdown', () => {
       this.tutorial?.coach.destroy();
@@ -609,7 +697,7 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
     const key = `${view.id}:${view.pieceId}`;
     if (key === this.tutorialKey) return;
     this.tutorialKey = key;
-    active.coach.show(view, spot, { rotateButton: this.hud.rotateButtonBounds() });
+    active.coach.show(view, spot, { rotateButton: this.hud.rotateButtonBounds(), timeBar: this.timeBar.bounds() });
   }
 
   /**
@@ -745,6 +833,10 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
 
   public onHardwareBack(): void {
     if (!this.tutorialAllows({ type: 'hud' })) return;
+    if (this.hintDialog.isOpen()) {
+      this.hintDialog.close();
+      return;
+    }
     if (this.pauseDialog.isOpen()) {
       this.pauseDialog.close();
     } else {

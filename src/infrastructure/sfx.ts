@@ -21,6 +21,8 @@ export type SfxOptions = { volume: number; maxVoices: number; repeatGapMs: numbe
 export interface SfxPort {
   play(cues: readonly AudioCue[]): void;
   setEnabled(on: boolean): void;
+  /** True when a played cue would actually be heard: the setting is on and there is a driver to play it. */
+  isEnabled(): boolean;
 }
 
 /** Sound effects are decoration: every failure is swallowed (spec G §2.2, §6). */
@@ -72,6 +74,10 @@ export function createSfx(driver: SfxDriver | null, env: SfxEnv, opts: SfxOption
           fire(cue);
         }
       }
+    },
+
+    isEnabled() {
+      return enabled && driver !== null;
     },
 
     setEnabled(on) {

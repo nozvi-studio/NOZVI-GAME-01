@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
+import { AdMob } from '@capacitor-community/admob';
+import { createAdMobDriver, resolveAdMobConfig } from './infrastructure/admobDriver.ts';
+import { ADS_REGISTRY_KEY } from './presentation/adsServices.ts';
 import { BackgroundScene } from './presentation/scenes/BackgroundScene.ts';
 import { LoadingScene } from './presentation/scenes/LoadingScene.ts';
 import { MenuScene } from './presentation/scenes/MenuScene.ts';
@@ -36,6 +39,11 @@ import type { AudioServices } from './presentation/audio/audioServices.ts';
 import { AUDIO_TOKENS } from './presentation/designTokens.ts';
 import './style.css';
 
+// Quảng cáo chỉ có trên app native (AdMob). Web và test: no-op.
+const adMobConfig = Capacitor.isNativePlatform() ? resolveAdMobConfig(import.meta.env) : null;
+if (Capacitor.isNativePlatform() && !adMobConfig) {
+  console.warn('[ads] VITE_ADMOB_USE_TEST_ADS=false nhưng thiếu VITE_ADMOB_BANNER_ID / VITE_ADMOB_REWARDED_ID: tắt quảng cáo');
+}
 // Không có DSN thì không có driver: mọi lệnh là no-op, game chạy y như chưa gắn SDK.
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
 const analyticsSelection = selectAnalyticsDriver({
@@ -46,6 +54,7 @@ const analyticsSelection = selectAnalyticsDriver({
   build: APP_VERSION,
 });
 const platform = createPlatformServices({
+  ads: adMobConfig ? createAdMobDriver(AdMob, adMobConfig) : null,
   crash: sentryDsn
     ? createSentryCrashDriver({
         dsn: sentryDsn,
@@ -80,6 +89,7 @@ const music = createMusic(browserMusicEnv(), {
   duckDownMs: AUDIO_TOKENS.duck.downMs,
   duckUpMs: AUDIO_TOKENS.duck.upMs,
   files: musicUrls,
+  trackLevel: (id) => AUDIO_TOKENS.trackLevel[id] ?? 1,
 });
 music.setEnabled(savedSettings.music);
 
@@ -179,6 +189,10 @@ export async function startGame(options: StartGameOptions = {}): Promise<void> {
   if (import.meta.env.DEV) {
     (window as unknown as { __GAME__?: Phaser.Game }).__GAME__ = game;
   }
+
+  game.registry.set(ADS_REGISTRY_KEY, platform.ads);
+  // Consent (UMP) rồi mới khởi tạo SDK; không chặn việc dựng game.
+  void platform.ads.init();
 
   director.setHost(new PhaserSceneHost(game));
   director.setMusic(music);

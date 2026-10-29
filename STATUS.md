@@ -1,10 +1,12 @@
 # STATUS
 
 > The *current* state of the project. Overwrite when things change; history lives in `CHANGELOG.md`.
-> Last updated: 2026-10-26
+> Last updated: 2026-10-29
 
 ## Branches
 - Last worked on: `feature/game-analytics` (level tracking + GameAnalytics driver, cut from `feature/sentry-crash-reporting`, 2026-10-26). Before it: `fix/intro-fly-in-lag` (merged into `release/v1.0.0`, 2026-10-24)
+- Before it: `feature/placement-feedback-audio` (X/N matched counts only pieces on target; kalimba piece sounds with a note per piece and a slow victory run; level music at half level; music no longer ducks with effects off; double-tap sound fix; merged into local `release/v1.0.0`, 2026-10-28, not pushed). Audio values are tuned by ear and may still move (`designTokens.ts`, Audio Lab).
+- Before it: `fix/release-issues` (no Sentry/GA; 10% tighter star time, 3-star hint in tutorial 1-1, Sound switch in Pause; pushed with `release/v1.0.0`, 2026-10-28). Before it: `fix/intro-fly-in-lag` (merged 2026-10-24). Before it: `feature/release-checklist-localization` (merged 2026-10-23)
 - Release branch: `release/v1.0.0` · Main: `main` · Development: `dev`
 
 ## Version
@@ -14,7 +16,9 @@
 - [x] AI onboarding setup: `CLAUDE.md`, `AGENT.md`
 - [x] Project log setup: `STATUS.md`, `CHANGELOG.md`
 - [x] Add 5 languages: es, fr, de, ko, zh-CN (now 10 locales)
+- [x] Ethereal Observatory theme & interaction upgrade (Direction 2): discrete 3-layer dynamic parallax on MenuScene & LevelSelectScene (deepest tiny rich-tinted stars sweep fastest at ±46px, mid-tier stars & galaxy artwork drift at ±20px, foreground emblems/nodes anchored at ±6px), gentle touch ripples, hero emblem ambient motes & tap resonance, full-chapter atmosphere FX, celestial snap feedback, smooth dialog transitions, and gyroscope device tilt/shake parallax.
 
+- [ ] `feature/ethereal-ui` perf pass (merged into local `release/v1.0.0` with `feature/admob-ads`, 2026-10-29, not pushed): parallax stars baked to textures; typecheck + tests pass, but frame rate not yet measured on laptop/Android. Possible next steps: `ethereal:ripple` listener in `BackgroundScene` is never removed (leaks on scene restart); consider lower density on low-end devices.
 - [x] Localization release checklist (LOC-01..05) on `feature/release-checklist-localization`: see `docs/testing/release-checklist-localization.md`. Scope locked; device evidence not collected yet. LOC-05 is N/A (no IAP). Chapter 2 Endless gate removed; chapters 4/5 "Coming soon" kept pending the leader.
 
 - [x] Compliance checklist (COMP-01..05): see `docs/testing/release-checklist-compliance.md`. Blocker: no Privacy Policy / Terms link or URL yet (COMP-01). COMP-03 and COMP-05 are N/A (no IAP, no accounts).
@@ -24,6 +28,7 @@
 - [ ] Monetization checklist (MON-01..06): see `docs/testing/release-checklist-monetization.md`. No ads/IAP/analytics SDK, so MON-01..05 are N/A; MON-06 (analytics events) left open for the owner.
 
 ## Next steps
+- Ads (AdMob, banner + privacy row + stuck hint done, test ads only; branch `feature/admob-ads`, worktree `../NOZVI-GAME-01-ads`): create the AdMob account/app, real App ID + banner/rewarded unit IDs, UMP message in Privacy & messaging, Privacy Policy URL (COMP-01), Data Safety + "Contains ads" in Play Console. Privacy settings row in Settings is done (hidden outside EEA/UK; check it on a device with UMP debug geography EEA). The stuck hint (rewarded ad) is built and checked in the dev server with the headless browser; still to check on a device with real test ads: the `?` button spot (top right, where the retired eye button was), the ad actually starting from Watch, and the clock staying paused through the ad. Hint on linked-rotation levels (chapter 3) puts a piece straight onto its turns without rotating its group, so rotating a driver afterwards turns the driven piece away; judge on device. The banner overlays the bottom of the level map; check on device. `npm run android:build` calls `gradlew` without `.` and fails on Windows; run `gradlew.bat assembleDebug` in `android/`.
 - Analytics (`feature/game-analytics`, cut from `feature/sentry-crash-reporting`): `LevelTracker`, the GameAnalytics driver and a placeholder consent screen are in and tests are green. Still to do: real consent UI and wording (Vietnamese law requires consent for analytics), Privacy Policy / Data Safety (COMP-01), and a device check of endless mode. On-device check done 2026-10-26 (Android 14 and 15, VN): start, complete (with moves and resets) and abandon events reach the dashboard, and the first `Start` after a launch is no longer lost. The two GameAnalytics keys must be in `.env.local` when the APK is built.
 - Crash reporting (`feature/sentry-crash-reporting`): Sentry web driver is in; needs a DSN in `.env.local` to verify end to end with `__crashTest` (not yet verified against real Sentry). Still to do: CrazyGames SDK driver, `@sentry/capacitor` for Android/iOS, source maps: upload is wired (`@sentry/vite-plugin`, runs only when `SENTRY_AUTH_TOKEN`/`SENTRY_ORG`/`SENTRY_PROJECT` are set in the shell; not yet verified against real Sentry, so stacks stay minified until a release build is made with the token), check CrazyGames' rules on outbound requests, update Privacy Policy / Data Safety (COMP-01).
 - Remaining unused params left on purpose: `Hud` `title`, `endlessCatalog` `chapter`.

@@ -39,7 +39,7 @@ describe('BoardRenderer target tint and idle breathing', () => {
       levelId: level.id,
       phase: 'playing',
       showTarget: true,
-      snappedCount: 0,
+      matchedCount: 0,
       totalPieces: 2,
       canRotate: false,
       selectedPieceId: null,

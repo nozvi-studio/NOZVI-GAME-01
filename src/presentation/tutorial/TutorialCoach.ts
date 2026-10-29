@@ -30,6 +30,7 @@ type StepCopy = Readonly<{
 }>;
 
 const COPY: Record<TutorialStepId, StepCopy> = {
+  time: { title: 'tutorial_time_title', body: 'tutorial_time_body', chip: 'tutorial_time_chip', chipArrow: false },
   'drag-first': { title: 'tutorial_drag_title', body: 'tutorial_drag_body', chip: 'tutorial_chip_drag', chipArrow: true },
   'drag-second': { title: 'tutorial_second_title', body: 'tutorial_second_body', chip: 'tutorial_chip_drag', chipArrow: true },
   select: {
@@ -94,20 +95,29 @@ export class TutorialCoach {
     private readonly scene: Phaser.Scene,
     private readonly level: Level,
     private readonly layout: LayoutMetrics,
-    private readonly onSkip: () => void
+    private readonly onSkip: () => void,
+    private readonly onAck: () => void = () => {}
   ) {}
 
   /** (Re)draw the overlay for a step. `extras.rotateButton` is the Rotate button's design-space bounds, when shown. */
-  show(view: TutorialView, spot: TutorialSpot, extras: { rotateButton: Rect | null } = { rotateButton: null }): void {
+  show(
+    view: TutorialView,
+    spot: TutorialSpot,
+    extras: { rotateButton: Rect | null; timeBar?: Rect | null } = { rotateButton: null }
+  ): void {
     if (this.destroyed) return;
     this.clearObjects();
     const k = designViewBounds(this.scene).width / 390;
     const button = usesRotateButton(view.id) && extras.rotateButton ? rotateButtonSpot(extras.rotateButton) : null;
-    this.focus = button
+    const bar = view.id === 'time' ? (extras.timeBar ?? null) : null;
+    this.focus = bar
+      ? { x: bar.x + bar.width / 2, y: bar.y + bar.height / 2, radius: bar.height / 2 + 12 }
+      : button
       ? { x: button.centre.x, y: button.centre.y, radius: button.radius + 4 }
       : { x: spot.trayCentre.x, y: spot.trayCentre.y, radius: spot.trayRadius };
     this.drawDim(view, spot, button);
-    this.drawGuide(view, spot, button);
+    if (bar) this.drawBarHighlight(bar);
+    else this.drawGuide(view, spot, button);
     this.drawBubble(view, k);
     this.drawSkip(k);
     this.fadeIn();
@@ -222,8 +232,11 @@ export class TutorialCoach {
     ctx.shadowColor = '#000';
     ctx.shadowBlur = 18;
     const well = spot.trayWell;
-    this.roundRectPath(ctx, well.x, well.y, well.width, well.height, 22);
-    ctx.fill();
+    // The time step looks at the bar, not the tray: the tray stays dimmed.
+    if (view.id !== 'time') {
+      this.roundRectPath(ctx, well.x, well.y, well.width, well.height, 22);
+      ctx.fill();
+    }
     if (button) {
       ctx.beginPath();
       ctx.arc(button.centre.x, button.centre.y, button.radius + 12, 0, Math.PI * 2);
@@ -270,6 +283,19 @@ export class TutorialCoach {
       repeat: -1,
       ease: 'Sine.easeOut',
     });
+  }
+
+  /** A gold frame that pulses around the time bar and its stars (above the HUD, which sits over the dim). */
+  private drawBarHighlight(bar: Rect): void {
+    const pad = 14;
+    const gold = Phaser.Display.Color.HexStringToColor(COLOR_TOKENS.amberGold.solidPrimary).color;
+    const frame = this.scene.add.graphics().setDepth(UI_DEPTH - 1).setData('noFade', true);
+    frame.lineStyle(5, gold, 1);
+    frame.strokeRoundedRect(bar.x - pad, bar.y - pad, bar.width + pad * 2, bar.height + pad * 2, (bar.height + pad * 2) / 2);
+    this.track(frame);
+    if (!isReducedMotion()) {
+      this.scene.tweens.add({ targets: frame, alpha: 0.35, duration: 650, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
   }
 
   private drawGuide(view: TutorialView, spot: TutorialSpot, button: { centre: { x: number; y: number }; radius: number } | null): void {
@@ -464,6 +490,12 @@ export class TutorialCoach {
     chipLabel.setPosition(iconX + iconW + gap, midY);
 
     [card, titleText, bodyText, labelText, chipLabel].forEach((o) => this.track(o));
+    if (view.id === 'time') {
+      // Nothing else is allowed in this step: tapping the card moves on.
+      const ack = this.scene.add.zone(x, y, w, h).setOrigin(0).setDepth(UI_DEPTH + 2).setInteractive({ useHandCursor: true });
+      ack.once('pointerdown', () => this.onAck());
+      this.track(ack);
+    }
     if (tipText) this.track(tipText);
     this.bubbleObjects = [card, titleText, bodyText, labelText, chipLabel, ...(tipText ? [tipText] : []), ...(this.icon ? [this.icon.graphics] : [])];
   }

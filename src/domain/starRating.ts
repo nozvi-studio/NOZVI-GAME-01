@@ -10,7 +10,20 @@ export const STAR_PERCENTS = [15, 45, 75] as const;
  * 3 stars are awarded up to par x this ratio (par = expert time). Single knob to tune after playtests;
  * the 2- and 1-star windows follow from `STAR_PERCENTS`.
  */
-export const THREE_STAR_PAR_RATIO = 1.25;
+export const THREE_STAR_PAR_RATIO = 1.125;
+
+/** Levels with at most this many pieces get the tighter ratio below; bigger ones the looser one. */
+export const SMALL_LEVEL_MAX_PIECES = 3;
+
+/** Extra tightening on top of `THREE_STAR_PAR_RATIO`: small levels lose 10 %, bigger ones 5 %. */
+export const SMALL_LEVEL_TIGHTEN = 0.9;
+export const LARGE_LEVEL_TIGHTEN = 0.95;
+
+/** The par ratio for a level with this many pieces. */
+export function threeStarRatio(pieceCount: number): number {
+  const tighten = pieceCount <= SMALL_LEVEL_MAX_PIECES ? SMALL_LEVEL_TIGHTEN : LARGE_LEVEL_TIGHTEN;
+  return THREE_STAR_PAR_RATIO * tighten;
+}
 
 /** Expert time for a level, from the placements of its first sample solution. */
 export function parFromSolution(steps: ReadonlyArray<{ turns: number }>): number {
@@ -21,11 +34,11 @@ export function parFromSolution(steps: ReadonlyArray<{ turns: number }>): number
 }
 
 /**
- * The 3-star window is `STAR_PERCENTS[0]` % of the budget and must equal par x `THREE_STAR_PAR_RATIO`.
+ * The 3-star window is `STAR_PERCENTS[0]` % of the budget and must equal par x `threeStarRatio(pieceCount)`.
  * No clamp: a fixed ceiling made every level with 2+ pieces share one window shorter than its own par.
  */
-export function timeBudget(parMs: number): number {
-  return Math.round((parMs * THREE_STAR_PAR_RATIO * 100) / STAR_PERCENTS[0]);
+export function timeBudget(parMs: number, pieceCount: number): number {
+  return Math.round((parMs * threeStarRatio(pieceCount) * 100) / STAR_PERCENTS[0]);
 }
 
 /** Integer comparison (no float thresholds) so exact boundaries are stable. */

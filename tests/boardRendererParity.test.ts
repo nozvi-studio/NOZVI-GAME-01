@@ -41,7 +41,7 @@ function setup(count = 2) {
     levelId: level.id,
     phase: 'playing',
     showTarget: false,
-    snappedCount: 0,
+    matchedCount: 0,
     totalPieces: count,
     canRotate: false,
     selectedPieceId: null,
@@ -76,7 +76,7 @@ describe('vùng giao mờ dần', () => {
     const glowAlpha = () =>
       [...calls].reverse().find((c) => c.method === 'lineStyle' && c.args[0] === 1.5 && c.depth === DEPTH_TOKENS.draggingPiece + 1)
         ?.args[2] as number;
-    const held = () => snapshot({ dragInfo: { pieceId: 'P2', x: 360, y: 400, snapCandidateId: null } });
+    const held = () => snapshot({ dragInfo: { pieceId: 'P2', x: 360, y: 400, snapCandidateId: null, onTarget: false } });
     const stage = { P1: snapped, P2: tray };
     renderer.tick(0, held(), stage);
     expect(glowAlpha()).toBe(0);
@@ -89,7 +89,7 @@ describe('vùng giao mờ dần', () => {
   test('thả mảnh là tắt đường sáng ngay khung đó, dù hai mảnh còn chồng nhau', () => {
     const { renderer, snapshot, calls } = setup();
     holdOverAnchor(renderer);
-    const held = () => snapshot({ dragInfo: { pieceId: 'P2', x: 360, y: 400, snapCandidateId: null } });
+    const held = () => snapshot({ dragInfo: { pieceId: 'P2', x: 360, y: 400, snapCandidateId: null, onTarget: false } });
     renderer.tick(16, held(), { P1: snapped, P2: tray });
     renderer.tick(700, held(), { P1: snapped, P2: tray });
     expect(glowLines(calls).length).toBeGreaterThan(0);
@@ -133,7 +133,7 @@ describe('vùng giao mờ dần', () => {
 
   test('xem trước: có neo ứng viên chồng lên mảnh đã snap thì vẽ nét ở depth 32', () => {
     const { renderer, snapshot, calls } = setup();
-    const drag = { pieceId: 'P2', x: 300, y: 600, snapCandidateId: 'A' };
+    const drag = { pieceId: 'P2', x: 300, y: 600, snapCandidateId: 'A', onTarget: true };
     renderer.tick(16, snapshot({ dragInfo: drag }), { P1: snapped, P2: tray });
     expect(calls.some((c) => c.method === 'strokePoints' && c.depth === DEPTH_TOKENS.placedPieces + 2)).toBe(true);
   });

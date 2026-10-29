@@ -10,11 +10,12 @@ import type { ProgressRepository } from '../../application/progressPort.ts';
 import { COLOR_NUMBERS, COLOR_TOKENS, LAYOUT_TOKENS, TYPO_TOKENS } from '../designTokens.ts';
 import { TEXTURE_KEYS, TextureFactory } from '../TextureFactory.ts';
 import { applyDesignViewport, designSafeArea, designViewBounds } from '../designViewport.ts';
-import { bandArtPlacements, layoutCampaignMap, snapToRowGap } from '../galaxy/constellationLayout.ts';
+import { bandArtPlacements, layoutCampaignMap, snapToRowGap, type ChapterBand } from '../galaxy/constellationLayout.ts';
 import { walkedLinkAlpha } from '../galaxy/constellationMotion.ts';
 import { isReducedMotion } from '../transitions/motion.ts';
 import { NODE_SILHOUETTE_FIT, drawTargetSilhouette } from '../board/targetSilhouette.ts';
 import { t, getChapterLabel, getChapterName, getGalaxyType } from '../i18n.ts';
+import { adsServices } from '../adsServices.ts';
 import { director } from '../transitions/SceneDirector.ts';
 import type { Choreographed, TransitionContext } from '../transitions/SceneDirector.ts';
 import type { TransitionTimeline } from '../transitions/TransitionTimeline.ts';
@@ -35,7 +36,9 @@ import { addGalaxyArtwork, ensureLinkDotTexture, ensureMeteorTexture, ensureWhit
 import { createChapterTitleCard, type ChapterTitleCard } from '../galaxy/ChapterTitleCard.ts';
 import { createSparkles, meteorPose, sparkleAlpha, type Sparkle } from '../galaxy/mapSparkle.ts';
 import { setPcBackground } from '../sky/pcBackground.ts';
+import { deviceTilt } from '../sky/deviceTilt.ts';
 import { starTexture } from '../sky/starTexture.ts';
+import { ensureParallaxStarTexture } from '../sky/parallaxStars.ts';
 import { formatStarTotal, nodeStarRow, starTotals, type StarTotal } from '../galaxy/levelStars.ts';
 import type { LevelResult } from '../../application/progressPort.ts';
 
@@ -91,6 +94,16 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
     elapsedMs: number;
   };
   private backdropParts: Phaser.GameObjects.GameObject[] = [];
+  private mapDeepStarsContainer?: Phaser.GameObjects.Container;
+  private mapMidStarsContainer?: Phaser.GameObjects.Container;
+  private chapterAtmosphereFx: Array<{
+    chapter: number;
+    band: { top: number; bottom: number };
+    sparkles: Array<{ data: Sparkle; image: Phaser.GameObjects.Image }>;
+    meteor?: Phaser.GameObjects.Image;
+    meteorOrigin?: { x: number; y: number };
+    elapsedMs: number;
+  }> = [];
   private scrollVelocity = 0;
   private dragged = false;
   private fog?: Phaser.GameObjects.Graphics;
@@ -169,6 +182,11 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
       const idealY = Phaser.Math.Clamp(540 - currentNode.y, this.minY, this.maxY);
       this.mapContainer.y = idealY;
     }
+
+    // Banner chỉ ở bản đồ: hiện khi vào, ẩn khi scene tắt (không chen vào lúc chơi).
+    const ads = adsServices(this);
+    ads.showBanner();
+    this.events.once('shutdown', () => ads.hideBanner());
 
     director.attach(this);
   }
@@ -356,6 +374,7 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
       .setOrigin(0).setDisplaySize(720, layout.totalHeight);
     this.mapContainer.add(sky);
     this.backdropParts.push(sky);
+    this.createMapParallaxLayers(layout.totalHeight, layout.chapters);
     for (const band of layout.chapters) {
       const gTheme = resolveGalaxyTheme(band.chapter);
       for (const place of bandArtPlacements(band)) {
@@ -378,8 +397,8 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
       const rows = layout.nodes.filter((n) => n.chapter === band.chapter).map((n) => n.y);
       this.titleCards.push({ top: band.top, bottom: band.bottom, bannerY: band.bannerY, rows, card, played: false });
     }
-    const chapterOne = layout.chapters.find((band) => band.chapter === 1);
-    if (chapterOne) this.addChapterOneFx(chapterOne);
+
+    this.addChapterAtmosphereFx(layout.chapters);
 
     // 3. Vẽ các đường cong Bezier mềm mại kết nối chòm sao (B3)
     // Dots are sprites: a Graphics holding thousands of fillCircle calls costs earcut time every frame.
@@ -880,6 +899,7 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
     // trùng toạ độ thiết kế, dùng nhầm thì ngưỡng header và quãng cuộn đều lệch.
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (pointer.worldY > this.safe.top + 100 && !this.celebrating) {
+        this.game?.events?.emit('ethereal:ripple', pointer.x, pointer.y, COLOR_NUMBERS.gridFine, 85);
         this.isDragging = true;
         this.dragged = false;
         this.scrollVelocity = 0;
@@ -939,7 +959,7 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
       this.mapContainer.y = Phaser.Math.Clamp(this.mapContainer.y + this.scrollVelocity * Math.min(delta / 16.67, 3), this.minY, this.maxY);
       this.scrollVelocity *= Math.pow(0.90, delta / 16.67);
     }
-    this.updateChapterOneFx(delta);
+    this.updateChapterAtmosphereFx(delta);
     const viewHeight = designViewBounds(this).height;
     // Wait for the scene's own fade-in so the arrival is seen, not played underneath it.
     if (!director.isTransitioning()) {
@@ -959,14 +979,81 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
         entry.card.play();
       }
     }
+    const tilt = deviceTilt.getTilt();
+    // 1. Lớp xa nhất (Deepest Layer): Những ngôi sao nhỏ nhỏ đậm màu di chuyển NHANH NHẤT
+    if (this.mapDeepStarsContainer) {
+      this.mapDeepStarsContainer.setPosition(tilt.x * 44, tilt.y * 36);
+    }
+    // 2. Lớp giữa (Middle Layer): Bụi sao lấp lánh & thiên hà di chuyển VỪA PHẢI
+    if (this.mapMidStarsContainer) {
+      this.mapMidStarsContainer.setPosition(tilt.x * 20, tilt.y * 16);
+    }
     for (const layer of this.galaxyLayers) {
       const screenY = layer.y + this.mapContainer.y;
-      layer.art.y = layer.y - Phaser.Math.Clamp((screenY - designViewBounds(this).height / 2) * 0.12, -layer.reach, layer.reach);
+      layer.art.x = 360 + tilt.x * 20;
+      layer.art.y = layer.y - Phaser.Math.Clamp((screenY - designViewBounds(this).height / 2) * 0.12, -layer.reach, layer.reach) + tilt.y * 16;
       layer.art.setVisible(screenY > -800 && screenY < designViewBounds(this).height + 800);
     }
   }
 
   /** Twinkling stars and an occasional shooting star over the chapter 1 haze. */
+  private createMapParallaxLayers(totalHeight: number, _chapters: readonly ChapterBand[]): void {
+    // 1. Lớp xa nhất (Depth -2): sao nhỏ xíu, màu sắc phong phú quét nhanh nhất.
+    // One 840x2048 tile baked once and repeated down the map: a Graphics with thousands of
+    // circles is re-triangulated (earcut) every frame, a TileSprite is a single quad.
+    const pad = 60;
+    const tileKey = ensureParallaxStarTexture(this, 'map_deep_stars_tile', 720 + pad * 2, 2048, {
+      count: 360,
+      seed: 4096,
+      colors: [COLOR_NUMBERS.amberSolid, 0x7fb8ff, 0xcfe6ff, 0xff8fc8, 0x5c7cfa, 0xffffff],
+      minRadius: 0.7,
+      maxRadius: 1.6,
+      minAlpha: 0.4,
+      maxAlpha: 0.95,
+      coreChance: 0.35,
+    });
+    this.mapDeepStarsContainer = this.add.container(0, 0).setDepth(-2);
+    this.mapDeepStarsContainer.add(
+      this.add.tileSprite(-pad, -pad, 720 + pad * 2, totalHeight + pad * 2, tileKey).setOrigin(0)
+    );
+    this.mapContainer.add(this.mapDeepStarsContainer);
+    this.backdropParts.push(this.mapDeepStarsContainer);
+
+    // 2. Lớp giữa (Depth -1): Chứa bụi sao lấp lánh và sao băng
+    this.mapMidStarsContainer = this.add.container(0, 0).setDepth(-1);
+    this.mapContainer.add(this.mapMidStarsContainer);
+    this.backdropParts.push(this.mapMidStarsContainer);
+  }
+
+  private addChapterAtmosphereFx(bands: readonly ChapterBand[]): void {
+    const starKey = ensureWhiteStarTexture(this);
+    for (const band of bands) {
+      const gTheme = resolveGalaxyTheme(band.chapter);
+      const sparkles = createSparkles(1701 + band.chapter * 83, Math.round((band.bottom - band.top) / 36), band.top + 100, band.bottom - 60, 6.5).map((data) => {
+        const image = this.add.image(data.x, data.y, starKey)
+          .setDisplaySize(data.size * 2.8, data.size * 2.8)
+          .setBlendMode(Phaser.BlendModes.ADD)
+          .setTint(data.size > 5 ? gTheme.colors.accent : 0xffffff);
+        (this.mapMidStarsContainer ?? this.mapContainer).add(image);
+        this.backdropParts.push(image);
+        return { data, image };
+      });
+      let meteor: Phaser.GameObjects.Image | undefined;
+      if (band.chapter <= 2) {
+        meteor = this.add.image(0, 0, ensureMeteorTexture(this))
+          .setOrigin(1, 0.5).setRotation(METEOR_HEADING).setBlendMode(Phaser.BlendModes.ADD).setVisible(false);
+        (this.mapMidStarsContainer ?? this.mapContainer).add(meteor);
+      }
+      this.chapterAtmosphereFx.push({
+        chapter: band.chapter,
+        band,
+        sparkles,
+        meteor,
+        elapsedMs: 0,
+      });
+    }
+  }
+
   private addChapterOneFx(band: { top: number; bottom: number }): void {
     const starKey = ensureWhiteStarTexture(this);
     const sparkles = createSparkles(1701, Math.round((band.bottom - band.top) / 30), band.top + 140, band.bottom - 60, 7).map((data) => {
@@ -982,6 +1069,37 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
     this.mapContainer.add(meteor);
     this.chapterOneFx = { band, sparkles, meteor, elapsedMs: 0 };
     this.updateChapterOneFx(0);
+  }
+
+  private updateChapterAtmosphereFx(delta: number): void {
+    const still = isReducedMotion();
+    const viewHeight = designViewBounds(this).height;
+    const screenTop = -this.mapContainer.y - 300;
+    const screenBottom = -this.mapContainer.y + viewHeight + 300;
+
+    for (const fx of this.chapterAtmosphereFx) {
+      if (fx.band.bottom < screenTop || fx.band.top > screenBottom) continue;
+      if (!still) fx.elapsedMs += Math.min(delta, 50);
+      for (const { data, image } of fx.sparkles) {
+        image.setAlpha(still ? 0.55 : sparkleAlpha(data, fx.elapsedMs));
+      }
+      if (fx.meteor) {
+        const pose = still ? null : meteorPose(fx.elapsedMs);
+        if (!pose) {
+          fx.meteor.setVisible(false);
+          fx.meteorOrigin = undefined;
+          continue;
+        }
+        fx.meteorOrigin ??= {
+          x: -60 + pose.rx * 480,
+          y: Phaser.Math.Clamp(-this.mapContainer.y + 120 + pose.ry * 520, fx.band.top + 60, fx.band.bottom - 340),
+        };
+        fx.meteor
+          .setPosition(fx.meteorOrigin.x + Math.cos(METEOR_HEADING) * METEOR_TRAVEL * pose.progress, fx.meteorOrigin.y + Math.sin(METEOR_HEADING) * METEOR_TRAVEL * pose.progress)
+          .setAlpha(pose.alpha * 0.9)
+          .setVisible(true);
+      }
+    }
   }
 
   private updateChapterOneFx(delta: number): void {

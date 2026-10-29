@@ -23,16 +23,25 @@ const transition = (next: PuzzleState, extra: Partial<Transition> = {}): Transit
 describe('feedbackEvents', () => {
   const empty = state({ P1: tray, P2: tray, P3: tray });
 
+  test('snap chỉ là onTarget khi mảnh nằm đúng chỗ lời giải mẫu', () => {
+    const solved: Level = { ...level, targetPlacements: [{ pieceId: 'P1', x: 0, y: 0, turns: 0 }] };
+    const next = state({ P1: snapped, P2: tray, P3: tray });
+    const [onTarget] = feedbackEvents(empty, transition(next), solved, { command: 'move', pieceId: 'P1' });
+    expect(onTarget).toMatchObject({ type: 'snap', onTarget: true });
+    const [offTarget] = feedbackEvents(empty, transition(next), level, { command: 'move', pieceId: 'P1' });
+    expect(offTarget).toMatchObject({ type: 'snap', onTarget: false });
+  });
+
   test('snap đơn lẻ: chỉ có snap', () => {
     const next = state({ P1: snapped, P2: tray, P3: tray });
     expect(feedbackEvents(empty, transition(next), level, { command: 'move', pieceId: 'P1' }))
-      .toEqual([{ type: 'snap', pieceId: 'P1', anchorId: 'A' }]);
+      .toEqual([{ type: 'snap', pieceId: 'P1', anchorId: 'A', onTarget: false, x: 0, y: 0 }]);
   });
 
   test('màn đặt tự do: thả vào giao điểm lưới (placed) là snap, không phải về khay', () => {
     const placed = state({ P1: { kind: 'placed', x: 8, y: 8, turns: 0 }, P2: tray, P3: tray });
     expect(feedbackEvents(empty, transition(placed, { outcome: 'snapped' }), level, { command: 'move', pieceId: 'P1' }))
-      .toEqual([{ type: 'snap', pieceId: 'P1', anchorId: null }]);
+      .toEqual([{ type: 'snap', pieceId: 'P1', anchorId: null, onTarget: false, x: 8, y: 8 }]);
     // Nhấc mảnh đã đặt trả về khay vẫn là return
     expect(feedbackEvents(placed, transition(empty, { outcome: 'tray' }), level, { command: 'move', pieceId: 'P1' }))
       .toEqual([{ type: 'return', pieceId: 'P1' }]);
@@ -50,7 +59,7 @@ describe('feedbackEvents', () => {
     const one = state({ P1: snapped, P2: tray, P3: tray });
     const two = state({ P1: snapped, P2: snapped, P3: tray });
     const events = feedbackEvents(one, transition(two), level, { command: 'move', pieceId: 'P2' });
-    expect(events[0]).toEqual({ type: 'snap', pieceId: 'P2', anchorId: 'A' });
+    expect(events[0]).toEqual({ type: 'snap', pieceId: 'P2', anchorId: 'A', onTarget: false, x: 8, y: 0 });
     expect(events[1].type).toBe('overlap-hollow');
     expect(events).toHaveLength(2);
   });

@@ -7,6 +7,7 @@ import { TEXTURE_KEYS } from '../TextureFactory.ts';
 import { t, getLocale, resetCosmicFacts } from '../i18n.ts';
 import type { SupportedLocale } from '../../localization/types.ts';
 import { setMotionScale } from '../transitions/motion.ts';
+import { adsServices } from '../adsServices.ts';
 import { audioServices } from '../audio/audioServices.ts';
 import { playUiCue } from '../audio/uiCues.ts';
 import { createDialogPanelInput } from './dialogInput.ts';
@@ -42,7 +43,13 @@ export class SettingsDialog {
     const canVibrate =
       Capacitor.isNativePlatform() || (typeof navigator !== 'undefined' && 'vibrate' in navigator);
     const modalW = 620;
-    const lastRowOffset = canVibrate ? 462 : 378;
+    // EEA/UK: the consent message must stay reachable so players can change their choice.
+    const ads = adsServices(this.scene);
+    const showPrivacy = ads.privacyOptionsRequired();
+    const hapticsOffset = 462;
+    const lastToggleOffset = canVibrate ? hapticsOffset : 378;
+    const privacyOffset = lastToggleOffset + 84;
+    const lastRowOffset = showPrivacy ? privacyOffset : lastToggleOffset;
     const dangerOffset = lastRowOffset + 84;
     // Room under the danger box for the version line.
     const versionRowH = 46;
@@ -130,13 +137,19 @@ export class SettingsDialog {
     // nên hiện khi chạy native (plugin Haptics) hoặc trình duyệt có vibrate
     if (canVibrate) {
       this.createToggleRow(
-        -modalH / 2 + 462,
+        -modalH / 2 + hapticsOffset,
         t('setting_haptics'),
         this.progressRepo.read().progress.settings.haptics,
         (on) => {
           this.progressRepo.setHaptics(on);
         }
       );
+    }
+
+    if (showPrivacy) {
+      this.createLinkRow(-modalH / 2 + privacyOffset, t('setting_privacy'), () => {
+        void ads.showPrivacyOptions();
+      });
     }
 
     // 6. Khu vực nguy hiểm: Xóa tiến trình chơi (tách biệt dưới đáy dạng badge)
@@ -235,6 +248,37 @@ export class SettingsDialog {
     divider.lineStyle(1, COLOR_NUMBERS.icePrimary, 0.15);
     divider.lineBetween(-270, y + 42, 270, y + 42);
     this.container.add([rowLabel, btnBg, flag, name, chevron, btnHit, divider]);
+  }
+
+  /** Row that opens something else (a form) when tapped: label on the left, chevron on the right. */
+  private createLinkRow(y: number, label: string, onTap: () => void): void {
+    if (!this.container) return;
+
+    const rowLabel = this.scene.add
+      .text(-270, y, label, {
+        fontFamily: TYPO_TOKENS.fontFamily.display,
+        fontSize: '24px',
+        color: '#FFFFFF',
+        wordWrap: { width: 460, useAdvancedWrap: true },
+      })
+      .setOrigin(0, 0.5);
+    const chevron = this.scene.add
+      .text(250, y, '›', {
+        fontFamily: TYPO_TOKENS.fontFamily.display,
+        fontSize: '28px',
+        color: '#7A89B8',
+      })
+      .setOrigin(0.5);
+    const hitZone = this.scene.add.zone(0, y, 560, 84).setInteractive({ useHandCursor: true });
+    hitZone.on('pointerdown', () => {
+      playUiCue(this.scene, 'tap');
+      onTap();
+    });
+
+    const divider = this.scene.add.graphics();
+    divider.lineStyle(1, COLOR_NUMBERS.icePrimary, 0.15);
+    divider.lineBetween(-270, y + 42, 270, y + 42);
+    this.container.add([rowLabel, chevron, hitZone, divider]);
   }
 
   /**
