@@ -96,13 +96,6 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
   }> = [];
   /** Each chapter's title card plays once, when the middle of the screen enters the chapter. */
   private titleCards: Array<{ top: number; bottom: number; bannerY: number; rows: number[]; card: ChapterTitleCard; played: boolean }> = [];
-  private chapterOneFx?: {
-    band: { top: number; bottom: number };
-    sparkles: Array<{ data: Sparkle; image: Phaser.GameObjects.Image }>;
-    meteor: Phaser.GameObjects.Image;
-    meteorOrigin?: { x: number; y: number };
-    elapsedMs: number;
-  };
   private backdropParts: Phaser.GameObjects.GameObject[] = [];
   private mapDeepStarsContainer?: Phaser.GameObjects.Container;
   private mapMidStarsContainer?: Phaser.GameObjects.Container;
@@ -385,7 +378,6 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
     this.linkParts = [];
     this.galaxyLayers = [];
     this.backdropParts = [];
-    this.chapterOneFx = undefined;
     this.artIntros = [];
     this.artSlots = [];
     this.titleCards = [];
@@ -1109,23 +1101,6 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
     }
   }
 
-  private addChapterOneFx(band: { top: number; bottom: number }): void {
-    const starKey = ensureWhiteStarTexture(this);
-    const sparkles = createSparkles(1701, Math.round((band.bottom - band.top) / 30), band.top + 140, band.bottom - 60, 7).map((data) => {
-      const image = this.add.image(data.x, data.y, starKey)
-        .setDisplaySize(data.size * 3, data.size * 3)
-        .setBlendMode(Phaser.BlendModes.ADD);
-      this.mapContainer.add(image);
-      this.backdropParts.push(image);
-      return { data, image };
-    });
-    const meteor = this.add.image(0, 0, ensureMeteorTexture(this))
-      .setOrigin(1, 0.5).setRotation(METEOR_HEADING).setBlendMode(Phaser.BlendModes.ADD).setVisible(false);
-    this.mapContainer.add(meteor);
-    this.chapterOneFx = { band, sparkles, meteor, elapsedMs: 0 };
-    this.updateChapterOneFx(0);
-  }
-
   private updateChapterAtmosphereFx(delta: number): void {
     const still = isReducedMotion();
     const viewHeight = designViewBounds(this).height;
@@ -1155,29 +1130,6 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
           .setVisible(true);
       }
     }
-  }
-
-  private updateChapterOneFx(delta: number): void {
-    const fx = this.chapterOneFx;
-    if (!fx) return;
-    const still = isReducedMotion();
-    if (!still) fx.elapsedMs += Math.min(delta, 50);
-    for (const { data, image } of fx.sparkles) image.setAlpha(still ? 0.55 : sparkleAlpha(data, fx.elapsedMs));
-    const pose = still ? null : meteorPose(fx.elapsedMs);
-    if (!pose) {
-      fx.meteor.setVisible(false);
-      fx.meteorOrigin = undefined;
-      return;
-    }
-    // Aim the streak at whatever part of chapter 1 the player is looking at when it starts.
-    fx.meteorOrigin ??= {
-      x: -60 + pose.rx * 480,
-      y: Phaser.Math.Clamp(-this.mapContainer.y + 120 + pose.ry * 520, fx.band.top + 60, fx.band.bottom - 340),
-    };
-    fx.meteor
-      .setPosition(fx.meteorOrigin.x + Math.cos(METEOR_HEADING) * METEOR_TRAVEL * pose.progress, fx.meteorOrigin.y + Math.sin(METEOR_HEADING) * METEOR_TRAVEL * pose.progress)
-      .setAlpha(pose.alpha * 0.9)
-      .setVisible(true);
   }
 
   /** A soft ripple leaves the level the player should play next. */

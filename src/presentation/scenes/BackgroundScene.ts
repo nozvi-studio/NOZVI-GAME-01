@@ -27,8 +27,13 @@ export class BackgroundScene extends Phaser.Scene implements MoodTarget {
       this.sky.setPointerOffset(pointer.x, pointer.y);
     });
 
-    this.game.events.on('ethereal:ripple', (x: number, y: number, color?: number, maxR?: number) => {
+    const onRipple = (x: number, y: number, color?: number, maxR?: number): void => {
       this.sky.spawnRipple(x, y, color, maxR);
+    };
+    // game.events outlives this scene, so drop the listener or a restart stacks a second one.
+    this.game.events.on('ethereal:ripple', onRipple);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.game.events.off('ethereal:ripple', onRipple);
     });
   }
 

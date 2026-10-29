@@ -4,6 +4,13 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Removed (cleanup)
+- `LevelSelectScene`: the unused chapter-one FX (`chapterOneFx`, `addChapterOneFx`, `updateChapterOneFx`); chapter atmosphere now lives only in `chapterAtmosphereFx`.
+- `public/assets/studio.svg`: an old logo that nothing referenced. `public/icon.svg` is also unreferenced but kept (likely the source for the PNG icons).
+
+### Fixed (cleanup)
+- `BackgroundScene` now removes its `ethereal:ripple` listener from `game.events` on shutdown, so a scene restart no longer stacks a second listener.
+
 ### Changed (performance, level map intro)
 - The level map plays its arrival animations (galaxy fade-ins and layer intros, chapter title cards) only on the first visit of a session (`galaxy/mapIntroSeen.ts`, in memory, so it resets on each launch). Later visits show the artwork at rest: `addGalaxyArtwork(..., skipIntro)` / `GalaxyLayerHost.skipIntro` skip the layer tweens, title cards never play, and art slots fill after 200 ms instead of 600 ms. Textures stay in Phaser's texture manager, so nothing is loaded again either. `tests/mapIntroSeen.test.ts`. Not yet measured on a weak device.
 
