@@ -18,7 +18,7 @@ import { planVictoryDust, VictoryDust } from './victoryDust.ts';
 import type { Poseable } from '../transitions/choreography.ts';
 import type { HapticsPort } from '../../infrastructure/haptics.ts';
 import { type FeedbackEvent } from './feedbackEvents.ts';
-import { snappedCount } from './audioCues.ts';
+import { matchedPieceCount } from '../../domain/targetMatch.ts';
 import { HAPTIC_CUES, playCue } from './hapticCues.ts';
 import { perimeterSegment } from './parityDiff.ts';
 import { victoryPlan, type VictoryPlan } from './victorySequence.ts';
@@ -64,8 +64,9 @@ export class FeedbackDirector {
     this.deps = deps;
   }
 
-  handle(events: readonly FeedbackEvent[]): void {
-    playFeedbackAudio(this.deps.audio.sfx, events, this.deps.getState());
+  /** `silent` skips the sound only (haptics and visuals still run): the caller has a better sound for this moment. */
+  handle(events: readonly FeedbackEvent[], opts: { silent?: boolean } = {}): void {
+    if (!opts.silent) playFeedbackAudio(this.deps.audio.sfx, events, this.deps.level);
     for (const event of events) {
       playCue(this.deps.haptics, HAPTIC_CUES[event.type]);
       this.visual(event);
@@ -126,12 +127,14 @@ export class FeedbackDirector {
         view.dropLiftNow();
         view.glideTo(board.targetPoseFor(piece, state, level.pieces.indexOf(piece)), scaleTiming(F.snapMs), 'cubicOut');
         if (reduced) return;
+        // Landing on the grid is quiet. Only a piece on its target gets the bounce, the light, the ring and the counter pop.
+        if (!event.onTarget) return;
         view.play('bounce', F.bounceMs);
         view.play('light', 320, 0.85);
         const target = board.targetPoseFor(piece, state, 0);
         this.snapRing(target, pieceRadiusPx(piece.frameSize, this.deps.layout));
-        const snapped = snappedCount(this.deps.getState());
-        this.deps.hud.popCounterIcon(snapped - 1);
+        this.deps.background()?.spawnRipple(target.x, target.y, COLOR_NUMBERS.gridFine, 130);
+        this.deps.hud.popCounterIcon(matchedPieceCount(level, this.deps.getState()) - 1);
         return;
       }
       case 'settle-temporary':
@@ -312,7 +315,7 @@ export class FeedbackDirector {
 
     tl.call(plan.burstAtMs, () => {
       this.deps.haptics.notify('success');
-      playVictoryAudio(this.deps.audio);
+      playVictoryAudio(this.deps.audio, level);
       if (plan.cameraFlash) scene.cameras.main.flash(VICTORY_TOKENS.flashMs, 249, 199, 79, false);
     });
     if (plan.rings || plan.particles > 0) this.burst(tl, plan);

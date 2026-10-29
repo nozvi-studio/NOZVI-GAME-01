@@ -67,6 +67,21 @@ describe('SfxPort', () => {
     expect(calls).toHaveLength(1);
   });
 
+  test('isEnabled follows the setting, and is false with no driver', () => {
+    const { sfx } = setup();
+    expect(sfx.isEnabled()).toBe(true);
+    sfx.setEnabled(false);
+    expect(sfx.isEnabled()).toBe(false);
+    sfx.setEnabled(true);
+    expect(sfx.isEnabled()).toBe(true);
+    const bare = createSfx(null, { now: () => 0, setTimeout: () => 0, clearTimeout: () => {}, warn: () => {} }, {
+      volume: 1,
+      maxVoices: 6,
+      repeatGapMs: 40,
+    });
+    expect(bare.isEnabled()).toBe(false);
+  });
+
   test('no driver is silent and safe', () => {
     const sfx = createSfx(null, { now: () => 0, setTimeout: () => 0, clearTimeout: () => {}, warn: () => {} }, {
       volume: 1,

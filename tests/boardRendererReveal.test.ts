@@ -46,7 +46,7 @@ describe('BoardRenderer.setTargetReveal', () => {
       levelId: level.id,
       phase: 'playing',
       showTarget: true,
-      snappedCount: 0,
+      matchedCount: 0,
       totalPieces: 2,
       canRotate: false,
       selectedPieceId: null,

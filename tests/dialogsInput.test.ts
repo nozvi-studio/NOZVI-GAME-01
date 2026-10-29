@@ -2,9 +2,12 @@ import type Phaser from 'phaser';
 import { Capacitor } from '@capacitor/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PauseDialog } from '../src/presentation/dialogs/PauseDialog.ts';
+import { HintDialog } from '../src/presentation/dialogs/HintDialog.ts';
 import { SettingsDialog } from '../src/presentation/dialogs/SettingsDialog.ts';
 import { createProgressRepository } from '../src/infrastructure/progressRepository.ts';
 import { getLocale, setLocale, t } from '../src/presentation/i18n.ts';
+import type { AdsPort } from '../src/application/platformPort.ts';
+import { NO_ADS } from '../src/presentation/adsServices.ts';
 
 vi.mock('phaser', () => ({ default: {} }));
 vi.mock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: vi.fn(() => true) } }));
@@ -17,7 +20,7 @@ type Item = {
 };
 
 // Only the Phaser display/input boundary is faked; dialogs and persistence run unchanged.
-function setup() {
+function setup(ads?: AdsPort) {
   const items: Item[] = [];
   const make = (kind: string, x = 0, y = 0, width = 0, height = 0, text?: string, style?: Record<string, unknown>) => {
     const item: Item = { kind, x, y, width, height, text, style, interactive: false, destroyed: false, children: [], handlers: new Map() };
@@ -27,6 +30,7 @@ function setup() {
         return (...args: any[]) => {
           if (key === 'on') target.handlers.set(args[0], args[1]);
           if (key === 'add') target.children.push(...(Array.isArray(args[0]) ? args[0] : [args[0]]));
+          if (key === 'setText') target.text = args[0];
           if (key === 'setInteractive') target.interactive = true;
           if (key === 'disableInteractive') target.interactive = false;
           if (key === 'destroy') target.destroyed = true;
@@ -51,6 +55,7 @@ function setup() {
     },
     tweens: { add: (config: { onComplete?: () => void }) => config.onComplete?.() },
     scene: { restart },
+    registry: { get: (key: string) => (key === 'ads' ? ads : undefined) },
   } as unknown as Phaser.Scene;
   const storage = new Map<string, string>();
   const repo = createProgressRepository({ getItem: k => storage.get(k) ?? null, setItem: (k, v) => { storage.set(k, v); } }, [], 'test');
@@ -58,6 +63,8 @@ function setup() {
   const settings = new SettingsDialog(scene, repo, onClose);
   const callbacks = { onResume: vi.fn(), onRestart: vi.fn(), onLevelSelect: vi.fn() };
   const pause = new PauseDialog(scene, callbacks);
+  const hintCallbacks = { onWatch: vi.fn(), onCancel: vi.fn() };
+  const hintDialog = new HintDialog(scene, hintCallbacks);
   const hit = (parent: Item, x: number, y: number): Item | undefined => {
     if (parent.destroyed) return;
     for (const child of [...parent.children].reverse()) {
@@ -73,7 +80,7 @@ function setup() {
     item?.handlers.get(event)?.({ ...pointer, id }, 0, 0, { stopPropagation() {} });
   };
   const tap = (x: number, y: number) => { send('pointerdown', x, y); send('pointerup', x, y); };
-  return { items, root, send, tap, settings, pause, callbacks, repo, restart, onClose };
+  return { items, root, send, tap, settings, pause, callbacks, repo, restart, onClose, hintDialog, hintCallbacks };
 }
 
 beforeEach(() => {
@@ -110,12 +117,12 @@ it('makes the full pause buttons touchable with comfortable gaps', () => {
   ui.pause.open();
   const buttons = ui.root().children.filter(i => i.kind === 'container');
   expect(buttons).toHaveLength(3);
-  for (const [index, button] of buttons.entries()) {
-    const zone = button.children.find(i => i.interactive)!;
-    expect(zone.width).toBe(500);
-    expect(zone.height).toBe(88);
-    if (index) expect(button.y - buttons[index - 1].y - 88).toBe(24);
-  }
+  const zones = buttons.map(b => b.children.find(i => i.interactive)!);
+  // Resume stands alone at full width; restart and level select share the row under it.
+  expect(zones.map(z => [z.width, z.height])).toEqual([[500, 88], [244, 88], [244, 88]]);
+  expect(buttons[1].y).toBe(buttons[2].y);
+  expect(buttons[1].y - buttons[0].y - 88).toBe(24);
+  expect(buttons[2].x - buttons[1].x - 244).toBe(12);
   ui.tap(245, buttons[0].y);
   expect(ui.callbacks.onResume).toHaveBeenCalledOnce();
 });
@@ -185,4 +192,72 @@ it('keeps Reset directly below the last row when haptics are unavailable', () =>
   const sfx = ui.items.find(i => i.text === t('setting_sfx'))!;
   const danger = ui.items.find(i => i.text?.includes(t('setting_danger_reset')))!;
   expect(danger.y - sfx.y).toBe(84);
+});
+
+describe('Privacy settings row (EEA/UK consent)', () => {
+  it('is hidden when the consent flow does not require it', () => {
+    const ui = setup({ ...NO_ADS, privacyOptionsRequired: () => false });
+    ui.settings.open();
+    expect(ui.items.some(i => i.text === t('setting_privacy'))).toBe(false);
+  });
+
+  it('sits directly below the last toggle and reopens the consent form on tap', () => {
+    const showPrivacyOptions = vi.fn(() => Promise.resolve());
+    const ui = setup({ ...NO_ADS, privacyOptionsRequired: () => true, showPrivacyOptions });
+    ui.settings.open();
+    const haptics = ui.items.find(i => i.text === t('setting_haptics'))!;
+    const privacy = ui.items.find(i => i.text === t('setting_privacy'))!;
+    const danger = ui.items.find(i => i.text?.includes(t('setting_danger_reset')))!;
+    expect(privacy.y - haptics.y).toBe(84);
+    expect(danger.y - privacy.y).toBe(84);
+    ui.tap(-250, privacy.y);
+    expect(showPrivacyOptions).toHaveBeenCalledOnce();
+    expect(ui.root().destroyed).toBe(false);
+  });
+
+  it('is a full-size touch target', () => {
+    const ui = setup({ ...NO_ADS, privacyOptionsRequired: () => true });
+    ui.settings.open();
+    for (const control of ui.items.filter(i => i.interactive && i.kind !== 'rectangle')) {
+      expect(control.width).toBeGreaterThanOrEqual(64);
+      expect(control.height).toBeGreaterThanOrEqual(64);
+    }
+  });
+});
+
+describe('hint dialog (rewarded ad opt-in)', () => {
+  it('starts the ad only after the player taps Watch', () => {
+    const ui = setup();
+    ui.hintDialog.open();
+    expect(ui.hintCallbacks.onWatch).not.toHaveBeenCalled();
+    ui.tap(0, 89);
+    expect(ui.hintCallbacks.onWatch).toHaveBeenCalledOnce();
+    expect(ui.hintDialog.isOpen()).toBe(true);
+  });
+
+  it('closes on Cancel without starting an ad', () => {
+    const ui = setup();
+    ui.hintDialog.open();
+    ui.tap(0, 177);
+    expect(ui.hintCallbacks.onCancel).toHaveBeenCalledOnce();
+    expect(ui.hintCallbacks.onWatch).not.toHaveBeenCalled();
+    expect(ui.hintDialog.isOpen()).toBe(false);
+  });
+
+  it('keeps the dialog open and says so when no ad is available', () => {
+    const ui = setup();
+    ui.hintDialog.open();
+    ui.hintDialog.showNoAd();
+    expect(ui.items.some(i => i.text === t('hint_no_ad'))).toBe(true);
+    expect(ui.hintDialog.isOpen()).toBe(true);
+  });
+
+  it('offers full-size touch targets', () => {
+    const ui = setup();
+    ui.hintDialog.open();
+    for (const control of ui.items.filter(i => i.interactive && i.kind !== 'rectangle')) {
+      expect(control.width).toBeGreaterThanOrEqual(64);
+      expect(control.height).toBeGreaterThanOrEqual(64);
+    }
+  });
 });

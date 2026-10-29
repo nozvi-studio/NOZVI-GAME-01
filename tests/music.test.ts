@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { createMusic } from '../src/infrastructure/music.ts';
+import type { TrackId } from '../src/infrastructure/audioManifest.ts';
 import type { MediaLike, MusicEnv, MusicOptions } from '../src/infrastructure/music.ts';
 
 class FakeMedia implements MediaLike {
@@ -28,7 +29,7 @@ class FakeMedia implements MediaLike {
   }
 }
 
-function setup(ogg = true) {
+function setup(ogg = true, levels: Partial<Record<TrackId, number>> = {}) {
   let now = 0;
   let nextId = 1;
   const timers = new Map<number, () => void>();
@@ -69,6 +70,7 @@ function setup(ogg = true) {
     duckDownMs: 200,
     duckUpMs: 800,
     files: (id) => [`audio/${id}.ogg`, `audio/${id}.m4a`],
+    trackLevel: (id) => levels[id] ?? 1,
   };
   const music = createMusic(env, opts);
   const advance = (ms: number) => {
@@ -94,6 +96,16 @@ describe('MusicPort', () => {
     expect(a.volume).toBeCloseTo(0.25, 5);
     advance(500);
     expect(a.volume).toBeCloseTo(0.5, 5);
+  });
+
+  test('a track level scales that track only, so the level music can sit under the effects', () => {
+    const { music, media, advance } = setup(true, { 'music-stele': 0.5 });
+    music.setTrack('music-sky', 0);
+    advance(50);
+    expect(media[0].volume).toBeCloseTo(0.5, 5);
+    music.setTrack('music-stele', 0);
+    advance(50);
+    expect(media[1].volume).toBeCloseTo(0.25, 5);
   });
 
   test('falls back to m4a without Ogg support', () => {

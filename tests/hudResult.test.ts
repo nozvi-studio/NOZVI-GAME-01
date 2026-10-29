@@ -85,7 +85,7 @@ test.each(['1-3', '3-1'])('drawn counter and pop animations stay inside the avai
     vi.mocked(drawJewel).mockClear();
     const start = calls.length;
     hud.update({
-      levelId, phase: 'playing', showTarget: true, snappedCount: 0, totalPieces: total,
+      levelId, phase: 'playing', showTarget: true, matchedCount: 0, totalPieces: total,
       canRotate: false, selectedPieceId: null, dragPreviewMask: null, snapCandidateId: null,
       dragInfo: null, committedMask: new Uint8Array(0), timer: null,
     });

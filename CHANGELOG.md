@@ -4,10 +4,57 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Added (ads)
+- Google AdMob via `@capacitor-community/admob` 8.2.1 (Android only; web and tests stay no-op). `AdsPort` in `application/platformPort.ts` (`init`, `showBanner`, `hideBanner`, `showRewarded`, `privacyOptionsRequired`, `showPrivacyOptions`), `createAds` in `infrastructure/platformServices.ts` swallows driver errors, `infrastructure/admobDriver.ts` runs the UMP consent flow before SDK init and only requests ads when UMP allows it.
+- Banner at the bottom of the level map (`LevelSelectScene` shows it on create, hides it on shutdown). Rewarded is used by the stuck hint below.
+- Test ads by default. Real ads need `VITE_ADMOB_USE_TEST_ADS=false` plus `VITE_ADMOB_BANNER_ID` and `VITE_ADMOB_REWARDED_ID`; missing IDs turn ads off instead of falling back to test ads. Manifest App ID comes from `-PADMOB_APP_ID` (default: Google test App ID).
+- Settings: a "Privacy settings" row (`setting_privacy`, all ten locales) that reopens the UMP consent form. It shows only when `AdsPort.privacyOptionsRequired()` is true (EEA/UK), so players can always withdraw consent.
+- Stuck hint (rewarded ad): once every star is gone (`timer.stars === 0`, 75 % of the time budget) a `?` button flies in at the top right (`HintButton`, `FEEDBACK_TOKENS.hintButton`). It opens `HintDialog` ("Stuck? Watch a short ad and we will place one piece for you"); the ad starts only after Watch. A completed ad puts one piece on its sample-solution spot (`domain/hintPlacement.ts` `applyHint`, `PlayController.onHint`), clearing wrong pieces that sit on those cells, and plays the normal snap feedback. Early close gives nothing; no ad shows "No ad is available right now" and keeps the button. The level clock stops while the dialog or the ad is open. The button needs `AdsPort.rewardedReady()` (never on web); the dev server shows it and grants the hint without an ad. Strings `hint_title/body/watch/no_ad` in all ten locales.
+- `tests/admobDriver.test.ts`, `tests/hintPlacement.test.ts` (hints win every approved campaign level, also with a wrong piece on a target), `tests/playControllerHint.test.ts`, cases in `tests/dialogsInput.test.ts`.
+
+### Changed (performance)
+- Ethereal parallax star layers are baked into textures once (`sky/parallaxStars.ts`) instead of Phaser `Graphics` with hundreds or thousands of `fillCircle` calls, which were re-triangulated (earcut) every frame: menu deep/mid layers are Images, the level map deep layer is a repeating `TileSprite` tile (was 360 circles per 2048 px of map height).
+- `SkyBackdrop` twinkling stars are 30 tinted sprites with per-frame alpha (was a Graphics cleared and refilled each frame, parsing hex colours per star); the ripple layer is only redrawn while ripples exist.
+- Menu ambient motes are sprites sharing one soft-dot texture (were 14 Graphics).
+
+### Added (visuals & interactions)
+- Ethereal Observatory theme & interaction upgrade (Direction 2):
+  - 3-layer parallax sky in `SkyBackdrop` (deep cosmos tile layer + midfield + twinkling stars) with subtle pointer parallax response.
+  - Dedicated discrete 3-layer dynamic parallax containers on `MenuScene` and `LevelSelectScene`:
+    - Deepest background starfield (`deepStarsContainer` / `mapDeepStarsContainer`): 160-360 tiny, rich-tinted stars (amber, star sapphire, young star magenta, starlight) sweeping fastest at `tilt * 46px` to produce unmistakable celestial depth.
+    - Middle celestial layer (`midStarsContainer` & `galaxy` / `mapMidStarsContainer` & `galaxyLayers`): glowing mid-tier stars, nebulae, and chapter galaxy artwork drifting at medium speed (`tilt * 20px`).
+    - Outermost foreground layer (`emblem` & motes / constellation nodes, lines & chapter cards): subtle, grounded anchor (`tilt * 6px` counter-drift) keeping tactile UI solid.
+    - Cleaned static stars previously baked into `galaxyGradient` and `galaxyMapGradient` canvases, ensuring every star on screen is dynamically responsive to tilt/motion.
+  - Calibrated 3-layer Parallax speeds per user feedback: outermost foreground (emblems/UI) moves slowest (0.25x), middle layer (main stars & galaxy art) moves at medium speed (0.75x), and deepest background layer (tiny rich-tinted stars) sweeps fastest (1.35x).
+  - Soft luminous starlight aura ripples (`ethereal:ripple`) on touch/click across BackgroundScene, MenuScene, LevelSelectScene, and PauseDialog.
+  - Ambient orbiting starlight motes and interactive touch resonance for the MenuScene hero emblem.
+  - Chapter-specific atmosphere effects (sparkling stars, meteors, tinted dust) across all chapters in `LevelSelectScene`.
+  - Celestial snap resonance: snapping a piece on target triggers background starlight ripple (`FeedbackDirector`).
+  - Smooth arrival and exit animations for `PauseDialog` with soft scale & fade easing.
+
+### Fixed
+- "X/N pieces matched" counted any piece resting on the board. In free placement every drop snaps to a grid point, so a random drop read as a match (bar, ring, rising bell). It now counts only pieces on their sample-solution placement (`domain/targetMatch.ts`: `isOnTarget`, `matchedPieceCount`; identical pieces may swap, a won level counts all). `PlayViewSnapshot.snappedCount` is now `matchedCount`.
+- With Sound Effects off, the level music no longer ducks when a level is won: `playVictoryAudio` ducks only if `SfxPort.isEnabled()` (new; false when the setting is off or there is no driver).
+- Double tap on a piece (rotation levels): the drop under the second tap no longer sounds together with the turn; only the turn's sound plays (`DoubleTap.wouldComplete`, `FeedbackDirector.handle(..., { silent })`).
+- The "Release to snap" label and the magnet ring show only when the dragged piece is on its target (`DragUpdate.onTarget`, `DragInfo.onTarget`).
+
+### Changed
+- Feedback: a `snap` event carries `onTarget`, `x`, `y`. Off target the piece just glides in (no bounce, light, ring or counter pop).
+- Star rating: `THREE_STAR_PAR_RATIO` 1.25 to 1.125, so every level's time budget and star windows are 10% tighter (no level data touched; `parMs` unchanged).
+- Star rating: on top of the 10% above, levels with up to 3 pieces are tightened another 10% and levels with 4+ pieces another 5% (`threeStarRatio(pieceCount)`; `timeBudget` and `parInfo` now take the piece count).
+
+### Changed (audio)
+- Piece sounds are one instrument, a kalimba, and each piece has its own note (`PIECE_NOTES`, a D major triad then up; `pieceSemitones`). Lift: a light touch of the note. Set down short of the target (or dropped without snapping): the same note, short. On target: the note rings (`kalimba-ring`) and a soft echo of it follows, two notes in all. Handed back to the tray: the note an octave down. Victory (`victoryCues`): the level's piece notes run up, then the root chord (root, fifth, octave) rolls out. This replaces the bell that rose with the match count, the separate `stinger-win` in play (the patch stays for the Audio Lab and `bell` for UI cues) and the `tick` on lift.
+- Level music (`music-stele`) plays at half level (`AUDIO_TOKENS.trackLevel`, new optional `MusicOptions.trackLevel`) so the move sounds stand out; menu and map music are unchanged.
+- `AUDIO_TOKENS.maxVoices` 6 to 12: ringing notes and the victory run overlap.
+
 ### Added
 - Sentry crash reporting (web), opt-in: set `VITE_SENTRY_DSN` in `.env.local` (git-ignored). Without it nothing is bundled or sent. `@sentry/browser` loads through a dynamic `import()` into its own chunk and initialises in the background (`initInBackground`, 8 s timeout), so a blocked or hung SDK never delays boot. Sentry's own GlobalHandlers are off; errors go through `installGlobalErrorHandlers` once. `sendDefaultPii` is off.
 - Crash reporter guards: max 10 reports and 100 breadcrumbs per 60 s, duplicate reports dropped, re-entrant `capture` blocked. Analytics `track` only queues (max 100, flushed in batches after 2 s, and on `pagehide`).
 - Dev-only crash test: `window.__crashTest('capture' | 'throw' | 'reject')` (not in release builds).
+- Sounds `kalimba` (short) and `kalimba-ring` (about 3.5 s) in `content/audio/sources/`; cue tokens `place`, `victoryNote`, `victoryEnd`, `victoryStepMs`, `victoryChordGapMs`, `echo`, `echoDelayMs`.
+- Pause dialog: Background Music and Sound Effects switches under the title (same settings as the Settings dialog); Resume stands alone and Restart / Level Select share one row. The Language picker is also in Pause (`onLanguageChange`). Hidden when `audio` is not passed.
+- Tutorial 1-1: a new first step (now 3 steps) that spotlights the time bar and stars with a pulsing frame; tap the card to continue. The clock starts on the first press, so reading it costs no time. New keys `tutorial_time_title/body/chip` in all ten locales; `tutorial_drag_body` is back to its original text.
 - `PlatformServices` seam (`application/platformPort.ts`, `infrastructure/platformServices.ts`): `CrashReporterPort` and `AnalyticsPort` with no-op defaults; driver errors are swallowed so an external SDK (Sentry, CrazyGames, Firebase) can never break the game. `main.ts` routes `error` / `unhandledrejection` through it (still logged to console).
 - `docs/testing/release-checklist-gameplay.md`: GAME-01..04 findings and device test plan.
 - `gate_locked` string ("Locked") in all ten locales for the locked chapter 1 Endless gate badge, replacing "Coming Soon" there.

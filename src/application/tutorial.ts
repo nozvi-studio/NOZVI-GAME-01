@@ -45,6 +45,7 @@ export function createTutorialSeenStore(storage: StoragePort, levelId: string = 
 
 /** Which copy, spotlights and guide the overlay shows. */
 export type TutorialStepId =
+  | 'time'
   | 'drag-first'
   | 'drag-second'
   | 'select'
@@ -63,7 +64,7 @@ export type TutorialObserved = Readonly<{
 }>;
 
 /** Things that really happened and that a step may be waiting for. */
-export type TutorialEvent = 'rotate-button' | 'double-tap' | 'hold-turn';
+export type TutorialEvent = 'rotate-button' | 'double-tap' | 'hold-turn' | 'time-ack';
 
 /** Something the player is trying to do; the script says whether the current step allows it. */
 export type TutorialAction =
@@ -88,23 +89,27 @@ type TutorialScript = {
   acceptsDrop(view: ScriptView, pieceId: string, correct: boolean): boolean;
 };
 
-/** 1-1: drag the first piece that is not yet at its target, twice. Only that piece may be pressed. */
+/**
+ * 1-1: first the time bar and stars (a tap to continue; the clock starts on the first press, so reading is free),
+ * then drag the first piece that is not yet at its target, twice. Only that piece may be pressed.
+ */
 function dragScript(pieceIds: readonly string[]): TutorialScript {
-  const total = Math.min(DRAG_STEPS, pieceIds.length);
+  const drags = Math.min(DRAG_STEPS, pieceIds.length);
+  let timeAcked = false;
   return {
-    total,
+    total: drags + 1,
     view(observed) {
       const doneCount = pieceIds.filter((id) => observed.correct.has(id)).length;
-      if (doneCount >= total) return null;
-      return {
-        step: doneCount + 1,
-        id: doneCount === 0 ? 'drag-first' : 'drag-second',
-        pieceId: pieceIds.find((id) => !observed.correct.has(id))!,
-      };
+      if (doneCount >= drags) return null;
+      const pieceId = pieceIds.find((id) => !observed.correct.has(id))!;
+      if (!timeAcked && doneCount === 0) return { step: 1, id: 'time', pieceId };
+      return { step: doneCount + 2, id: doneCount === 0 ? 'drag-first' : 'drag-second', pieceId };
     },
-    event() {},
+    event(event) {
+      if (event === 'time-ack') timeAcked = true;
+    },
     allows(view, action) {
-      return action.type === 'press-piece' && action.pieceId === view.pieceId;
+      return view.id !== 'time' && action.type === 'press-piece' && action.pieceId === view.pieceId;
     },
     acceptsDrop(view, pieceId, correct) {
       return correct && pieceId === view.pieceId;

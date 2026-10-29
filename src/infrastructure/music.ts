@@ -31,6 +31,8 @@ export type MusicOptions = {
   duckDownMs: number;
   duckUpMs: number;
   files(id: TrackId): readonly string[];
+  /** Gain of one track relative to the others (default 1), so a quiet bed can sit under the effects. */
+  trackLevel?(id: TrackId): number;
 };
 
 export interface MusicPort {
@@ -96,7 +98,7 @@ export function createMusic(env: MusicEnv, opts: MusicOptions): MusicPort {
   };
 
   const apply = () => {
-    for (const s of slots) s.el.volume = clamp01(s.gain * duckLevel * opts.volume);
+    for (const s of slots) s.el.volume = clamp01(s.gain * duckLevel * opts.volume * (s.track ? (opts.trackLevel?.(s.track) ?? 1) : 1));
   };
 
   function tick(): void {

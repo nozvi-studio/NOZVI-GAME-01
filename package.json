@@ -25,6 +25,7 @@
     "android:build": "npm run android:setup && npm run android:sync && cd android && gradlew assembleDebug"
   },
   "dependencies": {
+    "@capacitor-community/admob": "^8.2.1",
     "@capacitor/android": "8.5.2",
     "@capacitor/app": "^8.1.1",
     "@capacitor/core": "8.5.2",

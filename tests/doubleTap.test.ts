@@ -11,6 +11,19 @@ describe('createDoubleTap', () => {
     expect(tap.register('a', { x: 100, y: 100 }, { x: 100, y: 101 }, 1000 + D.windowMs - 10)).toBe(true);
   });
 
+  test('wouldComplete báo trước register mà không tiêu thụ lần chạm đầu', () => {
+    const tap = createDoubleTap();
+    const at = { x: 0, y: 0 };
+    expect(tap.wouldComplete('a', at, at, 1000)).toBe(false);
+    tap.register('a', at, at, 1000);
+    expect(tap.wouldComplete('a', at, at, 1100)).toBe(true);
+    expect(tap.wouldComplete('a', at, at, 1100)).toBe(true); // peeking twice changes nothing
+    expect(tap.wouldComplete('b', at, at, 1100)).toBe(false);
+    expect(tap.wouldComplete('a', at, { x: D.slopPx + 5, y: 0 }, 1100)).toBe(false); // a drag
+    expect(tap.wouldComplete('a', at, at, 1000 + D.windowMs + 10)).toBe(false);
+    expect(tap.register('a', at, at, 1100)).toBe(true); // still there for the real call
+  });
+
   test('quá cửa sổ thời gian thì không tính', () => {
     const tap = createDoubleTap();
     tap.register('a', { x: 0, y: 0 }, { x: 0, y: 0 }, 1000);

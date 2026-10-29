@@ -488,7 +488,7 @@ export class Hud {
       });
     }
 
-    this.drawMatchBar(snapshot.snappedCount, snapshot.totalPieces);
+    this.drawMatchBar(snapshot.matchedCount, snapshot.totalPieces);
 
     if (snapshot.phase !== 'won' && this.winContainer.visible) {
       this.hideWinModal();

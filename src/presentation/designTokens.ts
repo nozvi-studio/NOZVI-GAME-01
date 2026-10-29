@@ -305,6 +305,8 @@ export const FEEDBACK_TOKENS = {
   /** Second press of a double tap held in place: after `delayMs` the piece turns, then again every `stepMs` (turn, pause, turn). */
   holdRotate: { delayMs: 280, stepMs: 640 },
   hintMs: 120,
+  /** Stuck-hint button (shown at 0 stars): flies in from the right edge, then pulses until tapped. */
+  hintButton: { flyInMs: 420, flyOutMs: 180, startOffset: 160, pulseMs: 800, pulseScale: 1.08 },
   snapMs: 120,
   bounceMs: 180,
   bounceFrom: 1.08,
@@ -400,8 +402,14 @@ export const DEPTH_TOKENS = {
 /** Audio levels and timings (spec G). Cue volumes are multiplied by the bus volume. */
 export const AUDIO_TOKENS = {
   musicVolume: 0.45,
+  /**
+   * Per-track level on top of `musicVolume`. The level track sits well under the effects so the notes a move
+   * makes are the loudest thing in play; menu and map keep full level.
+   */
+  trackLevel: { 'music-stele': 0.5 } as Readonly<Partial<Record<'music-sky' | 'music-stele', number>>>,
   sfxVolume: 0.8,
-  maxVoices: 6,
+  /** Ringing kalimba notes and the victory run overlap, so this is well above the 6 the short effects needed. */
+  maxVoices: 12,
   repeatGapMs: 40,
   toggleOutMs: 300,
   toggleInMs: 1000,
@@ -409,12 +417,22 @@ export const AUDIO_TOKENS = {
   /** Changing scene track: old one fades out, silence, new one fades in (each fade is `sceneSwapFadeMs`). */
   sceneSwapFadeMs: 700,
   sceneSwapGapMs: 600,
-  duck: { level: 0.3, holdMs: 1500, downMs: 200, upMs: 800 },
+  duck: { level: 0.3, holdMs: 5000, downMs: 200, upMs: 1800 },
   overlapDelayMs: 60,
+  /** Gap between notes of the victory run, and between the notes of the closing chord (above `repeatGapMs`). */
+  victoryStepMs: 380,
+  victoryChordGapMs: 180,
+  /** The soft repeat that makes a locked note (and the closing chord) ring on, like a room's answer. */
+  echoDelayMs: 380,
+  /** The closing chord answers twice, each repeat further out and softer, so it hangs in the air. */
+  victoryEchoDelaysMs: [700, 1500] as readonly number[],
   cues: {
-    lift: 0.35,
+    lift: 0.28,
     snap: 0.8,
-    snapWin: 0.9,
+    place: 0.55,
+    /** The octave that rings above a piece locking in, as a share of `snap`. */
+    /** The echo, as a share of the note it repeats. */
+    echo: 0.3,
     settle: 0.4,
     return: 0.3,
     rotate: 0.4,
@@ -422,7 +440,9 @@ export const AUDIO_TOKENS = {
     rotateBlocked: 0.6,
     overlap: 0.6,
     reset: 0.4,
-    stinger: 0.9,
+    /** Victory: the piece notes run up, then the root chord rolls out. */
+    victoryNote: 0.5,
+    victoryEnd: 0.55,
     uiTap: 0.4,
     uiDialog: 0.35,
     uiNode: 0.5,

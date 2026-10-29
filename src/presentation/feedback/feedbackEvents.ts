@@ -1,12 +1,17 @@
 import type { Level, Piece, PuzzleState, Transition, Turns } from '../../domain/model.ts';
+import { placementsOf } from '../../domain/session.ts';
 import { effectiveOrientation, shapePolygon } from '../../domain/shapes.ts';
+import { isOnTarget } from '../../domain/targetMatch.ts';
 import type { Pt } from '../board/polygonClip.ts';
 import { diffLayers, overlapLayers } from './parityDiff.ts';
 
 export type FeedbackEvent =
   | { type: 'lift'; pieceId: string }
-  /** `anchorId` là null ở màn đặt tự do (mảnh hít vào giao điểm lưới, không có neo) */
-  | { type: 'snap'; pieceId: string; anchorId: string | null }
+  /**
+   * `anchorId` là null ở màn đặt tự do (mảnh hít vào giao điểm lưới, không có neo).
+   * `onTarget`: mảnh nằm đúng chỗ lời giải mẫu. Hít vào lưới thôi chưa đủ: ở màn đặt tự do thả đâu cũng hít.
+   */
+  | { type: 'snap'; pieceId: string; anchorId: string | null; onTarget: boolean; x: number; y: number }
   | { type: 'settle-temporary'; pieceId: string }
   | { type: 'return'; pieceId: string }
   | { type: 'rotate'; pieceId: string; turns: Turns }
@@ -62,8 +67,18 @@ export function feedbackEvents(
         events.push({ type: 'rotate', pieceId: id, turns: state.turns });
       }
     }
-  } else if (next.kind === 'snapped') events.push({ type: 'snap', pieceId, anchorId: next.anchorId });
-  else if (next.kind === 'placed') events.push({ type: 'snap', pieceId, anchorId: null });
+  } else if (next.kind === 'snapped' || next.kind === 'placed') {
+    const placement = placementsOf(level, transition.state).find((p) => p.pieceId === pieceId);
+    const onTarget = placement !== undefined && isOnTarget(level, placement);
+    events.push({
+      type: 'snap',
+      pieceId,
+      anchorId: next.kind === 'snapped' ? next.anchorId : null,
+      onTarget,
+      x: placement?.x ?? 0,
+      y: placement?.y ?? 0,
+    });
+  }
   else if (next.kind === 'temporary') events.push({ type: 'settle-temporary', pieceId });
   else events.push({ type: 'return', pieceId });
 

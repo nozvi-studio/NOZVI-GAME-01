@@ -8,6 +8,8 @@
 import type { Patch } from '../../audio-synth/patch.ts';
 import { bell } from './sources/bell.ts';
 import { hollow } from './sources/hollow.ts';
+import { kalimba } from './sources/kalimba.ts';
+import { kalimbaRing } from './sources/kalimbaRing.ts';
 import { shimmer } from './sources/shimmer.ts';
 import { stingerWin } from './sources/stingerWin.ts';
 import { swish } from './sources/swish.ts';
@@ -17,6 +19,8 @@ import { tick } from './sources/tick.ts';
 
 export type SfxKey =
   | 'bell'
+  | 'kalimba'
+  | 'kalimba-ring'
   | 'tick'
   | 'tap-soft'
   | 'thud'
@@ -27,6 +31,8 @@ export type SfxKey =
 
 export const SFX_KEYS: readonly SfxKey[] = [
   'bell',
+  'kalimba',
+  'kalimba-ring',
   'tick',
   'tap-soft',
   'thud',
@@ -40,6 +46,8 @@ export { MUSIC_ROOT_HZ } from './root.ts';
 
 export const SFX_PATCHES: Record<SfxKey, Patch> = {
   bell,
+  kalimba,
+  'kalimba-ring': kalimbaRing,
   tick,
   'tap-soft': tapSoft,
   thud,

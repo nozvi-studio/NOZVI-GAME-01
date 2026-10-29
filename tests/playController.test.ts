@@ -29,7 +29,7 @@ describe('PlayController Loop and State Coordination', () => {
     const snapshot = controller.getSnapshot();
     expect(snapshot.levelId).toBe('1-1');
     expect(snapshot.phase).toBe('playing');
-    expect(snapshot.snappedCount).toBe(0);
+    expect(snapshot.matchedCount).toBe(0);
     expect(snapshot.totalPieces).toBe(2);
     expect(snapshot.canRotate).toBe(false); // Chapter 1 rotation is disabled
     expect(snapshot.showTarget).toBe(true);
@@ -62,7 +62,7 @@ describe('PlayController Loop and State Coordination', () => {
     // Thả D1
     const trans1 = controller.onPointerUp(anchor1Canvas.x, anchor1Canvas.y, layout);
     expect(trans1?.outcome).toBe('snapped');
-    expect(controller.getSnapshot().snappedCount).toBe(1);
+    expect(controller.getSnapshot().matchedCount).toBe(1);
     expect(controller.getSnapshot().phase).toBe('playing');
 
     // 2. Chạm vào D2 trong khay (slot 1)
@@ -85,10 +85,35 @@ describe('PlayController Loop and State Coordination', () => {
 
     const finalSnap = controller.getSnapshot();
     expect(finalSnap.phase).toBe('won');
-    expect(finalSnap.snappedCount).toBe(2);
+    expect(finalSnap.matchedCount).toBe(2);
 
     // Xác nhận đã tự động lưu hoàn thành vào repo
     expect(repo.read().progress.completed).toContain('1-1');
+  });
+
+  test('thả mảnh bừa lên bàn thì X/N không tăng và không onTarget; chỉ đúng chỗ mới tăng', () => {
+    const repo = createProgressRepository(createMockStorage(), campaignManifest, 'oracle-v1');
+    const controller = new PlayController(level, repo, true);
+    const goal = level.targetPlacements![0];
+    const piece = level.pieces.find((p) => p.id === goal.pieceId)!;
+    const index = level.pieces.indexOf(piece);
+    const start = pieceHitbox(piece, { kind: 'tray', turns: 0 }, layout, index);
+    const centerOf = (x: number, y: number) => gridToCanvas(x + piece.frameSize / 2, y + piece.frameSize / 2, layout);
+
+    expect(controller.onPointerDown(start.x + start.width / 2, start.y + start.height / 2, layout)).toBe(true);
+    const wrong = centerOf(goal.x + 24, goal.y + 24);
+    controller.onPointerMove(wrong.x, wrong.y, layout);
+    expect(controller.getSnapshot().dragInfo?.onTarget).toBe(false);
+    controller.onPointerUp(wrong.x, wrong.y, layout);
+    expect(controller.getSnapshot().matchedCount).toBe(0);
+
+    const hit = pieceHitbox(piece, controller.getPuzzleState().pieces[piece.id], layout, index);
+    controller.onPointerDown(hit.x + hit.width / 2, hit.y + hit.height / 2, layout);
+    const right = centerOf(goal.x, goal.y);
+    controller.onPointerMove(right.x, right.y, layout);
+    expect(controller.getSnapshot().dragInfo?.onTarget).toBe(true);
+    controller.onPointerUp(right.x, right.y, layout);
+    expect(controller.getSnapshot().matchedCount).toBe(1);
   });
 
   test('onToggleTarget thay đổi trạng thái hiển thị và lưu vào repository', () => {
@@ -113,11 +138,11 @@ describe('PlayController Loop and State Coordination', () => {
 
     const anchor1 = gridToCanvas(40, 80, layout);
     controller.onPointerUp(anchor1.x, anchor1.y, layout);
-    expect(controller.getSnapshot().snappedCount).toBe(1);
+    expect(controller.getSnapshot().matchedCount).toBe(1);
 
     controller.onReset();
     const afterReset = controller.getSnapshot();
-    expect(afterReset.snappedCount).toBe(0);
+    expect(afterReset.matchedCount).toBe(0);
     expect(afterReset.phase).toBe('playing');
     expect(afterReset.selectedPieceId).toBeNull();
   });
@@ -145,7 +170,7 @@ describe('Màn đặt tự do thắng được qua PlayController (spec D mục 
 
     expect(last?.becameWon).toBe(true);
     expect(controller.getSnapshot().phase).toBe('won');
-    expect(controller.getSnapshot().snappedCount).toBe(4);
+    expect(controller.getSnapshot().matchedCount).toBe(4);
     for (const piece of level.pieces) {
       expect(controller.getPuzzleState().pieces[piece.id].kind).toBe('placed');
     }

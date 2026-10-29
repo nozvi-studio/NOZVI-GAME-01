@@ -23,7 +23,7 @@ export function galaxyMapGradient(scene: Phaser.Scene, bands: readonly ChapterBa
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 720, 2048);
   const random = mulberry32(712);
-  const starCount = Math.round(420 * Math.min(4, Math.max(1, height / 2048)));
+  const starCount = 0;
   for (let i = 0; i < starCount; i++) {
     ctx.fillStyle = `rgba(225,239,255,${0.2 + random() * 0.5})`;
     ctx.beginPath();
@@ -54,7 +54,7 @@ export function galaxyGradient(scene: Phaser.Scene, theme: GalaxyTheme): string 
     texture.context.fillStyle = gradient;
     texture.context.fillRect(0, 0, 720, 1600);
     const random = mulberry32(172 + theme.chapter);
-    for (let i = 0; i < 160; i++) {
+    for (let i = 0; i < 0; i++) {
       texture.context.fillStyle = `rgba(225,239,255,${0.25 + random() * 0.5})`;
       texture.context.beginPath();
       texture.context.arc(random() * 720, random() * 1600, 0.5 + random() * 1.5, 0, Math.PI * 2);

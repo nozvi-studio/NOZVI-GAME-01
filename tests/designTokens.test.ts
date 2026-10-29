@@ -111,8 +111,8 @@ describe('Design Tokens Validation', () => {
   });
   test('audio tokens keep music under effects and match spec G timings', () => {
     expect(AUDIO_TOKENS.musicVolume).toBeLessThan(AUDIO_TOKENS.sfxVolume);
-    expect(AUDIO_TOKENS.duck).toEqual({ level: 0.3, holdMs: 1500, downMs: 200, upMs: 800 });
-    expect(AUDIO_TOKENS.maxVoices).toBe(6);
+    expect(AUDIO_TOKENS.duck).toEqual({ level: 0.3, holdMs: 5000, downMs: 200, upMs: 1800 });
+    expect(AUDIO_TOKENS.maxVoices).toBe(12); // ringing kalimba notes and the victory run overlap
     expect(AUDIO_TOKENS.repeatGapMs).toBe(40);
     expect(AUDIO_TOKENS.overlapDelayMs).toBe(60);
   });
