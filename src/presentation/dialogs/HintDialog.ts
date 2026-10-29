@@ -17,6 +17,7 @@ export class HintDialog {
   private readonly callbacks: HintCallbacks;
   private container?: Phaser.GameObjects.Container;
   private status?: Phaser.GameObjects.Text;
+  private watchButton?: Phaser.GameObjects.Container;
 
   constructor(scene: Phaser.Scene, callbacks: HintCallbacks) {
     this.scene = scene;
@@ -85,9 +86,16 @@ export class HintDialog {
       this.status?.setText('');
       this.callbacks.onWatch();
     });
+    this.watchButton = watch;
     const cancel = this.makeButton(0, modalH / 2 - 58, btnW, 72, t('btn_cancel'), false, () => this.cancel());
 
     container.add([backdrop, panel, panelInput, title, body, this.status, watch, cancel]);
+  }
+
+  /** While the ad loads: dim Watch and show a pending mark, so a tap is not met with silence. */
+  public setLoading(on: boolean): void {
+    this.watchButton?.setAlpha(on ? 0.5 : 1);
+    this.status?.setColor(on ? COLOR_TOKENS.text.primary : '#FFA8A8').setText(on ? '...' : '');
   }
 
   /** The ad could not be shown: say so and keep the dialog open. */
@@ -99,6 +107,7 @@ export class HintDialog {
     this.container?.destroy();
     this.container = undefined;
     this.status = undefined;
+    this.watchButton = undefined;
   }
 
   public isOpen(): boolean {

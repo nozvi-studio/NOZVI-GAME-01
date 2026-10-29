@@ -135,7 +135,7 @@ describe('AdMob driver: rewarded', () => {
     const { plugin, listeners } = fakePlugin();
     const driver = createAdMobDriver(plugin, CONFIG);
     const outcome = driver.showRewarded();
-    await vi.waitFor(() => expect(listeners.size).toBe(3));
+    await vi.waitFor(() => expect(listeners.size).toBe(4));
     await vi.waitFor(() => expect((plugin.showRewardVideoAd as ReturnType<typeof vi.fn>).mock.calls.length).toBe(1));
     for (const name of events) listeners.get(name)?.();
     return { outcome: await outcome, listeners };
@@ -159,6 +159,42 @@ describe('AdMob driver: rewarded', () => {
   test('gỡ listener sau khi xong, không dồn lại sang lần sau', async () => {
     const { listeners } = await run(['onRewardedVideoAdDismissed']);
     await vi.waitFor(() => expect(listeners.size).toBe(0));
+  });
+
+  test('tải quảng cáo treo quá hạn: unavailable, không bật quảng cáo đến muộn', async () => {
+    vi.useFakeTimers();
+    try {
+      let load: () => void = () => {};
+      const { plugin, raw } = fakePlugin({
+        prepareRewardVideoAd: vi.fn(() => new Promise<void>((resolve) => { load = resolve; })),
+      });
+      const driver = createAdMobDriver(plugin, CONFIG, { startTimeoutMs: 5000 });
+      const outcome = driver.showRewarded();
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(await outcome).toBe('unavailable');
+      load();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(raw.showRewardVideoAd).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('quảng cáo đã chiếu thì không bị cắt theo đồng hồ chờ', async () => {
+    vi.useFakeTimers();
+    try {
+      const { plugin, listeners } = fakePlugin();
+      const driver = createAdMobDriver(plugin, CONFIG, { startTimeoutMs: 5000 });
+      const outcome = driver.showRewarded();
+      await vi.advanceTimersByTimeAsync(0);
+      listeners.get('onRewardedVideoAdShowed')?.();
+      await vi.advanceTimersByTimeAsync(60_000);
+      listeners.get('onRewardedVideoAdReward')?.();
+      listeners.get('onRewardedVideoAdDismissed')?.();
+      expect(await outcome).toBe('rewarded');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test('tải quảng cáo thất bại: unavailable', async () => {

@@ -4,6 +4,9 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Fixed (ads)
+- Stuck hint: a rewarded ad that loads too slowly or never answers no longer hangs the dialog. `createAdMobDriver` gives up after `REWARDED_START_TIMEOUT_MS` (10 s, from the start of loading to the `Showed` event) and returns `unavailable`, so the dialog shows "No ad is available right now" and no hint is given. An ad that arrives after the timeout is not shown. Watching an ad is not timed. While the ad loads, Watch is dimmed and a "..." mark shows (`HintDialog.setLoading`). `tests/admobDriver.test.ts`.
+
 ### Removed (cleanup)
 - `LevelSelectScene`: the unused chapter-one FX (`chapterOneFx`, `addChapterOneFx`, `updateChapterOneFx`); chapter atmosphere now lives only in `chapterAtmosphereFx`.
 - `public/assets/studio.svg`: an old logo that nothing referenced. `public/icon.svg` is also unreferenced but kept (likely the source for the PNG icons).
