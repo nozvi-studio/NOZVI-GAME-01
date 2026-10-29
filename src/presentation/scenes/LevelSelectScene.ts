@@ -23,7 +23,7 @@ import { applySteps, orderByDistance } from '../transitions/choreography.ts';
 import type { Parts, Poseable } from '../transitions/choreography.ts';
 import { MAP_OUT_TO_MENU, MAP_OUT_TO_PLAY, MAP_SPECIAL, mapIn } from '../transitions/routes.ts';
 import { playUiCue } from '../audio/uiCues.ts';
-import { GALAXY_THEMES, resolveGalaxyTheme, nodeAccent, teaserChapters } from '../galaxy/galaxyTheme.ts';
+import { resolveGalaxyTheme, nodeAccent, teaserChapters } from '../galaxy/galaxyTheme.ts';
 import { chapterRoman } from '../../content/chapters.ts';
 import { ChapterEndlessGate } from '../galaxy/chapterEndlessGate.ts';
 import { ENDLESS_UNLOCK_LEVEL, endlessGateState, galaxyCentreNear } from '../galaxy/endlessGateRules.ts';
@@ -37,6 +37,7 @@ import { createChapterTitleCard, type ChapterTitleCard } from '../galaxy/Chapter
 import { createSparkles, meteorPose, sparkleAlpha, type Sparkle } from '../galaxy/mapSparkle.ts';
 import { setPcBackground } from '../sky/pcBackground.ts';
 import { deviceTilt } from '../sky/deviceTilt.ts';
+import { mapIntroSeen, markMapIntroSeen } from '../galaxy/mapIntroSeen.ts';
 import { starTexture } from '../sky/starTexture.ts';
 import { ensureParallaxStarTexture } from '../sky/parallaxStars.ts';
 import { formatStarTotal, nodeStarRow, starTotals, type StarTotal } from '../galaxy/levelStars.ts';
@@ -84,6 +85,15 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
   private galaxyLayers: Array<{ art: Phaser.GameObjects.Container; y: number; reach: number }> = [];
   /** Each galaxy plays its arrival once, when it scrolls into view. */
   private artIntros: Array<{ y: number; art: Phaser.GameObjects.Container; played: boolean }> = [];
+  /** Empty galaxy slots waiting for their theme's textures; `art` is set once filled. */
+  /** False after the first visit of the session: arrival animations are skipped. */
+  private introsOn = true;
+  private artSlots: Array<{
+    theme: ReturnType<typeof resolveGalaxyTheme>;
+    place: ReturnType<typeof bandArtPlacements>[number];
+    intro: { y: number; art: Phaser.GameObjects.Container; played: boolean };
+    art?: Phaser.GameObjects.Container;
+  }> = [];
   /** Each chapter's title card plays once, when the middle of the screen enters the chapter. */
   private titleCards: Array<{ top: number; bottom: number; bannerY: number; rows: number[]; card: ChapterTitleCard; played: boolean }> = [];
   private chapterOneFx?: {
@@ -122,8 +132,43 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
     super({ key: 'LevelSelectScene' });
   }
 
-  preload(): void {
-    preloadGalaxyArtwork(this, Object.values(GALAXY_THEMES).map((theme) => theme.id));
+  /**
+   * Fills the empty artwork slots one theme at a time after the map is on screen. Loading all five
+   * themes (23 SVGs rasterised at 1024 px) in `preload` froze weak devices on the way in.
+   */
+  private fillArtSlots(): void {
+    let stopped = false;
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { stopped = true; });
+    const attach = (themeId: string): void => {
+      for (const slot of this.artSlots) {
+        if (slot.theme.id !== themeId || slot.art) continue;
+        const { place } = slot;
+        const art = addGalaxyArtwork(this, slot.theme, 0, 0, place.size, { rx: 295, ry: 375 }, place.look, this.introsOn, !this.introsOn);
+        slot.intro.art.add(art);
+        slot.art = art;
+        // The slot may have scrolled into view before its artwork existed.
+        if (slot.intro.played && this.introsOn) playGalaxyIntro(art);
+      }
+    };
+    const pending = [...new Set(this.artSlots.map((slot) => slot.theme.id))];
+    const next = (): void => {
+      const themeId = pending.shift();
+      if (stopped || themeId === undefined) return;
+      const step = (): void => {
+        if (stopped) return;
+        attach(themeId);
+        this.time.delayedCall(150, next);
+      };
+      preloadGalaxyArtwork(this, [themeId]);
+      if (this.load.list.size === 0) {
+        step();
+        return;
+      }
+      this.load.once(Phaser.Loader.Events.COMPLETE, step);
+      this.load.start();
+    };
+    // Let the scene's own fade-in finish first; later visits have nothing to wait for.
+    this.time.delayedCall(this.introsOn ? 600 : 200, next);
   }
 
   init(data: { mode?: LevelAccessMode; previewCompletedThrough?: string; focusLevelId?: string; revealAll?: boolean } = {}): void {
@@ -172,6 +217,7 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
 
     // 5. Cài đặt cuộn / kéo mượt mà
     this.setupScrolling();
+    this.fillArtSlots();
 
     // 6. Tự động cuộn tới node hiện tại (Auto-scroll to current node)
     if (this.pendingUnlock) {
@@ -341,7 +387,10 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
     this.backdropParts = [];
     this.chapterOneFx = undefined;
     this.artIntros = [];
+    this.artSlots = [];
     this.titleCards = [];
+    this.introsOn = !mapIntroSeen();
+    markMapIntroSeen();
 
     // 1. Toạ độ nút và dải chương suy ra từ manifest (constellationLayout.ts)
     const layout = layoutCampaignMap(campaignManifest, teaserChapters(campaignManifest));
@@ -378,13 +427,17 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
     for (const band of layout.chapters) {
       const gTheme = resolveGalaxyTheme(band.chapter);
       for (const place of bandArtPlacements(band)) {
-        const art = addGalaxyArtwork(this, gTheme, place.x, place.y, place.size, { rx: 295, ry: 375 }, place.look, true);
+        // The slot keeps the artwork's place in the draw order; the artwork itself is built once
+        // its textures are in (`fillArtSlots`), so entering the map never waits on SVG rasterising.
+        const art = this.add.container(place.x, place.y);
         if (place.look) art.setAngle(place.look.angle).setScale(1, place.look.scaleY);
         this.mapContainer.add(art);
         // Coil galaxies carry the path, so they drift less against their nodes.
         this.galaxyLayers.push({ art, y: place.y, reach: band.art ? 24 : 65 });
         this.backdropParts.push(art);
-        this.artIntros.push({ y: place.y, art, played: false });
+        const intro = { y: place.y, art, played: !this.introsOn };
+        this.artIntros.push(intro);
+        this.artSlots.push({ theme: gTheme, place, intro });
       }
       const card = createChapterTitleCard(this, 360, band.bannerY, {
         chapter: band.chapter,
@@ -395,7 +448,7 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
         accentHex: gTheme.colors.accentHex,
       });
       const rows = layout.nodes.filter((n) => n.chapter === band.chapter).map((n) => n.y);
-      this.titleCards.push({ top: band.top, bottom: band.bottom, bannerY: band.bannerY, rows, card, played: false });
+      this.titleCards.push({ top: band.top, bottom: band.bottom, bannerY: band.bannerY, rows, card, played: !this.introsOn });
     }
 
     this.addChapterAtmosphereFx(layout.chapters);
@@ -967,7 +1020,9 @@ export class LevelSelectScene extends Phaser.Scene implements Choreographed {
         const screenY = intro.y + this.mapContainer.y;
         if (intro.played || screenY < -viewHeight * 0.3 || screenY > viewHeight - 140) continue;
         intro.played = true;
-        playGalaxyIntro(intro.art);
+        // The slot holds its artwork once the theme has loaded; `fillArtSlots` plays it late otherwise.
+        const art = intro.art.getAt(0) as Phaser.GameObjects.Container | undefined;
+        if (art) playGalaxyIntro(art);
       }
       // The chapter the player is looking at introduces itself first; others follow as they scroll in.
       const centre = viewHeight / 2 - this.mapContainer.y;

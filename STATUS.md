@@ -4,6 +4,7 @@
 > Last updated: 2026-10-28
 
 ## Branches
+- Now: `perf/phaser-ui-load` (cut from `release/v1.0.0`, 2026-10-29): fix the lag on Menu to Level Select on weak devices. Done: galaxy artwork loads lazily per theme, the level map intro plays once per session, the piece sheen was made cheap (see CHANGELOG). Open question: should the intro-seen flag survive restarts (storage) instead of once per launch? Next: measure on the weak device (CPU throttle in the dev server), then lower SVG raster size for soft layers (check sharpness; map art shows at 920-1500 design units), spread `buildConstellation` over frames, remove the `ethereal:ripple` listener on shutdown, avoid calling `TextureFactory.generateAll` in every scene.
 - Last worked on: `feature/placement-feedback-audio` (X/N matched counts only pieces on target; kalimba piece sounds with a note per piece and a slow victory run; level music at half level; music no longer ducks with effects off; double-tap sound fix; merged into local `release/v1.0.0`, 2026-10-28, not pushed). Audio values are tuned by ear and may still move (`designTokens.ts`, Audio Lab).
 - Before it: `fix/release-issues` (no Sentry/GA; 10% tighter star time, 3-star hint in tutorial 1-1, Sound switch in Pause; pushed with `release/v1.0.0`, 2026-10-28). Before it: `fix/intro-fly-in-lag` (merged 2026-10-24). Before it: `feature/release-checklist-localization` (merged 2026-10-23)
 - Release branch: `release/v1.0.0` · Main: `main` · Development: `dev`
