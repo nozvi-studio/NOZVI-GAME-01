@@ -7,9 +7,9 @@
  * the character is a handful of numbers a reviewer can drag.
  *
  * Nothing here touches the Web Audio API, so it is a pure function of
- * (spec, sampleRate) and could graduate into src/audio-synth/ unchanged.
+ * (spec, sampleRate) and could graduate into src/engine/core/audio-synth/ unchanged.
  */
-import { mulberry32 } from '../../audio-synth/dsp.ts';
+import { mulberry32 } from '../../engine/core/audio-synth/dsp.ts';
 
 export type RoomSpec = {
   id: RoomId;

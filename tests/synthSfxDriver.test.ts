@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { SFX_KEYS } from '../src/content/audio/index.ts';
 import type { SfxKey } from '../src/content/audio/index.ts';
-import { synthSfxDriver } from '../src/infrastructure/synthSfxDriver.ts';
+import { synthSfxDriver } from '../src/engine/core/audio/synthSfxDriver.ts';
 
 /**
  * Enough of WebAudio to drive the driver, and to record what it did.

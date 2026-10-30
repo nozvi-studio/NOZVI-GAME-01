@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 import type Phaser from 'phaser';
-import { TransitionTimeline } from '../src/presentation/transitions/TransitionTimeline.ts';
+import { TransitionTimeline } from '../src/engine/core/transitions/TransitionTimeline.ts';
 import { choreographPlayIn } from '../src/presentation/transitions/playChoreography.ts';
 import type { PlayTransitionView } from '../src/presentation/transitions/playChoreography.ts';
 

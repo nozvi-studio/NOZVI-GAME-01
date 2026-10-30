@@ -1,5 +1,5 @@
 import type Phaser from 'phaser';
-import type { AudioCue } from '../../infrastructure/sfx.ts';
+import type { AudioCue } from '../../engine/core/audio/sfx.ts';
 import { AUDIO_TOKENS } from '../designTokens.ts';
 import { audioServices } from './audioServices.ts';
 

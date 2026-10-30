@@ -1,4 +1,4 @@
-import { getSafeStorage, memoryStorage } from '../../infrastructure/safeStorage.ts';
+import { getSafeStorage, memoryStorage } from '../../engine/core/platform/safeStorage.ts';
 import Phaser from 'phaser';
 import type { Level, PieceState, PuzzleState, Transition } from '../../domain/model.ts';
 import { loadLevel } from '../../content/catalog.ts';
@@ -17,7 +17,7 @@ import { NO_ASSIST, snapAssistFor, type SnapAssist } from '../board/snapAssist.t
 import { Hud } from '../hud/Hud.ts';
 import { TimeBar } from '../hud/TimeBar.ts';
 import { TIME_BAR } from '../hud/timeBarModel.ts';
-import { applyDesignViewport, designSafeArea, designViewBounds } from '../designViewport.ts';
+import { applyDesignViewport, designSafeArea, designViewBounds } from '../../engine/core/viewport/designViewport.ts';
 import {
   computeLayout,
   pieceCenterCanvas,
@@ -45,20 +45,20 @@ import type { TutorialAction, TutorialController } from '../../application/tutor
 import { snappedCount } from '../feedback/audioCues.ts';
 import type { FtueController } from '../../application/ftue.ts';
 import { resolveVictoryVerse } from '../hud/hudText.ts';
-import { director } from '../transitions/SceneDirector.ts';
+import { director } from '../transitions/director.ts';
 import { isReducedMotion } from '../transitions/motion.ts';
 import { createDoubleTap } from '../board/doubleTap.ts';
 import { createHoldRotate } from '../board/holdRotate.ts';
 import { IDLE_NUDGE_START, stepIdleNudge, type IdleNudgeState } from '../board/idleNudge.ts';
-import type { Choreographed, TransitionContext } from '../transitions/SceneDirector.ts';
-import type { TransitionTimeline } from '../transitions/TransitionTimeline.ts';
+import type { Choreographed, TransitionContext } from '../transitions/director.ts';
+import type { TransitionTimeline } from '../../engine/core/transitions/TransitionTimeline.ts';
 import { choreographPlayIn, choreographPlayOut, type PlayTransitionView } from '../transitions/playChoreography.ts';
 
 import { PieceTextureCache } from '../board/PieceTextureCache.ts';
 import { FeedbackDirector } from '../feedback/FeedbackDirector.ts';
 import { feedbackEvents, type FeedbackSubject } from '../feedback/feedbackEvents.ts';
-import { createHaptics } from '../../infrastructure/haptics.ts';
-import { capacitorHapticsDriver } from '../../infrastructure/capacitorHaptics.ts';
+import { createHaptics } from '../../engine/core/platform/haptics.ts';
+import { capacitorHapticsDriver } from '../../engine/core/platform/capacitorHaptics.ts';
 import { Capacitor } from '@capacitor/core';
 import type { BackgroundScene } from './BackgroundScene.ts';
 import { audioServices } from '../audio/audioServices.ts';
@@ -519,9 +519,11 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
   private async watchForHint(): Promise<void> {
     if (this.hintAdShowing) return;
     this.hintAdShowing = true;
+    this.hintDialog.setLoading(true);
     const outcome = await adsServices(this).showRewarded();
     this.hintAdShowing = false;
     if (!this.sys.isActive()) return;
+    this.hintDialog.setLoading(false);
     // The dev server has no ads: an unavailable ad still grants the hint so the flow can be tried.
     const earned = outcome === 'rewarded' || (import.meta.env.DEV && outcome === 'unavailable');
     if (earned) {

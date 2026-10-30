@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { computeLayout } from '../src/presentation/board/layout.ts';
 import { LAYOUT_TOKENS } from '../src/presentation/designTokens.ts';
-import { computeDesignHeight, DESIGN_WIDTH } from '../src/presentation/viewport.ts';
+import { computeDesignHeight, DESIGN_WIDTH } from '../src/engine/core/viewport/viewport.ts';
 
 const W = DESIGN_WIDTH;
 const NO_SAFE = { top: 0, bottom: 0 };

@@ -1,4 +1,4 @@
-import type { HapticsPort, ImpactLevel, NotifyKind } from '../../infrastructure/haptics.ts';
+import type { HapticsPort, ImpactLevel, NotifyKind } from '../../engine/core/platform/haptics.ts';
 import type { FeedbackEvent } from './feedbackEvents.ts';
 
 export type HapticCue = { kind: 'impact'; style: ImpactLevel } | { kind: 'notify'; type: NotifyKind };

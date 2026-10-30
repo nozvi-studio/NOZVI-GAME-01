@@ -6,7 +6,7 @@ import { HintDialog } from '../src/presentation/dialogs/HintDialog.ts';
 import { SettingsDialog } from '../src/presentation/dialogs/SettingsDialog.ts';
 import { createProgressRepository } from '../src/infrastructure/progressRepository.ts';
 import { getLocale, setLocale, t } from '../src/presentation/i18n.ts';
-import type { AdsPort } from '../src/application/platformPort.ts';
+import type { AdsPort } from '../src/engine/core/platform/platformPort.ts';
 import { NO_ADS } from '../src/presentation/adsServices.ts';
 
 vi.mock('phaser', () => ({ default: {} }));

@@ -1,4 +1,4 @@
-import type { CrashReporterPort } from '../application/platformPort.ts';
+import type { CrashReporterPort } from '../engine/core/platform/platformPort.ts';
 
 export type CrashTestKind = 'throw' | 'reject' | 'capture';
 

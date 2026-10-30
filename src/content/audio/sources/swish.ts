@@ -1,4 +1,4 @@
-import type { Patch } from '../../../audio-synth/patch.ts';
+import type { Patch } from '../../../engine/core/audio-synth/patch.ts';
 
 /** Light air swish, falling: white noise through a bandpass sweeping downward. */
 export const swish: Patch = {

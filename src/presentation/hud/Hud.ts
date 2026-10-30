@@ -25,7 +25,7 @@ import {
 import { enter, exit, type Poseable } from '../transitions/choreography.ts';
 import { stepScalar } from '../board/pieceMotion.ts';
 import { isReducedMotion } from '../transitions/motion.ts';
-import type { TransitionTimeline } from '../transitions/TransitionTimeline.ts';
+import type { TransitionTimeline } from '../../engine/core/transitions/TransitionTimeline.ts';
 import {
   VICTORY_COLLAPSE_MS,
   VICTORY_COLLAPSE_SCALE,
@@ -34,7 +34,7 @@ import {
   type VictoryPlan,
 } from '../feedback/victorySequence.ts';
 import { playUiCue } from '../audio/uiCues.ts';
-import { cjkWordWrapCallback } from '../cjkWrap.ts';
+import { cjkWordWrapCallback } from '../../engine/core/viewport/cjkWrap.ts';
 import { starTexture } from '../sky/starTexture.ts';
 import type { ResultCardModel } from './resultCardModel.ts';
 import { computeMatchBarLayout } from './matchBarLayout.ts';

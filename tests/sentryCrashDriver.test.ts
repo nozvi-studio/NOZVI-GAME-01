@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { createSentryCrashDriver } from '../src/infrastructure/sentryCrashDriver.ts';
-import type { SentryConfig, SentryLike } from '../src/infrastructure/sentryCrashDriver.ts';
-import { createCrashReporter } from '../src/infrastructure/platformServices.ts';
+import { createSentryCrashDriver } from '../src/engine/core/platform/sentryCrashDriver.ts';
+import type { SentryConfig, SentryLike } from '../src/engine/core/platform/sentryCrashDriver.ts';
+import { createCrashReporter } from '../src/engine/core/platform/platformServices.ts';
 import { installCrashTest } from '../src/devtools/crashTest.ts';
 
 const CONFIG: SentryConfig = { dsn: 'https://key@example.ingest.sentry.io/1', release: '1.0.0', environment: 'test' };

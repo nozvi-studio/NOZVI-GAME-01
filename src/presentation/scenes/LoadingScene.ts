@@ -1,22 +1,22 @@
-import { getSafeStorage, memoryStorage } from '../../infrastructure/safeStorage.ts';
+import { getSafeStorage, memoryStorage } from '../../engine/core/platform/safeStorage.ts';
 import Phaser from 'phaser';
 import { buildFactPool, createFactDeck } from '../../application/factDeck.ts';
 import type { FactDeck } from '../../application/factDeck.ts';
-import { LoadingProgress } from '../../application/loadingProgress.ts';
+import { LoadingProgress } from '../../engine/core/boot/loadingProgress.ts';
 import { APP_VERSION } from '../../appVersion.ts';
 import { campaignManifest } from '../../content/manifest.ts';
 import { createProgressRepository } from '../../infrastructure/progressRepository.ts';
 import { AUDIO_REGISTRY_KEY } from '../audio/audioServices.ts';
-import { cjkWordWrapCallback } from '../cjkWrap.ts';
+import { cjkWordWrapCallback } from '../../engine/core/viewport/cjkWrap.ts';
 import { TYPO_TOKENS } from '../designTokens.ts';
-import { applyDesignViewport, designViewBounds } from '../designViewport.ts';
+import { applyDesignViewport, designViewBounds } from '../../engine/core/viewport/designViewport.ts';
 import { preloadGalaxyArtwork } from '../galaxy/GalaxyArtwork.ts';
 import { resolveCurrentGalaxyTheme } from '../galaxy/galaxyTheme.ts';
 import { initialGalaxyThemeIds } from '../galaxy/initialGalaxyThemeIds.ts';
 import { getChapterTagline, getChapterVerses, t } from '../i18n.ts';
 import { mulberry32 } from '../sky/starField.ts';
 import { isReducedMotion, scaleTiming } from '../transitions/motion.ts';
-import { director } from '../transitions/SceneDirector.ts';
+import { director } from '../transitions/director.ts';
 
 // Stays up at least this long even when everything is loaded. The bar then
 // runs, hesitates and runs again (see `pacedProgress`), which reads as real work and a smooth game.

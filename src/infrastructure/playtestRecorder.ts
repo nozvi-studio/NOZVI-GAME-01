@@ -1,4 +1,4 @@
-import type { TelemetryEvent, TelemetryRecorder } from '../application/telemetry.ts';
+import type { TelemetryEvent, TelemetryRecorder } from '../engine/core/platform/telemetry.ts';
 import type { StoragePort } from '../application/progressPort.ts';
 
 const TELEMETRY_KEY = 'nozvi.playtest.v1';

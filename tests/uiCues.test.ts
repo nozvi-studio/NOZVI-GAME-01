@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import type Phaser from 'phaser';
-import type { AudioCue } from '../src/infrastructure/sfx.ts';
+import type { AudioCue } from '../src/engine/core/audio/sfx.ts';
 import { AUDIO_REGISTRY_KEY, SILENT_AUDIO } from '../src/presentation/audio/audioServices.ts';
 import { playUiCue, uiCue } from '../src/presentation/audio/uiCues.ts';
 import { AUDIO_TOKENS } from '../src/presentation/designTokens.ts';

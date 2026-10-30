@@ -11,11 +11,11 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { measure } from '../../src/audio-synth/normalize.ts';
-import { renderPatch } from '../../src/audio-synth/render.ts';
-import { renderAudioReport, renderWaveformSvg } from '../../src/audio-synth/report.ts';
-import type { ReportRow } from '../../src/audio-synth/report.ts';
-import { encodeWav } from '../../src/audio-synth/wav.ts';
+import { measure } from '../../src/engine/core/audio-synth/normalize.ts';
+import { renderPatch } from '../../src/engine/core/audio-synth/render.ts';
+import { renderAudioReport, renderWaveformSvg } from '../../src/engine/core/audio-synth/report.ts';
+import type { ReportRow } from '../../src/engine/core/audio-synth/report.ts';
+import { encodeWav } from '../../src/engine/core/audio-synth/wav.ts';
 import { MUSIC_ROOT_HZ, SFX_KEYS, SFX_PATCHES } from '../../src/content/audio/index.ts';
 import type { SfxKey } from '../../src/content/audio/index.ts';
 

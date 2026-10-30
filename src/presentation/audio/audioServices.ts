@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
-import type { MusicPort } from '../../infrastructure/music.ts';
-import type { SfxPort } from '../../infrastructure/sfx.ts';
+import type { MusicPort } from '../../engine/core/audio/music.ts';
+import type { SfxPort } from '../../engine/core/audio/sfx.ts';
 
 export type AudioServices = { music: MusicPort; sfx: SfxPort };
 

@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { AdMob } from '@capacitor-community/admob';
-import { createAdMobDriver, resolveAdMobConfig } from './infrastructure/admobDriver.ts';
+import { createAdMobDriver, resolveAdMobConfig } from './engine/core/platform/admobDriver.ts';
 import { ADS_REGISTRY_KEY } from './presentation/adsServices.ts';
 import { BackgroundScene } from './presentation/scenes/BackgroundScene.ts';
 import { LoadingScene } from './presentation/scenes/LoadingScene.ts';
@@ -10,25 +10,25 @@ import { MenuScene } from './presentation/scenes/MenuScene.ts';
 import { PlayScene } from './presentation/scenes/PlayScene.ts';
 import { LevelSelectScene } from './presentation/scenes/LevelSelectScene.ts';
 import { FixtureScene } from './presentation/scenes/FixtureScene.ts';
-import { setupAndroidLifecycle } from './infrastructure/lifecycle.ts';
-import { createPlatformServices, installGlobalErrorHandlers } from './infrastructure/platformServices.ts';
-import { createSentryCrashDriver } from './infrastructure/sentryCrashDriver.ts';
+import { setupAndroidLifecycle } from './engine/core/platform/lifecycle.ts';
+import { createPlatformServices, installGlobalErrorHandlers } from './engine/core/platform/platformServices.ts';
+import { createSentryCrashDriver } from './engine/core/platform/sentryCrashDriver.ts';
 import { installCrashTest } from './devtools/crashTest.ts';
 import { APP_VERSION } from './appVersion.ts';
 import { createProgressRepository } from './infrastructure/progressRepository.ts';
-import { getSafeStorage, memoryStorage } from './infrastructure/safeStorage.ts';
+import { getSafeStorage, memoryStorage } from './engine/core/platform/safeStorage.ts';
 import { campaignManifest } from './content/manifest.ts';
-import { director, PhaserSceneHost } from './presentation/transitions/SceneDirector.ts';
+import { director, PhaserSceneHost } from './presentation/transitions/director.ts';
 import { setMotionScale } from './presentation/transitions/motion.ts';
 import { resolveLaunch } from './launchParams.ts';
-import { readViewport } from './presentation/viewport.ts';
+import { readViewport } from './engine/core/viewport/viewport.ts';
 import { setPcBackground } from './presentation/sky/pcBackground.ts';
 import { musicUrls } from './infrastructure/audioManifest.ts';
-import { browserMusicEnv, browserSfxEnv } from './infrastructure/browserAudioEnv.ts';
-import { createMusic } from './infrastructure/music.ts';
-import { createSfx } from './infrastructure/sfx.ts';
-import { synthSfxDriver } from './infrastructure/synthSfxDriver.ts';
-import { renderAll } from './audio-synth/webaudio.ts';
+import { browserMusicEnv, browserSfxEnv } from './engine/core/audio/browserAudioEnv.ts';
+import { createMusic } from './engine/core/audio/music.ts';
+import { createSfx } from './engine/core/audio/sfx.ts';
+import { synthSfxDriver } from './engine/core/audio/synthSfxDriver.ts';
+import { renderAll } from './engine/core/audio-synth/webaudio.ts';
 import { SFX_PATCHES } from './content/audio/index.ts';
 import { AUDIO_REGISTRY_KEY } from './presentation/audio/audioServices.ts';
 import type { AudioServices } from './presentation/audio/audioServices.ts';
@@ -68,7 +68,7 @@ const music = createMusic(browserMusicEnv(), {
   duckDownMs: AUDIO_TOKENS.duck.downMs,
   duckUpMs: AUDIO_TOKENS.duck.upMs,
   files: musicUrls,
-  trackLevel: (id) => AUDIO_TOKENS.trackLevel[id] ?? 1,
+  trackLevel: (id) => (AUDIO_TOKENS.trackLevel as Readonly<Record<string, number | undefined>>)[id] ?? 1,
 });
 music.setEnabled(savedSettings.music);
 

@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { SkyBackdrop } from '../sky/SkyBackdrop.ts';
 import { SKY_MOODS } from '../sky/skyMood.ts';
 import type { MoodTarget, SkyMood } from '../sky/skyMood.ts';
-import { applyDesignViewport } from '../designViewport.ts';
+import { applyDesignViewport } from '../../engine/core/viewport/designViewport.ts';
 
 /**
  * Bầu trời duy nhất của cả game, luôn nằm dưới cùng. Menu, Bản đồ và Play

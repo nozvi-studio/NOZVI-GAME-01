@@ -9,9 +9,9 @@
  * The tweak sliders exist because nobody, including whoever wrote the
  * patches, can pick these numbers without listening.
  */
-import { measure } from '../../audio-synth/normalize.ts';
-import { renderPatch } from '../../audio-synth/render.ts';
-import { toAudioBuffer } from '../../audio-synth/webaudio.ts';
+import { measure } from '../../engine/core/audio-synth/normalize.ts';
+import { renderPatch } from '../../engine/core/audio-synth/render.ts';
+import { toAudioBuffer } from '../../engine/core/audio-synth/webaudio.ts';
 import { PRIORITY, createResonanceBus } from './bus.ts';
 import { INSTRUMENTS, NEUTRAL, instrumentSpec, midiToHz } from './instruments.ts';
 import type { InstrumentId, Tweaks } from './instruments.ts';

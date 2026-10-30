@@ -32,7 +32,7 @@ try {
       let ready = false;
       while (Date.now() < deadline) {
         ready = await page.evaluate(async key => {
-          const { director } = await import('/src/presentation/transitions/SceneDirector.ts');
+          const { director } = await import('/src/presentation/transitions/director.ts');
           const scene = director.host?.game.scene.getScene(key);
           return scene?.sys.settings.status === 5 && scene.scene.isActive() && !director.isTransitioning() && scene.input.enabled;
         }, key);
@@ -41,7 +41,7 @@ try {
       }
       assert.ok(ready, `${key} ready for input`);
       const zoom = await page.evaluate(async key => {
-        const { director } = await import('/src/presentation/transitions/SceneDirector.ts');
+        const { director } = await import('/src/presentation/transitions/director.ts');
         const game = director.host.game;
         const scene = game.scene.getScene(key);
         return { actual: scene.cameras.main.zoom, expected: game.scale.width / 720 };
@@ -52,7 +52,7 @@ try {
     await page.waitForTimeout(1200);
     if (chapter === 1) {
       const starSnapshot = () => page.evaluate(async () => {
-        const { director } = await import('/src/presentation/transitions/SceneDirector.ts');
+        const { director } = await import('/src/presentation/transitions/director.ts');
         return director.host.game.scene.getScene('MenuScene').galaxy.list
           .filter(object => object.name === 'moving-white-star')
           .map(object => ({ x: object.x, y: object.y, alpha: object.alpha }));
@@ -74,7 +74,7 @@ try {
     await page.screenshot({ path: new URL(`map-${label}.png`, output).pathname.replace(/^\/([A-Za-z]:)/, '$1') });
     // Drag starting on a playable node must scroll, not enter the level.
     const node = await page.evaluate(async () => {
-      const { director } = await import('/src/presentation/transitions/SceneDirector.ts');
+      const { director } = await import('/src/presentation/transitions/director.ts');
       const scene = director.host.game.scene.getScene('LevelSelectScene');
       const current = scene.nodeViews.find(n => n.info.state === 'current') ?? scene.nodeViews[2];
       const scale = scene.scale.width / 720 / devicePixelRatio;

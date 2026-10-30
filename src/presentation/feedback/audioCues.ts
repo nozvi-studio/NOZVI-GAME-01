@@ -1,6 +1,6 @@
 import type { Level, PuzzleState } from '../../domain/model.ts';
 import type { SfxKey } from '../../content/audio/index.ts';
-import type { AudioCue, SfxPort } from '../../infrastructure/sfx.ts';
+import type { AudioCue, SfxPort } from '../../engine/core/audio/sfx.ts';
 import type { AudioServices } from '../audio/audioServices.ts';
 import { AUDIO_TOKENS } from '../designTokens.ts';
 import type { FeedbackEvent } from './feedbackEvents.ts';
