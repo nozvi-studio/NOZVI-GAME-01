@@ -13,14 +13,14 @@ function blockedWindow() {
 describe('safe storage access', () => {
   it('returns null when the window storage getter throws', async () => {
     vi.stubGlobal('window', blockedWindow());
-    const { getSafeStorage } = await import('../src/infrastructure/safeStorage.ts');
+    const { getSafeStorage } = await import('../src/engine/core/platform/safeStorage.ts');
     expect(getSafeStorage()).toBeNull();
   });
 
   it('returns available browser storage', async () => {
     const storage = { getItem: () => null, setItem: () => {} };
     vi.stubGlobal('window', { localStorage: storage });
-    const { getSafeStorage } = await import('../src/infrastructure/safeStorage.ts');
+    const { getSafeStorage } = await import('../src/engine/core/platform/safeStorage.ts');
     expect(getSafeStorage()).toBe(storage);
   });
 
@@ -31,7 +31,7 @@ describe('safe storage access', () => {
       configurable: true,
       get() { throw new DOMException('Blocked', 'SecurityError'); },
     });
-    const { getSafeStorage } = await import('../src/infrastructure/safeStorage.ts');
+    const { getSafeStorage } = await import('../src/engine/core/platform/safeStorage.ts');
     expect(getSafeStorage()).toBeNull();
     expect(getEndlessLevelNumber()).toBe(1);
     expect(() => saveEndlessLevelNumber(1, 2)).not.toThrow();
@@ -46,7 +46,7 @@ describe('safe storage access', () => {
 
   it('shares memory progress between repositories when browser storage is blocked', async () => {
     vi.stubGlobal('window', blockedWindow());
-    const { getSafeStorage, memoryStorage } = await import('../src/infrastructure/safeStorage.ts');
+    const { getSafeStorage, memoryStorage } = await import('../src/engine/core/platform/safeStorage.ts');
     const { createProgressRepository } = await import('../src/infrastructure/progressRepository.ts');
     const first = createProgressRepository(getSafeStorage() ?? memoryStorage, [], 'test');
     first.setMusic(false);

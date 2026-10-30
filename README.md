@@ -50,7 +50,8 @@ src/
     feedback/       Feedback events, victory sequence, haptics
     menu/           Menu emblems and layout
     transitions/    Scene director, routes and choreography
-  audio-synth/      Procedural sound-effect synthesizer
+  engine/           Reusable runtime (see src/engine/ENGINE.md)
+    core/           Platform, audio, synth, boot, viewport, transitions, localization engine
   infrastructure/   Audio, haptics, progress storage and lifecycle adapters
   localization/     Locale resolution and manager
   locales/          Translation files (en-US, es, pt-BR, fr, de, ja, ko, zh-CN, id, vi)

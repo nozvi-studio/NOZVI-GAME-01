@@ -4,8 +4,8 @@
  * Plays the same patches, through the same renderer, that the game will use.
  * Not listed in vite.config.ts build input, so it never reaches production.
  */
-import { measure } from '../../audio-synth/normalize.ts';
-import type { Patch } from '../../audio-synth/patch.ts';
+import { measure } from '../../engine/core/audio-synth/normalize.ts';
+import type { Patch } from '../../engine/core/audio-synth/patch.ts';
 import { SFX_KEYS, SFX_PATCHES } from '../../content/audio/index.ts';
 import type { SfxKey } from '../../content/audio/index.ts';
 import { ViewMemory, formatIssues, sliderLabel, tryRender } from './guard.ts';

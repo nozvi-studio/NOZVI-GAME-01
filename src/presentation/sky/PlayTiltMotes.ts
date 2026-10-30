@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { DEPTH_TOKENS } from '../designTokens.ts';
-import { designViewBounds } from '../designViewport.ts';
+import { designViewBounds } from '../../engine/core/viewport/designViewport.ts';
 import { isReducedMotion } from '../transitions/motion.ts';
 import { deviceTilt } from './deviceTilt.ts';
 import { ensureSoftDotTexture } from './parallaxStars.ts';

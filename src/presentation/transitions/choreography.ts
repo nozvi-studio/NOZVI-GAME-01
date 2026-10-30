@@ -1,6 +1,6 @@
-import type { EaseName } from './motion.ts';
+import type { EaseName } from '../../engine/core/transitions/motion.ts';
 import { stagger } from './motion.ts';
-import type { TransitionTimeline } from './TransitionTimeline.ts';
+import type { TransitionTimeline } from '../../engine/core/transitions/TransitionTimeline.ts';
 
 /** Mọi GameObject của Phaser đều thoả kiểu này (Transform + Alpha). */
 export type Poseable = { x: number; y: number; alpha: number; scaleX: number; scaleY: number };

@@ -1,4 +1,4 @@
-import type { Patch } from '../../../audio-synth/patch.ts';
+import type { Patch } from '../../../engine/core/audio-synth/patch.ts';
 import { MUSIC_ROOT_HZ } from '../root.ts';
 
 /**

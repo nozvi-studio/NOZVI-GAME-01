@@ -1,5 +1,5 @@
 import type Phaser from 'phaser';
-import type { AdsPort } from '../application/platformPort.ts';
+import type { AdsPort } from '../engine/core/platform/platformPort.ts';
 
 /** main.ts stores the ads port in game.registry under this key. */
 export const ADS_REGISTRY_KEY = 'ads';

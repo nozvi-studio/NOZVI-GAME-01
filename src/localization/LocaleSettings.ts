@@ -1,6 +1,6 @@
 import { localizationConfig } from './localizationConfig.ts';
 import type { SupportedLocale } from './types.ts';
-import { getSafeStorage } from '../infrastructure/safeStorage.ts';
+import { getSafeStorage } from '../engine/core/platform/safeStorage.ts';
 
 export class LocaleSettings {
   private static getStorage(): Storage | null {

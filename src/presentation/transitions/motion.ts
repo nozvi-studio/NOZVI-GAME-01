@@ -1,28 +1,23 @@
 import { ANIM_TOKENS, FEEDBACK_TOKENS, TRANSITION_TOKENS } from '../designTokens.ts';
+import { EASES as CORE_EASES } from '../../engine/core/transitions/motion.ts';
+import type { EaseName as CoreEaseName } from '../../engine/core/transitions/motion.ts';
+
+export {
+  getMotionScale,
+  isReducedMotion,
+  scaleTiming,
+  setMotionScale,
+  stagger,
+} from '../../engine/core/transitions/motion.ts';
 
 export type RouteId = keyof typeof TRANSITION_TOKENS.routes;
 
-export type EaseName =
-  | 'linear'
-  | 'cubicOut'
-  | 'cubicInOut'
-  | 'quartOut'
-  | 'backOut'
-  | 'sineInOut'
-  | 'anticipateOut';
+/** The core ease names plus the one that reads a game token. */
+export type EaseName = CoreEaseName | 'anticipateOut';
 
 /** Hàm easing thuần, t trong [0, 1]. Tự viết để test được mà không cần Phaser. */
 export const EASES: Record<EaseName, (t: number) => number> = {
-  linear: (t) => t,
-  cubicOut: (t) => 1 - (1 - t) ** 3,
-  cubicInOut: (t) => (t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2),
-  quartOut: (t) => 1 - (1 - t) ** 4,
-  backOut: (t) => {
-    const c1 = 1.70158;
-    const c3 = c1 + 1;
-    return 1 + c3 * (t - 1) ** 3 + c1 * (t - 1) ** 2;
-  },
-  sineInOut: (t) => -(Math.cos(Math.PI * t) - 1) / 2,
+  ...CORE_EASES,
   anticipateOut: (t) => {
     const { pickupDipLift: dip, pickupDipAt: at } = FEEDBACK_TOKENS;
     if (t <= 0) return 0;
@@ -32,33 +27,6 @@ export const EASES: Record<EaseName, (t: number) => number> = {
   },
 };
 
-/** Độ trễ so le của phần tử thứ `index` trong `count` phần tử, trải đều trên `spanMs`. */
-export function stagger(index: number, count: number, spanMs: number): number {
-  if (count <= 1 || spanMs <= 0) return 0;
-  const i = Math.min(Math.max(index, 0), count - 1);
-  return (i * spanMs) / (count - 1);
-}
-
-let motionScale = 1;
-
-/** 1 là chuyển động đầy đủ, 0 là Giảm chuyển động. Không có mức giữa. */
-export function getMotionScale(): number {
-  return motionScale;
-}
-
-export function setMotionScale(value: number): void {
-  motionScale = value <= 0 ? 0 : 1;
-}
-
-export function isReducedMotion(scale: number = motionScale): boolean {
-  return scale <= 0;
-}
-
-/** Thời lượng chuyển động dịch vị trí: giữ nguyên, hoặc 0 khi Giảm chuyển động. */
-export function scaleTiming(ms: number, scale: number = motionScale): number {
-  return isReducedMotion(scale) ? 0 : ms;
-}
-
 export type MotionFamilyName = 'ui' | 'glass' | 'magic' | 'piece';
 
 /**
@@ -67,9 +35,9 @@ export type MotionFamilyName = 'ui' | 'glass' | 'magic' | 'piece';
  * `number | undefined`. A shared optional shape typechecks here but pushes a
  * non-null assertion onto every consumer.
  */
-export type UiFamily = Readonly<{ ease: EaseName; tapMs: number; standardMs: number }>;
-export type GlassFamily = Readonly<{ ease: EaseName; durationMs: number }>;
-export type MagicFamily = Readonly<{ ease: EaseName; minMs: number; maxMs: number }>;
+export type UiFamily = Readonly<{ ease: CoreEaseName; tapMs: number; standardMs: number }>;
+export type GlassFamily = Readonly<{ ease: CoreEaseName; durationMs: number }>;
+export type MagicFamily = Readonly<{ ease: CoreEaseName; minMs: number; maxMs: number }>;
 /** `piece` is integrated frame by frame by POSE_TAU, so it has no ease. */
 export type PieceFamily = Readonly<{ ease: null; governedBy: 'POSE_TAU' }>;
 
@@ -120,4 +88,3 @@ export const MOTION_FAMILIES: MotionFamilies = {
 export function motionFamily<K extends MotionFamilyName>(name: K): MotionFamilies[K] {
   return MOTION_FAMILIES[name];
 }
-

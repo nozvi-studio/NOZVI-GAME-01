@@ -2,7 +2,7 @@ import { Capacitor } from '@capacitor/core';
 import Phaser from 'phaser';
 import type { ProgressRepository } from '../../application/progressPort.ts';
 import { COLOR_NUMBERS, COLOR_TOKENS, TYPO_TOKENS } from '../designTokens.ts';
-import { designViewBounds } from '../designViewport.ts';
+import { designViewBounds } from '../../engine/core/viewport/designViewport.ts';
 import { TEXTURE_KEYS } from '../TextureFactory.ts';
 import { t, getLocale, resetCosmicFacts } from '../i18n.ts';
 import type { SupportedLocale } from '../../localization/types.ts';

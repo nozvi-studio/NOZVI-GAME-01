@@ -1,4 +1,4 @@
-import { getSafeStorage, memoryStorage } from '../../infrastructure/safeStorage.ts';
+import { getSafeStorage, memoryStorage } from '../../engine/core/platform/safeStorage.ts';
 import Phaser from 'phaser';
 import { campaignManifest } from '../../content/manifest.ts';
 import { loadLevel } from '../../content/catalog.ts';
@@ -9,16 +9,16 @@ import { createProgressRepository } from '../../infrastructure/progressRepositor
 import type { ProgressRepository } from '../../application/progressPort.ts';
 import { COLOR_NUMBERS, COLOR_TOKENS, LAYOUT_TOKENS, TYPO_TOKENS } from '../designTokens.ts';
 import { TEXTURE_KEYS, TextureFactory } from '../TextureFactory.ts';
-import { applyDesignViewport, designSafeArea, designViewBounds } from '../designViewport.ts';
+import { applyDesignViewport, designSafeArea, designViewBounds } from '../../engine/core/viewport/designViewport.ts';
 import { bandArtPlacements, layoutCampaignMap, snapToRowGap, type ChapterBand } from '../galaxy/constellationLayout.ts';
 import { walkedLinkAlpha } from '../galaxy/constellationMotion.ts';
 import { isReducedMotion } from '../transitions/motion.ts';
 import { NODE_SILHOUETTE_FIT, drawTargetSilhouette } from '../board/targetSilhouette.ts';
 import { t, getChapterLabel, getChapterName, getGalaxyType } from '../i18n.ts';
 import { adsServices } from '../adsServices.ts';
-import { director } from '../transitions/SceneDirector.ts';
-import type { Choreographed, TransitionContext } from '../transitions/SceneDirector.ts';
-import type { TransitionTimeline } from '../transitions/TransitionTimeline.ts';
+import { director } from '../transitions/director.ts';
+import type { Choreographed, TransitionContext } from '../transitions/director.ts';
+import type { TransitionTimeline } from '../../engine/core/transitions/TransitionTimeline.ts';
 import { applySteps, orderByDistance } from '../transitions/choreography.ts';
 import type { Parts, Poseable } from '../transitions/choreography.ts';
 import { MAP_OUT_TO_MENU, MAP_OUT_TO_PLAY, MAP_SPECIAL, mapIn } from '../transitions/routes.ts';

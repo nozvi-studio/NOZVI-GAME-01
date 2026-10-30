@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import { MUSIC_ROOT_HZ, SFX_KEYS, SFX_PATCHES } from '../src/content/audio/index.ts';
 import type { SfxKey } from '../src/content/audio/index.ts';
-import { validatePatch } from '../src/audio-synth/patch.ts';
-import { measure } from '../src/audio-synth/normalize.ts';
-import { renderPatch } from '../src/audio-synth/render.ts';
+import { validatePatch } from '../src/engine/core/audio-synth/patch.ts';
+import { measure } from '../src/engine/core/audio-synth/normalize.ts';
+import { renderPatch } from '../src/engine/core/audio-synth/render.ts';
 
 const SR = 44100;
 

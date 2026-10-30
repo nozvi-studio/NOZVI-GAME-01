@@ -1,6 +1,6 @@
-import type { Patch, PatchIssue } from '../../audio-synth/patch.ts';
-import { validatePatch } from '../../audio-synth/patch.ts';
-import { renderPatch } from '../../audio-synth/render.ts';
+import type { Patch, PatchIssue } from '../../engine/core/audio-synth/patch.ts';
+import { validatePatch } from '../../engine/core/audio-synth/patch.ts';
+import { renderPatch } from '../../engine/core/audio-synth/render.ts';
 
 export type RenderAttempt =
   | { ok: true; samples: Float32Array }
