@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { LevelClock } from '../src/application/levelClock.ts';
+import { LevelClock } from '../../../src/engine/core/levelClock.ts';
 
 describe('LevelClock', () => {
   test('does not count before start', () => {

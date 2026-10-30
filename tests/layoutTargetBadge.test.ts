@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { computeLayout, computeTargetBadgeScale } from '../src/presentation/board/layout.ts';
-import { computeDesignView, computeViewport } from '../src/presentation/viewport.ts';
+import { computeDesignView, computeViewport } from '../src/engine/core/viewport/viewport.ts';
 
 describe('target badge uses spare height above the board', () => {
   it.each([

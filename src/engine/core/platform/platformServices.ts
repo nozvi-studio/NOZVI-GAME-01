@@ -6,8 +6,8 @@ import type {
   CrashValue,
   PlatformServices,
   RewardedOutcome,
-} from '../application/platformPort.ts';
-import type { TelemetryEvent } from '../application/telemetry.ts';
+} from './platformPort.ts';
+import type { TelemetryEvent } from './telemetry.ts';
 
 /** Điểm cắm cho SDK ngoài. Driver được phép ném lỗi hoặc reject: lớp bọc dưới đây nuốt hết. */
 export type CrashDriver = {

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { PENTATONIC_STEPS, ladderRates, patchToTypeScript } from '../src/devtools/audiolab/serialize.ts';
-import { validatePatch } from '../src/audio-synth/patch.ts';
-import type { Patch } from '../src/audio-synth/patch.ts';
+import { validatePatch } from '../src/engine/core/audio-synth/patch.ts';
+import type { Patch } from '../src/engine/core/audio-synth/patch.ts';
 import { SFX_PATCHES } from '../src/content/audio/index.ts';
 
 describe('patchToTypeScript', () => {

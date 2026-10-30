@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import { applyNormalize, measure } from '../src/audio-synth/normalize.ts';
-import type { Patch } from '../src/audio-synth/patch.ts';
-import { FADE_OUT_MS, renderPatch } from '../src/audio-synth/render.ts';
+import { applyNormalize, measure } from '../../../src/engine/core/audio-synth/normalize.ts';
+import type { Patch } from '../../../src/engine/core/audio-synth/patch.ts';
+import { FADE_OUT_MS, renderPatch } from '../../../src/engine/core/audio-synth/render.ts';
 
 const SR = 44100;
 

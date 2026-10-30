@@ -1,11 +1,11 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
-import { validatePatch } from '../src/audio-synth/patch.ts';
-import { renderPatch } from '../src/audio-synth/render.ts';
-import { bellPreset, clickPreset, whooshPreset } from '../src/audio-synth/presets.ts';
+import { validatePatch } from '../../../src/engine/core/audio-synth/patch.ts';
+import { renderPatch } from '../../../src/engine/core/audio-synth/render.ts';
+import { bellPreset, clickPreset, whooshPreset } from '../../../src/engine/core/audio-synth/presets.ts';
 
-const dir = fileURLToPath(new URL('../src/audio-synth/', import.meta.url));
+const dir = fileURLToPath(new URL('../../../src/engine/core/audio-synth/', import.meta.url));
 
 /** Every .ts file under the engine folder, as paths relative to it, subfolders included. */
 function listSources(root: string, rel = ''): string[] {
@@ -55,7 +55,7 @@ describe('the engine folder stays portable', () => {
     expect(importTargets(`import { a } from './patch.ts';`).filter((t) => !isLocal(t))).toEqual([]);
   });
 
-  test('no file imports anything outside src/audio-synth/', () => {
+  test('no file imports anything outside src/engine/core/audio-synth/', () => {
     const files = listSources(dir);
     expect(files.length).toBeGreaterThan(0);
     const offenders: string[] = [];

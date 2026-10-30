@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { resolveFontUrl } from '../src/boot/fontUrl';
+import { resolveFontUrl } from '../src/engine/core/boot/fontUrl';
 
 describe('bootEntry', () => {
   const indexHtmlPath = resolve(__dirname, '../index.html');

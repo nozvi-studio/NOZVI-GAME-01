@@ -1,4 +1,4 @@
-import { getSafeStorage, memoryStorage } from '../../infrastructure/safeStorage.ts';
+import { getSafeStorage, memoryStorage } from '../../engine/core/platform/safeStorage.ts';
 import Phaser from 'phaser';
 import { campaignManifest } from '../../content/manifest.ts';
 import { resolveNextCampaignLevel } from '../../domain/campaign.ts';
@@ -6,7 +6,7 @@ import { createProgressRepository } from '../../infrastructure/progressRepositor
 import type { ProgressRepository } from '../../application/progressPort.ts';
 import { COLOR_NUMBERS, DEPTH_TOKENS, TYPO_TOKENS, glowTier } from '../designTokens.ts';
 import { TextureFactory } from '../TextureFactory.ts';
-import { applyDesignViewport, designSafeArea, designViewBounds } from '../designViewport.ts';
+import { applyDesignViewport, designSafeArea, designViewBounds } from '../../engine/core/viewport/designViewport.ts';
 import { SettingsDialog } from '../dialogs/SettingsDialog.ts';
 import { LanguageSelectDialog } from '../dialogs/LanguageSelectDialog.ts';
 import { LOCALE_REGISTRY } from '../../localization/localizationConfig.ts';

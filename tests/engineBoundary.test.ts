@@ -55,6 +55,10 @@ describe('findEscapes', () => {
 });
 
 describe('engine layering', () => {
+  test('core has files, so the rule below is not vacuous', () => {
+    expect(walk(CORE).length).toBeGreaterThan(20);
+  });
+
   test('core imports nothing outside engine/core', () => {
     expect(shown(findEscapes(load(CORE), [CORE]))).toEqual([]);
   });

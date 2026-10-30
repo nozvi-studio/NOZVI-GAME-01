@@ -4,9 +4,9 @@ import {
   createCrashReporter,
   createPlatformServices,
   installGlobalErrorHandlers,
-} from '../src/infrastructure/platformServices.ts';
-import type { AnalyticsDriver, CrashDriver } from '../src/infrastructure/platformServices.ts';
-import type { TelemetryEvent } from '../src/application/telemetry.ts';
+} from '../../../src/engine/core/platform/platformServices.ts';
+import type { AnalyticsDriver, CrashDriver } from '../../../src/engine/core/platform/platformServices.ts';
+import type { TelemetryEvent } from '../../../src/engine/core/platform/telemetry.ts';
 
 const EVENT: TelemetryEvent = { type: 'level_start', levelId: '1-1', timestamp: 1 };
 

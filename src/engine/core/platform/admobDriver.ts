@@ -5,7 +5,7 @@ import {
   BannerAdSize,
   RewardAdPluginEvents,
 } from '@capacitor-community/admob';
-import type { RewardedOutcome } from '../application/platformPort.ts';
+import type { RewardedOutcome } from './platformPort.ts';
 import type { AdsDriver } from './platformServices.ts';
 
 export type AdMobConfig = {

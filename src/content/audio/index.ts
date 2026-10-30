@@ -1,11 +1,11 @@
 /**
  * Mirror's sound effects, as patches rather than files.
  *
- * The engine that renders these lives in src/audio-synth/ and knows nothing
+ * The engine that renders these lives in src/engine/core/audio-synth/ and knows nothing
  * about Mirror. This file is the Mirror-side content, the same way
  * src/content/sources/ holds level content.
  */
-import type { Patch } from '../../audio-synth/patch.ts';
+import type { Patch } from '../../engine/core/audio-synth/patch.ts';
 import { bell } from './sources/bell.ts';
 import { hollow } from './sources/hollow.ts';
 import { kalimba } from './sources/kalimba.ts';

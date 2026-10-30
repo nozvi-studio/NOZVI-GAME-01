@@ -123,7 +123,7 @@ A rule of thumb for each sound family:
 
 ## Porting it to another project
 
-1. Copy `src/audio-synth/` in. There are no dependencies to install and no build step. Imports use the `.ts` suffix, so your toolchain must allow that (Vite, Vitest and Node's type stripping all do).
+1. Copy `src/engine/core/audio-synth/` in. There are no dependencies to install and no build step. Imports use the `.ts` suffix, so your toolchain must allow that (Vite, Vitest and Node's type stripping all do).
 2. Write your patches somewhere outside this folder, importing `Patch` from `patch.ts`. Keep the folder clean so the next copy is just as easy.
 3. Call `renderPatch(patch, ctx.sampleRate)` and push the result into an `AudioBuffer`, as in *Hello, bell* above. Render once at start-up and cache the result rather than rendering on every play.
 

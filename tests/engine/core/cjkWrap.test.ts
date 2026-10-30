@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { wrapCjk } from '../src/presentation/cjkWrap.ts';
+import { wrapCjk } from '../../../src/engine/core/viewport/cjkWrap.ts';
 
 // 1 ký tự = 10 px
 const measure = (s: string): number => s.length * 10;

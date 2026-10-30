@@ -1,4 +1,4 @@
-import type { Patch } from '../../audio-synth/patch.ts';
+import type { Patch } from '../../engine/core/audio-synth/patch.ts';
 
 /**
  * The eight steps G2 uses for snapped pieces, in semitones relative to the

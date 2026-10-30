@@ -16,7 +16,7 @@ import { TransitionTimeline } from '../transitions/TransitionTimeline.ts';
 import { burstAt, planBurst, STARDUST_MAX } from '../transitions/stardust.ts';
 import { planVictoryDust, VictoryDust } from './victoryDust.ts';
 import type { Poseable } from '../transitions/choreography.ts';
-import type { HapticsPort } from '../../infrastructure/haptics.ts';
+import type { HapticsPort } from '../../engine/core/platform/haptics.ts';
 import { type FeedbackEvent } from './feedbackEvents.ts';
 import { matchedPieceCount } from '../../domain/targetMatch.ts';
 import { HAPTIC_CUES, playCue } from './hapticCues.ts';

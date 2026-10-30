@@ -8,7 +8,7 @@ import {
   DESIGN_WIDTH,
   MAX_DPR,
   NO_SAFE_AREA,
-} from '../src/presentation/viewport.ts';
+} from '../../../src/engine/core/viewport/viewport.ts';
 
 describe('computeViewport', () => {
   it('đặt bộ đệm bằng số pixel vật lý', () => {

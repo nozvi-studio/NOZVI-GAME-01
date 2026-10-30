@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { renderAudioReport, renderWaveformSvg } from '../src/audio-synth/report.ts';
-import type { ReportRow } from '../src/audio-synth/report.ts';
+import { renderAudioReport, renderWaveformSvg } from '../../../src/engine/core/audio-synth/report.ts';
+import type { ReportRow } from '../../../src/engine/core/audio-synth/report.ts';
 
 const rows: ReportRow[] = [
   { key: 'bell', durationMs: 1400, peak: 0.9, rms: 0.21, pitchHz: 587.32, limitMs: 1500, withinLimit: true },

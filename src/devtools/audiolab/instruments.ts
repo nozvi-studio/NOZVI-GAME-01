@@ -7,7 +7,7 @@
  * and the result stops sounding like the same instrument.
  *
  * Three techniques cover everything here, all built from the engine's
- * existing sources, envelopes and filters, so nothing in src/audio-synth/
+ * existing sources, envelopes and filters, so nothing in src/engine/core/audio-synth/
  * changes:
  *
  *   additive  a stack of sine partials, each with its own level and decay.
@@ -20,7 +20,7 @@
  *   noise     short filtered bursts for the non-pitched part of a sound:
  *             hammer thump, pick, breath, mallet.
  */
-import type { Envelope, Filter, Layer, Patch } from '../../audio-synth/patch.ts';
+import type { Envelope, Filter, Layer, Patch } from '../../engine/core/audio-synth/patch.ts';
 
 export type InstrumentId =
   | 'piano'

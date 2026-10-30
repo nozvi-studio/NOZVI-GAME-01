@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { COLOR_NUMBERS, COLOR_TOKENS, TYPO_TOKENS } from '../designTokens.ts';
-import { designViewBounds } from '../designViewport.ts';
+import { designViewBounds } from '../../engine/core/viewport/designViewport.ts';
 import { t } from '../i18n.ts';
 import { playUiCue } from '../audio/uiCues.ts';
 import { createDialogPanelInput } from './dialogInput.ts';

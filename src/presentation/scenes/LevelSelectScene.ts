@@ -1,4 +1,4 @@
-import { getSafeStorage, memoryStorage } from '../../infrastructure/safeStorage.ts';
+import { getSafeStorage, memoryStorage } from '../../engine/core/platform/safeStorage.ts';
 import Phaser from 'phaser';
 import { campaignManifest } from '../../content/manifest.ts';
 import { loadLevel } from '../../content/catalog.ts';
@@ -9,7 +9,7 @@ import { createProgressRepository } from '../../infrastructure/progressRepositor
 import type { ProgressRepository } from '../../application/progressPort.ts';
 import { COLOR_NUMBERS, COLOR_TOKENS, LAYOUT_TOKENS, TYPO_TOKENS } from '../designTokens.ts';
 import { TEXTURE_KEYS, TextureFactory } from '../TextureFactory.ts';
-import { applyDesignViewport, designSafeArea, designViewBounds } from '../designViewport.ts';
+import { applyDesignViewport, designSafeArea, designViewBounds } from '../../engine/core/viewport/designViewport.ts';
 import { bandArtPlacements, layoutCampaignMap, snapToRowGap, type ChapterBand } from '../galaxy/constellationLayout.ts';
 import { walkedLinkAlpha } from '../galaxy/constellationMotion.ts';
 import { isReducedMotion } from '../transitions/motion.ts';

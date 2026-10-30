@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LoadingProgress } from '../src/application/loadingProgress.ts';
+import { LoadingProgress } from '../../../src/engine/core/boot/loadingProgress.ts';
 
 const OPTIONS = { minMs: 1400, maxMs: 8000 };
 

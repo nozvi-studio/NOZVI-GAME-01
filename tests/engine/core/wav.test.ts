@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { decodeWavSamples, encodeWav } from '../src/audio-synth/wav.ts';
+import { decodeWavSamples, encodeWav } from '../../../src/engine/core/audio-synth/wav.ts';
 
 const ascii = (bytes: Uint8Array, at: number, len: number) =>
   String.fromCharCode(...Array.from(bytes.subarray(at, at + len)));

@@ -6,7 +6,7 @@ import {
   mulberry32,
   noise,
   osc,
-} from '../src/audio-synth/dsp.ts';
+} from '../../../src/engine/core/audio-synth/dsp.ts';
 
 const SR = 44100;
 

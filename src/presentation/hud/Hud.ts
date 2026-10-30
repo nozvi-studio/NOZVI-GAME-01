@@ -34,7 +34,7 @@ import {
   type VictoryPlan,
 } from '../feedback/victorySequence.ts';
 import { playUiCue } from '../audio/uiCues.ts';
-import { cjkWordWrapCallback } from '../cjkWrap.ts';
+import { cjkWordWrapCallback } from '../../engine/core/viewport/cjkWrap.ts';
 import { starTexture } from '../sky/starTexture.ts';
 import type { ResultCardModel } from './resultCardModel.ts';
 import { computeMatchBarLayout } from './matchBarLayout.ts';

@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from 'vitest';
-import { createAdMobDriver, resolveAdMobConfig } from '../src/infrastructure/admobDriver.ts';
-import type { AdMobConfig, AdMobLike } from '../src/infrastructure/admobDriver.ts';
-import { createAds } from '../src/infrastructure/platformServices.ts';
+import { createAdMobDriver, resolveAdMobConfig } from '../../../src/engine/core/platform/admobDriver.ts';
+import type { AdMobConfig, AdMobLike } from '../../../src/engine/core/platform/admobDriver.ts';
+import { createAds } from '../../../src/engine/core/platform/platformServices.ts';
 
 const CONFIG: AdMobConfig = { banner: 'banner-id', rewarded: 'rewarded-id', testing: true };
 

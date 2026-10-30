@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { validatePatch } from '../src/audio-synth/patch.ts';
-import type { Patch } from '../src/audio-synth/patch.ts';
+import { validatePatch } from '../../../src/engine/core/audio-synth/patch.ts';
+import type { Patch } from '../../../src/engine/core/audio-synth/patch.ts';
 
 const SR = 44100;
 

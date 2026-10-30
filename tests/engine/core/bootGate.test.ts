@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createBootGate } from '../src/boot/bootGate';
+import { createBootGate } from '../../../src/engine/core/boot/bootGate';
 
 describe('createBootGate', () => {
   it('coalesces concurrent enterLoading calls and defers loadGame until afterPaint', async () => {
