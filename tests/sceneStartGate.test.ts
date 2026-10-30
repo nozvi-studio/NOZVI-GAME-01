@@ -17,6 +17,6 @@ describe('chỉ SceneDirector được đổi scene', () => {
     const offenders = walk(SRC)
       .filter((file) => /scene\.start\(/.test(readFileSync(file, 'utf8')))
       .map((file) => relative(SRC, file).replaceAll('\\', '/'));
-    expect(offenders).toEqual(['presentation/transitions/SceneDirector.ts']);
+    expect(offenders).toEqual(['engine/core/transitions/SceneDirector.ts']);
   });
 });

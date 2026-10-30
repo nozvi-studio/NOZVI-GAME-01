@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 import { COLOR_NUMBERS, COLOR_TOKENS, DEPTH_TOKENS, LAYOUT_TOKENS } from '../designTokens.ts';
 import { generateStarField, twinkleAlpha, driftOffset, mulberry32 } from './starField.ts';
-import { designViewBounds } from '../designViewport.ts';
-import type { DesignView } from '../viewport.ts';
+import { designViewBounds } from '../../engine/core/viewport/designViewport.ts';
+import type { DesignView } from '../../engine/core/viewport/viewport.ts';
 import type { Star } from './starField.ts';
 import { advanceDrift } from './skyMood.ts';
 import type { MoodState } from './skyMood.ts';

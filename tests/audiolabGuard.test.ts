@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { ViewMemory, formatIssues, sliderLabel, tryRender } from '../src/devtools/audiolab/guard.ts';
-import type { Patch } from '../src/audio-synth/patch.ts';
+import type { Patch } from '../src/engine/core/audio-synth/patch.ts';
 import { SFX_PATCHES } from '../src/content/audio/index.ts';
 
 const clone = (): Patch => JSON.parse(JSON.stringify(SFX_PATCHES.tick)) as Patch;

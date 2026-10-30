@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { LevelTracker } from '../src/application/levelTracker.ts';
-import type { AnalyticsPort } from '../src/application/platformPort.ts';
-import type { TelemetryEvent } from '../src/application/telemetry.ts';
+import type { AnalyticsPort } from '../src/engine/core/platform/platformPort.ts';
+import type { TelemetryEvent } from '../src/engine/core/platform/telemetry.ts';
 
 function setup() {
   const events: TelemetryEvent[] = [];

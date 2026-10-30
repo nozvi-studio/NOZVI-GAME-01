@@ -1,6 +1,6 @@
 import './boot.css';
-import { createBootGate } from './boot/bootGate.ts';
-import { resolveFontUrl } from './boot/fontUrl.ts';
+import { createBootGate } from './engine/core/boot/bootGate.ts';
+import { resolveFontUrl } from './engine/core/boot/fontUrl.ts';
 
 /**
  * Loads the bundled Unbounded font faces for the portrait intro.

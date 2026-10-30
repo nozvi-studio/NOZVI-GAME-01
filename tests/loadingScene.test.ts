@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LoadingScene } from '../src/presentation/scenes/LoadingScene.ts';
-import { LoadingProgress } from '../src/application/loadingProgress.ts';
+import { LoadingProgress } from '../src/engine/core/boot/loadingProgress.ts';
 
 vi.mock('phaser', () => ({ default: { Scene: class {} } }));
 

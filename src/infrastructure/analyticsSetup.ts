@@ -1,7 +1,7 @@
 import { createConsoleAnalyticsDriver } from './consoleAnalyticsDriver.ts';
 import { createGameAnalyticsDriver } from './gameAnalyticsDriver.ts';
 import { loadGameAnalytics } from './gameAnalyticsSdk.ts';
-import type { AnalyticsDriver } from './platformServices.ts';
+import type { AnalyticsDriver } from '../engine/core/platform/platformServices.ts';
 
 export type AnalyticsSelection = { driver: AnalyticsDriver | null; requiresConsent: boolean; warmUp?: () => void };
 

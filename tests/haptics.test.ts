@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { createHaptics } from '../src/infrastructure/haptics.ts';
-import type { HapticsDriver } from '../src/infrastructure/haptics.ts';
+import { createHaptics } from '../src/engine/core/platform/haptics.ts';
+import type { HapticsDriver } from '../src/engine/core/platform/haptics.ts';
 import { HAPTIC_CUES, playCue } from '../src/presentation/feedback/hapticCues.ts';
 
 function fakeDriver(fail: 'none' | 'throw' | 'reject' = 'none') {

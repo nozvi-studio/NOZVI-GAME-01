@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { createConsoleAnalyticsDriver } from '../src/infrastructure/consoleAnalyticsDriver.ts';
-import type { TelemetryEvent } from '../src/application/telemetry.ts';
+import type { TelemetryEvent } from '../src/engine/core/platform/telemetry.ts';
 
 const START: TelemetryEvent = { type: 'level_start', levelId: '1-1', chapter: 1, mode: 'campaign', timestamp: 1 };
 

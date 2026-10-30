@@ -1,6 +1,6 @@
 import { chapterOfLevelId } from '../content/chapters.ts';
-import type { AnalyticsPort, CrashReporterPort } from './platformPort.ts';
-import type { PlayMode } from './telemetry.ts';
+import type { AnalyticsPort, CrashReporterPort } from '../engine/core/platform/platformPort.ts';
+import type { PlayMode } from '../engine/core/platform/telemetry.ts';
 
 type Run = {
   levelId: string;

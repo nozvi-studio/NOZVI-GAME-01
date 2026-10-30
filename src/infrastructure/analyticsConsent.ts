@@ -1,4 +1,4 @@
-import { getSafeStorage, memoryStorage } from './safeStorage.ts';
+import { getSafeStorage, memoryStorage } from '../engine/core/platform/safeStorage.ts';
 
 export const ANALYTICS_CONSENT_KEY = 'nozvi.analytics.consent.v1';
 

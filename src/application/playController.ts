@@ -7,7 +7,7 @@ import type { DragSession, DragUpdate } from './drag.ts';
 import { beginDrag, cancelDrag, finishDrag, updateDrag } from './drag.ts';
 import type { LayoutMetrics } from '../presentation/board/layout.ts';
 import { pieceBoardOrigin, pieceHitbox, piecePolygonCanvas, pointNearPolygon } from '../presentation/board/layout.ts';
-import { LevelClock } from './levelClock.ts';
+import { LevelClock } from '../engine/core/levelClock.ts';
 import { applyHint, type HintResult } from '../domain/hintPlacement.ts';
 import { parFromSolution, starsFor, timeBudget, type Stars } from '../domain/starRating.ts';
 

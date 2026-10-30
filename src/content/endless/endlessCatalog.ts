@@ -2,7 +2,7 @@ import ch1PoolData from './ch1Pool.json';
 import { buildLevelDocument, type LevelSource } from '../authoring.ts';
 import { validateLevel } from '../validate.ts';
 import type { Level } from '../../domain/model.ts';
-import { getSafeStorage } from '../../infrastructure/safeStorage.ts';
+import { getSafeStorage } from '../../engine/core/platform/safeStorage.ts';
 
 const CH1_POOL = ch1PoolData as unknown as LevelSource[];
 export const ENDLESS_CH1_STORAGE_KEY = 'mirror.endless.ch1.level';

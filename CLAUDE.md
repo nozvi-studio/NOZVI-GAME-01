@@ -20,10 +20,12 @@ Environment: Node `>=24.13.1 <25`, npm 11.13.0.
 ## Architecture (layered, dependencies point one way)
 
 `domain` (pure rules, no rendering) → `application` (controller, tutorial, FTUE, telemetry) → `presentation` (Phaser: scenes, board, hud, dialogs, ...). `infrastructure` holds adapters (audio, haptics, progress storage). `content` holds levels, solver and validation. `localization` + `locales` handle i18n.
+Reusable runtime lives in `src/engine/` (see `src/engine/ENGINE.md`): `core` is game-independent; game code may import it, never the reverse.
 
 ## Hard rules (enforced by tests)
 
 - Scene changes go **only** through `director.go(...)` (`src/presentation/transitions/SceneDirector.ts`); never call `scene.start` directly (`sceneStartGate` test).
+- Engine boundary: `src/engine/core` imports nothing outside itself, and `src/engine/puzzle` imports only `core` and itself (`engineBoundary` test). Move files into the engine with `scripts/dev/move-files.ts`, which rewrites the imports.
 - Every player command goes through `feedbackEvents()` → `FeedbackDirector.handle()`; durations come from `FEEDBACK_TOKENS` / `VICTORY_TOKENS` in `src/presentation/designTokens.ts`.
 - Levels: edit `src/content/sources/<id>.ts`, then run `content:author`; never hand-edit the generated JSON in `src/content/levels/`.
 - Current locales: en-US, es, pt-BR, fr, de, ja, ko, zh-CN, id, vi (`src/locales/`; `en` is an alias of `en-US`). A new locale needs: a `src/locales/<code>/` folder, an entry in `types.ts`, `localizationConfig.ts`, `LocaleResolver.ts`, `LocalizationManager.ts`, and the locale lists in the tests.

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { COLOR_TOKENS } from '../designTokens.ts';
-import { applyDesignViewport } from '../designViewport.ts';
+import { applyDesignViewport } from '../../engine/core/viewport/designViewport.ts';
 import { runFixtureSolution } from '../../application/fixtureRunner.ts';
 import { GRID_HEIGHT, GRID_WIDTH } from '../../domain/model.ts';
 

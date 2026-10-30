@@ -5,7 +5,7 @@
  * sound like the game, can you tell a triangle from a circle with your eyes
  * shut, and does the board breathing become annoying after a minute.
  */
-import { renderAll } from '../../audio-synth/webaudio.ts';
+import { renderAll } from '../../engine/core/audio-synth/webaudio.ts';
 import { SFX_PATCHES } from '../../content/audio/index.ts';
 import type { SfxKey } from '../../content/audio/index.ts';
 import type { ShapeKind } from '../../domain/model.ts';

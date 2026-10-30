@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { LOCALE_REGISTRY } from '../../localization/localizationConfig.ts';
 import type { SupportedLocale } from '../../localization/types.ts';
 import { COLOR_NUMBERS, TYPO_TOKENS } from '../designTokens.ts';
-import { designViewBounds } from '../designViewport.ts';
+import { designViewBounds } from '../../engine/core/viewport/designViewport.ts';
 import { TEXTURE_KEYS } from '../TextureFactory.ts';
 import { getLocale, setLocale, t } from '../i18n.ts';
 import { playUiCue } from '../audio/uiCues.ts';

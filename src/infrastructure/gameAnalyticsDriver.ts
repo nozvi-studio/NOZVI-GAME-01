@@ -1,7 +1,7 @@
-import type { TelemetryEvent } from '../application/telemetry.ts';
+import type { TelemetryEvent } from '../engine/core/platform/telemetry.ts';
 import { isAnalyticsConsentGranted } from './analyticsConsent.ts';
-import { initInBackground } from './platformServices.ts';
-import type { AnalyticsDriver } from './platformServices.ts';
+import { initInBackground } from '../engine/core/platform/platformServices.ts';
+import type { AnalyticsDriver } from '../engine/core/platform/platformServices.ts';
 
 export type GameAnalyticsConfig = { gameKey: string; secretKey: string; build: string };
 

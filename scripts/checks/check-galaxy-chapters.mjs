@@ -12,7 +12,7 @@ const waitScene = async (page, key) => {
   const deadline = Date.now() + 30000;
   while (Date.now() < deadline) {
     const ok = await page.evaluate(async key => {
-      const { director } = await import('/src/presentation/transitions/SceneDirector.ts');
+      const { director } = await import('/src/presentation/transitions/director.ts');
       const scene = director.host?.game.scene.getScene(key);
       return scene?.sys.settings.status === 5 && scene.scene.isActive() && !director.isTransitioning() && scene.input.enabled;
     }, key);
@@ -24,7 +24,7 @@ const waitScene = async (page, key) => {
 
 /** Reads a number from a named layer of the menu galaxy; the layer may sit inside a rotated group. */
 const layerValue = (page, stem, prop) => page.evaluate(async ({ stem, prop }) => {
-  const { director } = await import('/src/presentation/transitions/SceneDirector.ts');
+  const { director } = await import('/src/presentation/transitions/director.ts');
   const find = (obj) => obj.name === stem ? obj : obj.list?.map(find).find(Boolean);
   const layer = find(director.host.game.scene.getScene('MenuScene').galaxy);
   return layer ? layer[prop] : null;
@@ -63,7 +63,7 @@ try {
 
     if (chapter === 3) { // chapter III: the hero's arrow and pinwheel turn slowly, and stop under reduced motion
       const heroSpin = () => page.evaluate(async () => {
-        const { director } = await import('/src/presentation/transitions/SceneDirector.ts');
+        const { director } = await import('/src/presentation/transitions/director.ts');
         const emblem = director.host.game.scene.getScene('MenuScene').emblem;
         return [emblem.arrow.rotation, emblem.pinwheel.rotation];
       });
@@ -105,7 +105,7 @@ try {
   assert.deepEqual(bands.map(b => [b.chapter, b.nodeCount]), [[1, 6], [2, 6], [3, 10], [4, 6], [5, 0]]);
   for (const band of bands) {
     await page.evaluate(async ({ top, bottom }) => {
-      const { director } = await import('/src/presentation/transitions/SceneDirector.ts');
+      const { director } = await import('/src/presentation/transitions/director.ts');
       const scene = director.host.game.scene.getScene('LevelSelectScene');
       const halfView = scene.cameras.main.height / scene.cameras.main.zoom / 2;
       scene.mapContainer.y = halfView - (top + bottom) / 2;

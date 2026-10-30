@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { createGameAnalyticsDriver } from '../src/infrastructure/gameAnalyticsDriver.ts';
 import type { GameAnalyticsLike } from '../src/infrastructure/gameAnalyticsDriver.ts';
-import type { TelemetryEvent } from '../src/application/telemetry.ts';
+import type { TelemetryEvent } from '../src/engine/core/platform/telemetry.ts';
 
 const CONFIG = { gameKey: 'gk', secretKey: 'sk', build: '1.0.0' };
 
