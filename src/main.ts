@@ -59,7 +59,7 @@ const music = createMusic(browserMusicEnv(), {
   duckDownMs: AUDIO_TOKENS.duck.downMs,
   duckUpMs: AUDIO_TOKENS.duck.upMs,
   files: musicUrls,
-  trackLevel: (id) => AUDIO_TOKENS.trackLevel[id] ?? 1,
+  trackLevel: (id) => (AUDIO_TOKENS.trackLevel as Readonly<Record<string, number | undefined>>)[id] ?? 1,
 });
 music.setEnabled(savedSettings.music);
 

@@ -1,12 +1,10 @@
-import type { SfxKey } from '../content/audio/index.ts';
-
-export type AudioCue = { key: SfxKey; rate: number; volume: number; delayMs: number };
+export type AudioCue = { key: string; rate: number; volume: number; delayMs: number };
 
 export type SfxDriver = {
   isLocked(): boolean;
-  has(key: SfxKey): boolean;
+  has(key: string): boolean;
   /** Starts the sound and returns its length in ms (0 if unknown) */
-  play(key: SfxKey, config: { rate: number; volume: number }): number;
+  play(key: string, config: { rate: number; volume: number }): number;
 };
 
 export type SfxEnv = {
@@ -29,11 +27,11 @@ export interface SfxPort {
 export function createSfx(driver: SfxDriver | null, env: SfxEnv, opts: SfxOptions): SfxPort {
   let enabled = true;
   const voiceEnds: number[] = [];
-  const lastStart = new Map<SfxKey, number>();
+  const lastStart = new Map<string, number>();
   const pending = new Set<number>();
-  const warned = new Set<SfxKey>();
+  const warned = new Set<string>();
 
-  const warnOnce = (key: SfxKey, why: string) => {
+  const warnOnce = (key: string, why: string) => {
     if (warned.has(key)) return;
     warned.add(key);
     env.warn(`[sfx] ${key}: ${why}`);

@@ -1,5 +1,3 @@
-import type { TrackId } from './audioManifest.ts';
-
 /** The part of HTMLAudioElement the port uses; tests pass a fake. */
 export type MediaLike = {
   src: string;
@@ -30,9 +28,9 @@ export type MusicOptions = {
   toggleInMs: number;
   duckDownMs: number;
   duckUpMs: number;
-  files(id: TrackId): readonly string[];
+  files(id: string): readonly string[];
   /** Gain of one track relative to the others (default 1), so a quiet bed can sit under the effects. */
-  trackLevel?(id: TrackId): number;
+  trackLevel?(id: string): number;
 };
 
 export interface MusicPort {
@@ -41,7 +39,7 @@ export interface MusicPort {
    * quiet for `gapMs` before the new one fades in over `fadeMs`. Without a gap
    * the two overlap in a crossfade.
    */
-  setTrack(id: TrackId | null, fadeMs: number, gapMs?: number): void;
+  setTrack(id: string | null, fadeMs: number, gapMs?: number): void;
   duck(level: number, holdMs: number): void;
   pause(): void;
   resume(): void;
@@ -50,7 +48,7 @@ export interface MusicPort {
 
 type Ramp = { from: number; to: number; start: number; ms: number };
 type EndAction = 'none' | 'pause' | 'unload';
-type Slot = { el: MediaLike; track: TrackId | null; gain: number; ramp: Ramp | null; end: EndAction };
+type Slot = { el: MediaLike; track: string | null; gain: number; ramp: Ramp | null; end: EndAction };
 
 const TICK_MS = 50;
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
@@ -66,7 +64,7 @@ function rampAt(r: Ramp, now: number): number {
  */
 export function createMusic(env: MusicEnv, opts: MusicOptions): MusicPort {
   const warned = new Set<string>();
-  const warnOnce = (track: TrackId | null, why: string) => {
+  const warnOnce = (track: string | null, why: string) => {
     if (!track || warned.has(track)) return;
     warned.add(track);
     env.warn(`[music] ${track}: ${why}`);
@@ -81,7 +79,7 @@ export function createMusic(env: MusicEnv, opts: MusicOptions): MusicPort {
   };
   const slots: [Slot, Slot] = [makeSlot(), makeSlot()];
   let active = 0;
-  let wanted: TrackId | null = null;
+  let wanted: string | null = null;
   let enabled = true;
   let paused = false;
   let waitingForGesture = false;
@@ -89,9 +87,9 @@ export function createMusic(env: MusicEnv, opts: MusicOptions): MusicPort {
   let duckRamp: Ramp | null = null;
   let duckReleaseAt: number | null = null;
   let timer: number | null = null;
-  let pending: { id: TrackId; at: number; fadeMs: number } | null = null;
+  let pending: { id: string; at: number; fadeMs: number } | null = null;
 
-  const pickFile = (id: TrackId): string => {
+  const pickFile = (id: string): string => {
     const files = opts.files(id);
     const ext = env.canPlayOgg() ? '.ogg' : '.m4a';
     return files.find((f) => f.endsWith(ext)) ?? files[0] ?? '';
@@ -151,7 +149,7 @@ export function createMusic(env: MusicEnv, opts: MusicOptions): MusicPort {
     tick();
   }
 
-  function onPlayError(track: TrackId, err: unknown): void {
+  function onPlayError(track: string, err: unknown): void {
     if ((err as { name?: string } | null)?.name === 'NotAllowedError') {
       if (waitingForGesture) return;
       waitingForGesture = true;
@@ -180,7 +178,7 @@ export function createMusic(env: MusicEnv, opts: MusicOptions): MusicPort {
     }
   }
 
-  function startOn(slot: Slot, id: TrackId, fadeMs: number): void {
+  function startOn(slot: Slot, id: string, fadeMs: number): void {
     if (slot.track !== id) {
       slot.track = id;
       slot.el.src = pickFile(id);
@@ -196,7 +194,7 @@ export function createMusic(env: MusicEnv, opts: MusicOptions): MusicPort {
     slot.end = end;
   }
 
-  function crossTo(id: TrackId | null, fadeMs: number, gapMs = 0): void {
+  function crossTo(id: string | null, fadeMs: number, gapMs = 0): void {
     const cur = slots[active];
     if (id !== null && gapMs > 0 && cur.track && cur.track !== id) {
       // Old track out, silence, then the new one on the same (by then empty) slot.

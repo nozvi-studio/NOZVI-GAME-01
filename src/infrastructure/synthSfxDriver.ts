@@ -5,12 +5,11 @@
  * SfxPort above this does all the voice limiting and repeat guarding; this
  * layer only starts sounds and reports how long they last.
  */
-import type { SfxKey } from '../content/audio/index.ts';
 import type { SfxDriver } from './sfx.ts';
 
 export function synthSfxDriver(
   ctx: AudioContext,
-  buffers: Partial<Record<SfxKey, AudioBuffer>>,
+  buffers: Partial<Record<string, AudioBuffer>>,
 ): SfxDriver {
   return {
     isLocked: () => ctx.state !== 'running',

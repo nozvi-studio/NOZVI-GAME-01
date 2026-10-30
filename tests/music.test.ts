@@ -29,7 +29,7 @@ class FakeMedia implements MediaLike {
   }
 }
 
-function setup(ogg = true, levels: Partial<Record<TrackId, number>> = {}) {
+function setup(ogg = true, levels: Partial<Record<string, number>> = {}) {
   let now = 0;
   let nextId = 1;
   const timers = new Map<number, () => void>();
