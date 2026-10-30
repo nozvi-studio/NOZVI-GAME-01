@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, test } from 'vitest';
-import { SceneDirector } from '../src/presentation/transitions/SceneDirector.ts';
+import { createDirector } from '../src/presentation/transitions/director.ts';
 import type {
   Choreographed,
+  Director,
   SceneHost,
   SceneKey,
   TransitionContext,
-} from '../src/presentation/transitions/SceneDirector.ts';
+} from '../src/presentation/transitions/director.ts';
 import type { TransitionTimeline } from '../src/engine/core/transitions/TransitionTimeline.ts';
 import { setMotionScale } from '../src/presentation/transitions/motion.ts';
 import type { SkyMood } from '../src/presentation/sky/skyMood.ts';
@@ -17,9 +18,9 @@ class FakeScene implements Choreographed {
   readonly ins: TransitionContext[] = [];
   readonly outs: TransitionContext[] = [];
   readonly probe = { v: 0 };
-  private readonly director: SceneDirector;
+  private readonly director: Director;
 
-  constructor(key: SceneKey, director: SceneDirector) {
+  constructor(key: SceneKey, director: Director) {
     this.directorKey = key;
     this.director = director;
   }
@@ -91,7 +92,7 @@ class FakeHost implements SceneHost {
 }
 
 function setup() {
-  const director = new SceneDirector();
+  const director = createDirector();
   const host = new FakeHost();
   const menu = new FakeScene('MenuScene', director);
   const play = new FakeScene('PlayScene', director);

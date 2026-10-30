@@ -16,7 +16,7 @@ import { initialGalaxyThemeIds } from '../galaxy/initialGalaxyThemeIds.ts';
 import { getChapterTagline, getChapterVerses, t } from '../i18n.ts';
 import { mulberry32 } from '../sky/starField.ts';
 import { isReducedMotion, scaleTiming } from '../transitions/motion.ts';
-import { director } from '../transitions/SceneDirector.ts';
+import { director } from '../transitions/director.ts';
 
 // Stays up at least this long even when everything is loaded. The bar then
 // runs, hesitates and runs again (see `pacedProgress`), which reads as real work and a smooth game.

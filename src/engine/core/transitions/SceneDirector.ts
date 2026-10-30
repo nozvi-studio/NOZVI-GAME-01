@@ -1,72 +1,72 @@
 import type Phaser from 'phaser';
-import { AUDIO_TOKENS, TRANSITION_TOKENS } from '../designTokens.ts';
-import type { MoodTarget, SkyMood } from '../sky/skyMood.ts';
-import type { RouteId } from './motion.ts';
+import type { MusicPort } from '../audio/music.ts';
 import { isReducedMotion } from './motion.ts';
-import { TransitionTimeline } from '../../engine/core/transitions/TransitionTimeline.ts';
-import type { MusicPort } from '../../engine/core/audio/music.ts';
-import { trackFor } from '../audio/tracks.ts';
+import { TransitionTimeline } from './TransitionTimeline.ts';
 
-export type SceneKey = 'MenuScene' | 'LevelSelectScene' | 'PlayScene';
-
-export type TransitionContext = {
-  from: SceneKey | 'boot';
-  route: RouteId;
+export type TransitionContext<K extends string, R extends string> = {
+  from: K | 'boot';
+  route: R;
   /** Nút hoặc node vừa bấm, để cảnh mới mọc ra từ đúng chỗ đó */
   origin?: { x: number; y: number };
 };
 
-export interface Choreographed {
-  readonly directorKey: SceneKey;
-  playIn(tl: TransitionTimeline, ctx: TransitionContext): void;
-  playOut(tl: TransitionTimeline, ctx: TransitionContext): void;
+export interface Choreographed<K extends string, R extends string> {
+  readonly directorKey: K;
+  playIn(tl: TransitionTimeline, ctx: TransitionContext<K, R>): void;
+  playOut(tl: TransitionTimeline, ctx: TransitionContext<K, R>): void;
 }
 
 /** Cổng tới Phaser; test dùng bản giả. */
-export interface SceneHost {
-  start(key: SceneKey, data: object): void;
-  restart(key: SceneKey, data: object): void;
-  stop(key: SceneKey): void;
-  setInputEnabled(key: SceneKey, enabled: boolean): void;
-  setCameraAlpha(key: SceneKey, alpha: number): void;
-  setMood(mood: SkyMood, durationMs: number): void;
+export interface SceneHost<K extends string, M extends string> {
+  start(key: K, data: object): void;
+  restart(key: K, data: object): void;
+  stop(key: K): void;
+  setInputEnabled(key: K, enabled: boolean): void;
+  setCameraAlpha(key: K, alpha: number): void;
+  setMood(mood: M, durationMs: number): void;
   armSkip(onSkip: () => void): void;
   disarmSkip(): void;
   onStep(cb: (deltaMs: number) => void): void;
 }
 
-const ROUTE_MOOD: Record<RouteId, SkyMood> = {
-  'menu-to-play': 'play',
-  'map-to-play': 'play',
-  'next-level': 'play',
-  'play-to-map': 'map',
-  'play-to-menu': 'menu',
-  'menu-to-map': 'map',
-  'map-to-menu': 'menu',
+/** Everything the director needs to know about a particular game. */
+export type DirectorConfig<K extends string, R extends string, M extends string> = {
+  /** Sky mood each route settles into */
+  routeMood: Readonly<Record<R, M>>;
+  /** Route used for the in-half when the game starts straight into a scene */
+  bootRoute: Readonly<Record<K, R>>;
+  /** Music track for a scene */
+  trackFor(scene: K): string;
+  timing: {
+    crossfadeMs: number;
+    moodMs: number;
+    handoffMs(route: R): number;
+    sceneSwapFadeMs: number;
+    sceneSwapGapMs: number;
+    bootFadeMs: number;
+  };
 };
 
-/** Tuyến dùng cho phần vào khi khởi động thẳng vào một cảnh */
-const BOOT_ROUTE: Record<SceneKey, RouteId> = {
-  MenuScene: 'play-to-menu',
-  LevelSelectScene: 'menu-to-map',
-  PlayScene: 'menu-to-play',
-};
-
-export class SceneDirector {
-  private host: SceneHost | null = null;
+export class SceneDirector<K extends string, R extends string, M extends string> {
+  private readonly config: DirectorConfig<K, R, M>;
+  private host: SceneHost<K, M> | null = null;
   private music: Pick<MusicPort, 'setTrack'> | null = null;
   private busy = false;
   private skipping = false;
-  private fromKey: SceneKey | null = null;
-  private toKey: SceneKey | null = null;
+  private fromKey: K | null = null;
+  private toKey: K | null = null;
   private outTl: TransitionTimeline | null = null;
   private inTl: TransitionTimeline | null = null;
-  private incoming: { key: SceneKey; ctx: TransitionContext } | null = null;
+  private incoming: { key: K; ctx: TransitionContext<K, R> } | null = null;
   private outDone = false;
   private inDone = false;
-  private pendingEnable: SceneKey | null = null;
+  private pendingEnable: K | null = null;
 
-  setHost(host: SceneHost): void {
+  constructor(config: DirectorConfig<K, R, M>) {
+    this.config = config;
+  }
+
+  setHost(host: SceneHost<K, M>): void {
     this.host = host;
     host.onStep((dt) => this.step(dt));
   }
@@ -80,31 +80,30 @@ export class SceneDirector {
   }
 
   go(
-    fromScene: Choreographed,
-    to: SceneKey,
+    fromScene: Choreographed<K, R>,
+    to: K,
     data: object,
-    ctx: { route: RouteId; origin?: { x: number; y: number } }
+    ctx: { route: R; origin?: { x: number; y: number } }
   ): boolean {
     const host = this.host;
     if (!host || this.busy) return false;
+    const timing = this.config.timing;
 
     // Music leaves, rests, then returns, independent of reduced motion (spec G §3.6, §3.7)
-    this.music?.setTrack(trackFor(to), AUDIO_TOKENS.sceneSwapFadeMs, AUDIO_TOKENS.sceneSwapGapMs);
+    this.music?.setTrack(this.config.trackFor(to), timing.sceneSwapFadeMs, timing.sceneSwapGapMs);
 
     const fromKey = fromScene.directorKey;
-    const fullCtx: TransitionContext = { ...ctx, from: fromKey };
+    const fullCtx: TransitionContext<K, R> = { ...ctx, from: fromKey };
     const reduced = isReducedMotion();
     this.begin(fromKey, to);
     host.setInputEnabled(fromKey, false);
-    host.setMood(ROUTE_MOOD[ctx.route], reduced ? 0 : TRANSITION_TOKENS.moodMs);
+    host.setMood(this.config.routeMood[ctx.route], reduced ? 0 : timing.moodMs);
 
     const out = new TransitionTimeline(0);
     this.outTl = out;
     if (reduced) {
       const fade = { alpha: 1 };
-      out.at(0, fade, { alpha: 0 }, TRANSITION_TOKENS.crossfadeMs, 'linear', () =>
-        host.setCameraAlpha(fromKey, fade.alpha)
-      );
+      out.at(0, fade, { alpha: 0 }, timing.crossfadeMs, 'linear', () => host.setCameraAlpha(fromKey, fade.alpha));
     } else {
       fromScene.playOut(out, fullCtx);
     }
@@ -117,7 +116,7 @@ export class SceneDirector {
         host.restart(to, data);
       });
     } else {
-      const handoff = reduced ? 0 : TRANSITION_TOKENS.routes[ctx.route].handoffMs;
+      const handoff = reduced ? 0 : timing.handoffMs(ctx.route);
       out.call(handoff, () => host.start(to, data));
       out.onDone(() => {
         this.outDone = true;
@@ -129,38 +128,34 @@ export class SceneDirector {
   }
 
   /** Khởi động thẳng vào một cảnh: chỉ có phần vào. */
-  boot(to: SceneKey, data: object): void {
+  boot(to: K, data: object): void {
     const host = this.host;
     if (!host || this.busy) return;
-    this.music?.setTrack(trackFor(to), AUDIO_TOKENS.bootFadeMs);
-    const route = BOOT_ROUTE[to];
+    this.music?.setTrack(this.config.trackFor(to), this.config.timing.bootFadeMs);
+    const route = this.config.bootRoute[to];
     this.begin(null, to);
     this.outDone = true;
-    host.setMood(ROUTE_MOOD[route], 0);
+    host.setMood(this.config.routeMood[route], 0);
     this.incoming = { key: to, ctx: { from: 'boot', route } };
     host.start(to, data);
   }
 
-
   /** Mỗi scene gọi ở cuối create(). Ngoài chuyển cảnh thì không làm gì. */
-  attach(scene: Choreographed): void {
+  attach(scene: Choreographed<K, R>): void {
     const host = this.host;
     const incoming = this.incoming;
     if (!host || !incoming || incoming.key !== scene.directorKey) return;
     this.incoming = null;
     host.setInputEnabled(incoming.key, false);
+    const timing = this.config.timing;
 
     const reduced = isReducedMotion();
-    const tl = new TransitionTimeline(
-      reduced ? 0 : TRANSITION_TOKENS.routes[incoming.ctx.route].handoffMs
-    );
+    const tl = new TransitionTimeline(reduced ? 0 : timing.handoffMs(incoming.ctx.route));
     this.inTl = tl;
     if (reduced) {
       const fade = { alpha: 0 };
       host.setCameraAlpha(incoming.key, 0);
-      tl.at(0, fade, { alpha: 1 }, TRANSITION_TOKENS.crossfadeMs, 'linear', () =>
-        host.setCameraAlpha(incoming.key, fade.alpha)
-      );
+      tl.at(0, fade, { alpha: 1 }, timing.crossfadeMs, 'linear', () => host.setCameraAlpha(incoming.key, fade.alpha));
     } else {
       scene.playIn(tl, incoming.ctx);
     }
@@ -179,7 +174,7 @@ export class SceneDirector {
     this.inTl?.complete();
   }
 
-  private begin(fromKey: SceneKey | null, toKey: SceneKey): void {
+  private begin(fromKey: K | null, toKey: K): void {
     this.busy = true;
     this.skipping = false;
     this.fromKey = fromKey;
@@ -222,38 +217,43 @@ export class SceneDirector {
 /** Chờ chừng này sau khi bắt đầu chuyển mới nhận chạm bỏ qua (tránh chính cú chạm khởi động) */
 const SKIP_ARM_GUARD_MS = 80;
 
-export class PhaserSceneHost implements SceneHost {
+/** What the sky scene exposes so the director can change its mood. */
+type MoodTarget<M extends string> = { setMood(mood: M, durationMs: number): void };
+
+export class PhaserSceneHost<K extends string, M extends string> implements SceneHost<K, M> {
   private readonly game: Phaser.Game;
+  private readonly moodSceneKey: string;
   private skipHandler: (() => void) | null = null;
 
-  constructor(game: Phaser.Game) {
+  constructor(game: Phaser.Game, moodSceneKey: string) {
     this.game = game;
+    this.moodSceneKey = moodSceneKey;
   }
 
-  start(key: SceneKey, data: object): void {
+  start(key: K, data: object): void {
     this.game.scene.start(key, data);
     this.game.scene.bringToTop(key);
   }
 
-  restart(key: SceneKey, data: object): void {
+  restart(key: K, data: object): void {
     this.game.scene.getScene(key)?.scene.restart(data);
   }
 
-  stop(key: SceneKey): void {
+  stop(key: K): void {
     this.game.scene.stop(key);
   }
 
-  setInputEnabled(key: SceneKey, enabled: boolean): void {
+  setInputEnabled(key: K, enabled: boolean): void {
     const scene = this.game.scene.getScene(key);
     if (scene?.input) scene.input.enabled = enabled;
   }
 
-  setCameraAlpha(key: SceneKey, alpha: number): void {
+  setCameraAlpha(key: K, alpha: number): void {
     this.game.scene.getScene(key)?.cameras?.main?.setAlpha(alpha);
   }
 
-  setMood(mood: SkyMood, durationMs: number): void {
-    const background = this.game.scene.getScene('BackgroundScene') as unknown as MoodTarget | null;
+  setMood(mood: M, durationMs: number): void {
+    const background = this.game.scene.getScene(this.moodSceneKey) as unknown as MoodTarget<M> | null;
     background?.setMood(mood, durationMs);
   }
 
@@ -275,5 +275,3 @@ export class PhaserSceneHost implements SceneHost {
     this.game.events.on('step', (_time: number, delta: number) => cb(delta));
   }
 }
-
-export const director = new SceneDirector();

@@ -45,12 +45,12 @@ import type { TutorialAction, TutorialController } from '../../application/tutor
 import { snappedCount } from '../feedback/audioCues.ts';
 import type { FtueController } from '../../application/ftue.ts';
 import { resolveVictoryVerse } from '../hud/hudText.ts';
-import { director } from '../transitions/SceneDirector.ts';
+import { director } from '../transitions/director.ts';
 import { isReducedMotion } from '../transitions/motion.ts';
 import { createDoubleTap } from '../board/doubleTap.ts';
 import { createHoldRotate } from '../board/holdRotate.ts';
 import { IDLE_NUDGE_START, stepIdleNudge, type IdleNudgeState } from '../board/idleNudge.ts';
-import type { Choreographed, TransitionContext } from '../transitions/SceneDirector.ts';
+import type { Choreographed, TransitionContext } from '../transitions/director.ts';
 import type { TransitionTimeline } from '../../engine/core/transitions/TransitionTimeline.ts';
 import { choreographPlayIn, choreographPlayOut, type PlayTransitionView } from '../transitions/playChoreography.ts';
 

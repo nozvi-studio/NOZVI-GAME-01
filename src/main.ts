@@ -15,7 +15,7 @@ import { createPlatformServices, installGlobalErrorHandlers } from './engine/cor
 import { createProgressRepository } from './infrastructure/progressRepository.ts';
 import { getSafeStorage, memoryStorage } from './engine/core/platform/safeStorage.ts';
 import { campaignManifest } from './content/manifest.ts';
-import { director, PhaserSceneHost } from './presentation/transitions/SceneDirector.ts';
+import { director, PhaserSceneHost } from './presentation/transitions/director.ts';
 import { setMotionScale } from './presentation/transitions/motion.ts';
 import { resolveLaunch } from './launchParams.ts';
 import { readViewport } from './engine/core/viewport/viewport.ts';
