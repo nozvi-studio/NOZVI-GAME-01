@@ -1,4 +1,5 @@
-import { chapterRoman } from '../content/chapters.ts';
+﻿import { chapterRoman } from '../content/chapters.ts';
+import { interpolate, Localization } from '../engine/core/localization/Localization.ts';
 import { LocaleResolver } from './LocaleResolver.ts';
 import { LocaleSettings } from './LocaleSettings.ts';
 import { localizationConfig, LOCALE_REGISTRY } from './localizationConfig.ts';
@@ -34,12 +35,10 @@ import zhGame from '../locales/zh-CN/game.json';
 export class LocalizationManager {
   private static instance: LocalizationManager;
 
-  private currentLocale: SupportedLocale;
-  private readonly bundles: Record<SupportedLocale, TranslationBundle>;
-  private readonly listeners = new Set<(locale: SupportedLocale) => void>();
+  private readonly core: Localization<SupportedLocale, TranslationBundle>;
 
   private constructor() {
-    this.bundles = {
+    const bundles: Record<SupportedLocale, TranslationBundle> = {
       'en-US': { common: enCommon as CommonTranslations, game: enGame as unknown as GameTranslations },
       vi: { common: viCommon as CommonTranslations, game: viGame as unknown as GameTranslations },
       id: { common: idCommon as CommonTranslations, game: idGame as unknown as GameTranslations },
@@ -51,7 +50,9 @@ export class LocalizationManager {
       ko: { common: koCommon as CommonTranslations, game: koGame as unknown as GameTranslations },
       'zh-CN': { common: zhCommon as CommonTranslations, game: zhGame as unknown as GameTranslations },
     };
-    this.currentLocale = LocaleResolver.resolve();
+    this.core = new Localization(bundles, localizationConfig.fallbackLocale, LocaleResolver.resolve(), (locale) => {
+      if (localizationConfig.persistSelectedLocale) LocaleSettings.saveLocale(locale);
+    });
   }
 
   public static getInstance(): LocalizationManager {
@@ -62,56 +63,40 @@ export class LocalizationManager {
   }
 
   public getLocale(): SupportedLocale {
-    return this.currentLocale;
+    return this.core.locale;
   }
 
-  public getMetadata(locale: SupportedLocale = this.currentLocale): LocaleMetadata {
+  public getMetadata(locale: SupportedLocale = this.core.locale): LocaleMetadata {
     return LOCALE_REGISTRY[locale];
   }
 
   public setLocale(locale: SupportedLocale | 'en'): void {
     const targetLocale: SupportedLocale = locale === 'en' ? 'en-US' : locale;
     if (!(localizationConfig.supportedLocales as readonly string[]).includes(targetLocale)) return;
-    if (this.currentLocale === targetLocale) return;
-
-    this.currentLocale = targetLocale;
-    if (localizationConfig.persistSelectedLocale) {
-      LocaleSettings.saveLocale(targetLocale);
-    }
-
-    this.listeners.forEach((listener) => listener(targetLocale));
+    this.core.set(targetLocale);
   }
 
   public onLocaleChange(listener: (locale: SupportedLocale) => void): () => void {
-    this.listeners.add(listener);
-    return () => {
-      this.listeners.delete(listener);
-    };
+    return this.core.onChange(listener);
   }
 
   public t(key: keyof CommonTranslations, params?: Record<string, string | number>): string {
-    const dict = this.bundles[this.currentLocale]?.common || this.bundles['en-US'].common;
-    let text = dict[key] || this.bundles['en-US'].common[key] || String(key);
-
-    if (params) {
-      for (const [paramKey, paramVal] of Object.entries(params)) {
-        text = text.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), String(paramVal));
-      }
-    }
-    return text;
+    const dict = this.core.bundle()?.common || this.core.bundle('en-US').common;
+    const text = dict[key] || this.core.bundle('en-US').common[key] || String(key);
+    return interpolate(text, params);
   }
 
   public getLevelTitle(levelId: string, fallbackTitle = ''): string {
-    const titles = this.bundles[this.currentLocale]?.game?.levelTitles || this.bundles['en-US'].game.levelTitles;
+    const titles = this.core.bundle()?.game?.levelTitles || this.core.bundle('en-US').game.levelTitles;
     return (
       titles[levelId] ||
-      (fallbackTitle ? fallbackTitle : this.bundles['en-US'].game.levelTitles[levelId] || levelId)
+      (fallbackTitle ? fallbackTitle : this.core.bundle('en-US').game.levelTitles[levelId] || levelId)
     );
   }
 
   public getChapterName(chapter: number, fallbackName?: string): string {
-    const chapters = this.bundles[this.currentLocale]?.game?.chapters || this.bundles['en-US'].game.chapters;
-    return chapters[String(chapter)] || fallbackName || this.bundles['en-US'].game.chapters[String(chapter)] || `Chapter ${chapter}`;
+    const chapters = this.core.bundle()?.game?.chapters || this.core.bundle('en-US').game.chapters;
+    return chapters[String(chapter)] || fallbackName || this.core.bundle('en-US').game.chapters[String(chapter)] || `Chapter ${chapter}`;
   }
 
   public getChapterLabel(chapter: number, fallbackName?: string): string {
@@ -122,7 +107,7 @@ export class LocalizationManager {
   }
 
   public getRandomMenuTagline(forcedIndex?: number): string {
-    const list = this.bundles[this.currentLocale]?.game?.taglines || this.bundles['en-US'].game.taglines;
+    const list = this.core.bundle()?.game?.taglines || this.core.bundle('en-US').game.taglines;
     if (forcedIndex !== undefined && forcedIndex >= 0 && forcedIndex < list.length) {
       return list[forcedIndex];
     }
@@ -130,29 +115,29 @@ export class LocalizationManager {
   }
 
   public getVictoryVerse(levelId: string, fallbackVerse = ''): string {
-    const verses = this.bundles[this.currentLocale]?.game?.victoryVerses || this.bundles['en-US'].game?.victoryVerses;
+    const verses = this.core.bundle()?.game?.victoryVerses || this.core.bundle('en-US').game?.victoryVerses;
     return (
       verses?.[levelId] ||
-      (fallbackVerse ? fallbackVerse : this.bundles['en-US'].game?.victoryVerses?.[levelId] || '')
+      (fallbackVerse ? fallbackVerse : this.core.bundle('en-US').game?.victoryVerses?.[levelId] || '')
     );
   }
 
   public getChapterTagline(chapter: number, fallbackTagline?: string): string {
-    const taglines = this.bundles[this.currentLocale]?.game?.chapterTaglines || this.bundles['en-US'].game?.chapterTaglines;
+    const taglines = this.core.bundle()?.game?.chapterTaglines || this.core.bundle('en-US').game?.chapterTaglines;
     return (
       taglines?.[String(chapter)] ||
       fallbackTagline ||
-      this.bundles['en-US'].game?.chapterTaglines?.[String(chapter)] ||
+      this.core.bundle('en-US').game?.chapterTaglines?.[String(chapter)] ||
       ''
     );
   }
 
   public getGalaxyType(chapter: number, fallbackType?: string): string {
-    const types = this.bundles[this.currentLocale]?.game?.galaxyTypes || this.bundles['en-US'].game?.galaxyTypes;
+    const types = this.core.bundle()?.game?.galaxyTypes || this.core.bundle('en-US').game?.galaxyTypes;
     return (
       types?.[String(chapter)] ||
       fallbackType ||
-      this.bundles['en-US'].game?.galaxyTypes?.[String(chapter)] ||
+      this.core.bundle('en-US').game?.galaxyTypes?.[String(chapter)] ||
       ''
     );
   }
@@ -167,8 +152,8 @@ export class LocalizationManager {
 
   public getChapterVerses(chapter: number): readonly string[] | undefined {
     return (
-      this.bundles[this.currentLocale]?.game?.chapterVerses?.[String(chapter)] ||
-      this.bundles['en-US']?.game?.chapterVerses?.[String(chapter)]
+      this.core.bundle()?.game?.chapterVerses?.[String(chapter)] ||
+      this.core.bundle('en-US')?.game?.chapterVerses?.[String(chapter)]
     );
   }
 }
