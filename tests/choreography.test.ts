@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { TransitionTimeline } from '../src/presentation/transitions/TransitionTimeline.ts';
+import { TransitionTimeline } from '../src/engine/core/transitions/TransitionTimeline.ts';
 import {
   applySteps,
   enter,

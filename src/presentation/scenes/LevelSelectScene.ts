@@ -18,7 +18,7 @@ import { t, getChapterLabel, getChapterName, getGalaxyType } from '../i18n.ts';
 import { adsServices } from '../adsServices.ts';
 import { director } from '../transitions/SceneDirector.ts';
 import type { Choreographed, TransitionContext } from '../transitions/SceneDirector.ts';
-import type { TransitionTimeline } from '../transitions/TransitionTimeline.ts';
+import type { TransitionTimeline } from '../../engine/core/transitions/TransitionTimeline.ts';
 import { applySteps, orderByDistance } from '../transitions/choreography.ts';
 import type { Parts, Poseable } from '../transitions/choreography.ts';
 import { MAP_OUT_TO_MENU, MAP_OUT_TO_PLAY, MAP_SPECIAL, mapIn } from '../transitions/routes.ts';

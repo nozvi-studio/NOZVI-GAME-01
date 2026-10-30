@@ -12,7 +12,7 @@ import type { PieceTextureCache } from '../board/PieceTextureCache.ts';
 import { lightAlpha } from '../board/pieceMotion.ts';
 import type { Pt } from '../board/polygonClip.ts';
 import { isReducedMotion, scaleTiming } from '../transitions/motion.ts';
-import { TransitionTimeline } from '../transitions/TransitionTimeline.ts';
+import { TransitionTimeline } from '../../engine/core/transitions/TransitionTimeline.ts';
 import { burstAt, planBurst, STARDUST_MAX } from '../transitions/stardust.ts';
 import { planVictoryDust, VictoryDust } from './victoryDust.ts';
 import type { Poseable } from '../transitions/choreography.ts';

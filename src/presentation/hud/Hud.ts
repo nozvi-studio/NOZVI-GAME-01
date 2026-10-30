@@ -25,7 +25,7 @@ import {
 import { enter, exit, type Poseable } from '../transitions/choreography.ts';
 import { stepScalar } from '../board/pieceMotion.ts';
 import { isReducedMotion } from '../transitions/motion.ts';
-import type { TransitionTimeline } from '../transitions/TransitionTimeline.ts';
+import type { TransitionTimeline } from '../../engine/core/transitions/TransitionTimeline.ts';
 import {
   VICTORY_COLLAPSE_MS,
   VICTORY_COLLAPSE_SCALE,

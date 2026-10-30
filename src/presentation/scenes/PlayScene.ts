@@ -51,7 +51,7 @@ import { createDoubleTap } from '../board/doubleTap.ts';
 import { createHoldRotate } from '../board/holdRotate.ts';
 import { IDLE_NUDGE_START, stepIdleNudge, type IdleNudgeState } from '../board/idleNudge.ts';
 import type { Choreographed, TransitionContext } from '../transitions/SceneDirector.ts';
-import type { TransitionTimeline } from '../transitions/TransitionTimeline.ts';
+import type { TransitionTimeline } from '../../engine/core/transitions/TransitionTimeline.ts';
 import { choreographPlayIn, choreographPlayOut, type PlayTransitionView } from '../transitions/playChoreography.ts';
 
 import { PieceTextureCache } from '../board/PieceTextureCache.ts';

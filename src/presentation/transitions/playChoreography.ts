@@ -6,7 +6,7 @@ import { stagger } from './motion.ts';
 import { PLAY_OUT_LEAVE, PLAY_OUT_NEXT, PLAY_SPECIAL, playIn } from './routes.ts';
 import type { Point } from './routes.ts';
 import type { TransitionContext } from './SceneDirector.ts';
-import type { TransitionTimeline } from './TransitionTimeline.ts';
+import type { TransitionTimeline } from '../../engine/core/transitions/TransitionTimeline.ts';
 
 export type PlayTransitionView = {
   scene: Phaser.Scene;

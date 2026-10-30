@@ -14,7 +14,7 @@ import { t, getLocale } from '../i18n.ts';
 import { formatMenuContinueSubtext } from '../hud/hudText.ts';
 import { director } from '../transitions/SceneDirector.ts';
 import type { Choreographed, TransitionContext } from '../transitions/SceneDirector.ts';
-import type { TransitionTimeline } from '../transitions/TransitionTimeline.ts';
+import type { TransitionTimeline } from '../../engine/core/transitions/TransitionTimeline.ts';
 import { isReducedMotion } from '../transitions/motion.ts';
 import { applySteps } from '../transitions/choreography.ts';
 import type { Parts } from '../transitions/choreography.ts';

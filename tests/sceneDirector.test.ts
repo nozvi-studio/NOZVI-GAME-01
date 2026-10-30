@@ -6,7 +6,7 @@ import type {
   SceneKey,
   TransitionContext,
 } from '../src/presentation/transitions/SceneDirector.ts';
-import type { TransitionTimeline } from '../src/presentation/transitions/TransitionTimeline.ts';
+import type { TransitionTimeline } from '../src/engine/core/transitions/TransitionTimeline.ts';
 import { setMotionScale } from '../src/presentation/transitions/motion.ts';
 import type { SkyMood } from '../src/presentation/sky/skyMood.ts';
 

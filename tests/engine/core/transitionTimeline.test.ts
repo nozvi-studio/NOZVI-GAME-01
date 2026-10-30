@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { TransitionTimeline } from '../src/presentation/transitions/TransitionTimeline.ts';
+import { TransitionTimeline } from '../../../src/engine/core/transitions/TransitionTimeline.ts';
 
 describe('TransitionTimeline', () => {
   test('tween tuyến tính theo thời gian, giá trị đầu lấy lúc tween bắt đầu', () => {

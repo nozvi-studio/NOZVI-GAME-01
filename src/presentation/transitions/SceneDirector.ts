@@ -3,7 +3,7 @@ import { AUDIO_TOKENS, TRANSITION_TOKENS } from '../designTokens.ts';
 import type { MoodTarget, SkyMood } from '../sky/skyMood.ts';
 import type { RouteId } from './motion.ts';
 import { isReducedMotion } from './motion.ts';
-import { TransitionTimeline } from './TransitionTimeline.ts';
+import { TransitionTimeline } from '../../engine/core/transitions/TransitionTimeline.ts';
 import type { MusicPort } from '../../engine/core/audio/music.ts';
 import { trackFor } from '../audio/tracks.ts';
 
