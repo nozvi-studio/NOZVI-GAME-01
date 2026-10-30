@@ -41,7 +41,7 @@ General rules live in `CLAUDE.md`.
 - **Done when:** `npm run typecheck` and `npm test` pass; no keys are missing versus `en-US`.
 
 ## 5. Audio
-- **Read first:** `src/audio-synth/README.md`.
+- **Read first:** `src/engine/core/audio-synth/README.md`.
 - **Do:** tune in the Audio Lab (`/tools/audiolab.html`), render trial output with `npm run audio:author`.
 - **Done when:** the `audio*` tests pass.
 

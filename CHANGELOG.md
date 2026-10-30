@@ -4,6 +4,17 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Changed (engine extraction, phases 0 and 1)
+- Game-independent runtime moved to `src/engine/core/`: platform services and drivers, `music`/`sfx` (string ids), `audio-synth`, boot helpers, viewport maths, `TransitionTimeline`, a generic `SceneDirector`, and a generic `Localization` engine. No behaviour change.
+- `SceneDirector` is now generic and takes a `DirectorConfig`; Mirror's instance, keys and routes live in `src/presentation/transitions/director.ts`. Import `director` from there.
+- `motion.ts` splits: easing, `stagger` and the motion-scale switch moved to core; the game file keeps `RouteId`, `anticipateOut` and `MOTION_FAMILIES` and re-exports the core functions.
+- `LocalizationManager` keeps its public API and is built on `Localization`.
+
+### Added (engine extraction)
+- `engineBoundary` test: `core` may not import outside itself.
+- `scripts/dev/move-files.ts`: `git mv` plus import rewriting.
+- `src/engine/ENGINE.md`.
+
 ### Fixed (ads)
 - Stuck hint: a rewarded ad that loads too slowly or never answers no longer hangs the dialog. `createAdMobDriver` gives up after `REWARDED_START_TIMEOUT_MS` (10 s, from the start of loading to the `Showed` event) and returns `unavailable`, so the dialog shows "No ad is available right now" and no hint is given. An ad that arrives after the timeout is not shown. Watching an ad is not timed. While the ad loads, Watch is dimmed and a "..." mark shows (`HintDialog.setLoading`). `tests/admobDriver.test.ts`.
 
