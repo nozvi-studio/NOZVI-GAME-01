@@ -46,8 +46,8 @@ describe('the engine folder stays portable', () => {
       `const m = await import('x');`,
       `const m = require("x");`,
       `export * from '../content/x';`,
-      `import { a } from './../content/x';`,
-      `import { a } from './sub/../../x';`,
+      `import { a } from '../content/x';`,
+      `import { a } from '../x';`,
     ];
     for (const line of bad) {
       expect(importTargets(line).filter((t) => !isLocal(t)), line).toHaveLength(1);

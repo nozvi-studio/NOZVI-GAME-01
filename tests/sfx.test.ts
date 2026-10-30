@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { SFX_KEYS } from '../src/content/audio/index.ts';
 import type { SfxKey } from '../src/content/audio/index.ts';
-import { createSfx } from '../src/infrastructure/sfx.ts';
-import type { AudioCue, SfxDriver, SfxEnv } from '../src/infrastructure/sfx.ts';
+import { createSfx } from '../src/engine/core/audio/sfx.ts';
+import type { AudioCue, SfxDriver, SfxEnv } from '../src/engine/core/audio/sfx.ts';
 
 function setup(lengthMs = 500) {
   const calls: Array<{ key: string; rate: number; volume: number }> = [];

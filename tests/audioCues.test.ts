@@ -5,7 +5,7 @@ import type { StoragePort } from '../src/application/progressPort.ts';
 import { PlayController } from '../src/application/playController.ts';
 import type { Level, PuzzleState } from '../src/domain/model.ts';
 import { createProgressRepository } from '../src/infrastructure/progressRepository.ts';
-import type { AudioCue } from '../src/infrastructure/sfx.ts';
+import type { AudioCue } from '../src/engine/core/audio/sfx.ts';
 import type { AudioServices } from '../src/presentation/audio/audioServices.ts';
 import { SILENT_AUDIO } from '../src/presentation/audio/audioServices.ts';
 import { computeLayout, gridToCanvas, pieceHitbox } from '../src/presentation/board/layout.ts';

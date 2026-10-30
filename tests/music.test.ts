@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import { createMusic } from '../src/infrastructure/music.ts';
+import { createMusic } from '../src/engine/core/audio/music.ts';
 import type { TrackId } from '../src/infrastructure/audioManifest.ts';
-import type { MediaLike, MusicEnv, MusicOptions } from '../src/infrastructure/music.ts';
+import type { MediaLike, MusicEnv, MusicOptions } from '../src/engine/core/audio/music.ts';
 
 class FakeMedia implements MediaLike {
   src = '';

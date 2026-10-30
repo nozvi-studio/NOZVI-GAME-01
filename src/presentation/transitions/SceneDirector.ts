@@ -4,7 +4,7 @@ import type { MoodTarget, SkyMood } from '../sky/skyMood.ts';
 import type { RouteId } from './motion.ts';
 import { isReducedMotion } from './motion.ts';
 import { TransitionTimeline } from './TransitionTimeline.ts';
-import type { MusicPort } from '../../infrastructure/music.ts';
+import type { MusicPort } from '../../engine/core/audio/music.ts';
 import { trackFor } from '../audio/tracks.ts';
 
 export type SceneKey = 'MenuScene' | 'LevelSelectScene' | 'PlayScene';
