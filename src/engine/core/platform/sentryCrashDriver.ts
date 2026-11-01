@@ -78,6 +78,8 @@ export function createSentryCrashDriver(
   gate: ConsentGate = ALWAYS_ON
 ): CrashDriver {
   let ready: Promise<SentryLike | null> | null = null;
+  /** Bản đã `init` thật sự, kể cả khi `initInBackground` đã quá hạn và trả null: rút lại phải đóng đúng bản này. */
+  let live: SentryLike | null = null;
 
   const start = (): Promise<SentryLike | null> => {
     if (ready) return ready;
@@ -99,6 +101,7 @@ export function createSentryCrashDriver(
         // Lỗi toàn cục đã đi qua `installGlobalErrorHandlers`; tắt cái của Sentry để không báo hai lần.
         integrations: (defaults: { name: string }[]) => defaults.filter((i) => i.name !== 'GlobalHandlers'),
       });
+      live = sentry;
       return sentry;
     });
     ready = mine;
@@ -107,7 +110,7 @@ export function createSentryCrashDriver(
 
   /** Chỉ chạy lệnh khi đang được đồng ý; đang tắt thì bỏ, không xếp hàng. */
   const whenOn = (run: (sentry: SentryLike) => void): Promise<void> | undefined =>
-    gate.enabled() ? start().then((sentry) => void (sentry && gate.enabled() && run(sentry))) : undefined;
+    gate.enabled() ? start().then(() => void (live && gate.enabled() && run(live))) : undefined;
 
   if (gate.enabled()) void start();
   gate.onChange((on) => {
@@ -115,15 +118,15 @@ export function createSentryCrashDriver(
       void start();
       return;
     }
-    const closing = ready;
     ready = null;
-    void closing?.then((sentry) => {
-      try {
-        void sentry?.close();
-      } catch {
-        // đóng hỏng: lệnh sau vẫn là no-op vì gate đã tắt
-      }
-    });
+    const closing = live;
+    live = null;
+    // Nếu SDK còn đang tải, `ready !== mine` khiến lượt init đó tự bỏ; nếu đã init (kể cả sau hạn chờ) thì đóng ở đây.
+    try {
+      void closing?.close();
+    } catch {
+      // đóng hỏng: lệnh sau vẫn là no-op vì gate đã tắt
+    }
   });
 
   return {

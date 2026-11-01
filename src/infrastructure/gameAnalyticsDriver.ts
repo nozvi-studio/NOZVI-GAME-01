@@ -101,6 +101,8 @@ export function createGameAnalyticsDriver(
   let ready: Promise<GameAnalyticsLike | null> | null = null;
   /** Đã rút lại sau khi SDK chạy: dừng hẳn tới lần mở sau. */
   let stopped = false;
+  /** SDK ngay khi đã `initialize`, kể cả khi chờ sẵn sàng quá hạn (ready = null): rút lại vẫn tắt gửi trên bản này. */
+  let started: GameAnalyticsLike | null = null;
 
   const sdk = (): Promise<GameAnalyticsLike | null> =>
     (ready ??= initInBackground(
@@ -113,10 +115,24 @@ export function createGameAnalyticsDriver(
         ga.configureUserId(privacy.userId());
         if (!active()) return null;
         ga.initialize(config.gameKey, config.secretKey);
-        return (await waitUntilReady(ga)) ? ga : null;
+        started = ga;
+        const isReady = await waitUntilReady(ga);
+        if (!active()) {
+          disable(ga);
+          return null;
+        }
+        return isReady ? ga : null;
       },
       readyTimeoutMs + 5000
     ));
+
+  const disable = (ga: GameAnalyticsLike | null): void => {
+    try {
+      ga?.setEnabledEventSubmission(false);
+    } catch {
+      // SDK hỏng: đằng nào cũng không gửi nữa.
+    }
+  };
 
   const active = (): boolean => privacy.get().analytics && !stopped;
 
@@ -126,15 +142,7 @@ export function createGameAnalyticsDriver(
     if (!state.analytics) {
       if (ready) {
         stopped = true;
-        void ready
-          .then((ga) => {
-            try {
-              ga?.setEnabledEventSubmission(false);
-            } catch {
-              // SDK hỏng: đằng nào cũng không gửi nữa.
-            }
-          })
-          .catch(() => {});
+        disable(started);
       }
       clearGameAnalyticsStore(store, config.gameKey);
       return;

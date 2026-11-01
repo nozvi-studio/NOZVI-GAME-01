@@ -240,4 +240,19 @@ describe('Sentry theo đồng ý báo lỗi', () => {
     expect(f.log).not.toContain('init');
     expect(f.log.some((l) => l.startsWith('capture'))).toBe(false);
   });
+
+  test('SDK nạp xong sau hạn chờ rồi rút lại: vẫn close bản đã init', async () => {
+    vi.useFakeTimers();
+    const f = fakeSentry();
+    const c = gate(true);
+    let release!: (s: SentryLike) => void;
+    createSentryCrashDriver(CONFIG, () => new Promise<SentryLike>((r) => (release = r)), c.g);
+    await vi.advanceTimersByTimeAsync(9000);
+    release(f.sentry);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(f.log).toContain('init');
+    c.set(false);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(f.log).toContain('close');
+  });
 });

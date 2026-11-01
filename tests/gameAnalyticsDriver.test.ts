@@ -267,4 +267,26 @@ describe('gameAnalyticsDriver theo lựa chọn quyền riêng tư', () => {
     await vi.waitFor(() => expect(calls).toContainEqual(['initialize', 'gk', 'sk']));
     expect(calls).toContainEqual(['configureUserId', 'user-9']);
   });
+
+  test('isReady chưa đúng trong hạn chờ rồi rút lại: vẫn tắt gửi trên SDK đã initialize', async () => {
+    vi.useFakeTimers();
+    try {
+      const { sdk, calls } = fakeSdk();
+      sdk.isReady = () => false;
+      const privacy = fakePrivacy();
+      createGameAnalyticsDriver(CONFIG, async () => sdk, privacy, {
+        readyPollMs: 200,
+        readyTimeoutMs: 1000,
+        store: null,
+        sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+      }).warmUp();
+      await vi.advanceTimersByTimeAsync(7000);
+      expect(calls.some((c) => c[0] === 'initialize')).toBe(true);
+      privacy.change({ analytics: false });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(calls).toContainEqual(['submission', false]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
