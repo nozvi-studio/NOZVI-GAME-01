@@ -4,6 +4,13 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Fixed (privacy consent)
+
+- Sentry: if the SDK finished loading after the 8 s start timeout, withdrawing consent did not close it and it kept sending. The driver now tracks the instance that actually ran `init` and closes it on withdrawal.
+- GameAnalytics: same pattern when the SDK took longer than the ready timeout; withdrawal now turns event submission off on the initialized SDK.
+- Policy link: the first-launch screen and the Privacy dialog open it through `openExternal` (new window, `noopener`); the boot screen anchor no longer lets the WebView navigate away.
+- Reading the saved privacy record failing no longer overwrites it; the Copy ID row shows "Copied" after a successful copy.
+
 ### Changed (privacy consent)
 - Consent is now per service and optional: a first-launch screen offers "Reject all" / "Accept all" (equal buttons) and "Options" with one switch per service in this build (Android: gameplay statistics via GameAnalytics and error reports via Sentry; web: error reports only). Declining never blocks play. Choices live in `PrivacyChoices` (`application/privacyChoices.ts`, key `nozvi.privacy.v2`); the old `nozvi.analytics.consent.v1` choice is ignored, so everyone is asked again.
 - Sentry starts only with diagnostics consent (`ConsentGate` in `sentryCrashDriver.ts`); withdrawing calls `close()` and later calls are no-ops; turning it on again re-initialises.

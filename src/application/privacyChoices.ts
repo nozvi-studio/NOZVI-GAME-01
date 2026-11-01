@@ -49,10 +49,11 @@ export function createPrivacyChoices(
   newId: () => string = randomId
 ): PrivacyChoices {
   let raw: string | null = null;
+  let readFailed = false;
   try {
     raw = store.getItem(PRIVACY_STORAGE_KEY);
   } catch {
-    raw = null;
+    readFailed = true;
   }
   const parsed = parse(raw);
   let state: Stored = parsed ?? { analytics: false, diagnostics: false, decided: false, userId: newId() };
@@ -66,7 +67,8 @@ export function createPrivacyChoices(
     }
   };
   // Lần đầu (hoặc dữ liệu hỏng): ghi ngay để userId được giữ qua các lần mở.
-  if (!parsed) persist();
+  // Đọc lỗi tạm thời thì không ghi đè bản hợp lệ đang lưu; lần `set` đầu sẽ ghi.
+  if (!parsed && !readFailed) persist();
 
   return {
     get: () => ({ analytics: state.analytics, diagnostics: state.diagnostics }),

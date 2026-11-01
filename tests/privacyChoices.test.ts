@@ -87,4 +87,19 @@ describe('createPrivacyChoices', () => {
     c.set({ analytics: true });
     expect(ok).toHaveBeenCalledOnce();
   });
+
+  test('getItem ném lỗi thì không ghi đè bản đã lưu lúc khởi tạo', () => {
+    const setItem = vi.fn();
+    const c = createPrivacyChoices({ getItem: () => { throw new Error('read'); }, setItem }, ids());
+    expect(setItem).not.toHaveBeenCalled();
+    expect(c.decided()).toBe(false);
+  });
+
+  test('khóa đồng ý cũ nozvi.analytics.consent.v1 = granted bị bỏ qua', () => {
+    const m = memory();
+    m.map.set('nozvi.analytics.consent.v1', 'granted');
+    const c = createPrivacyChoices(m.store, ids());
+    expect(c.decided()).toBe(false);
+    expect(c.get()).toEqual({ analytics: false, diagnostics: false });
+  });
 });
