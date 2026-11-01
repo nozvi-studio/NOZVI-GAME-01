@@ -198,7 +198,7 @@ describe('Privacy settings row (EEA/UK consent)', () => {
   it('is hidden when the consent flow does not require it', () => {
     const ui = setup({ ...NO_ADS, privacyOptionsRequired: () => false });
     ui.settings.open();
-    expect(ui.items.some(i => i.text === t('setting_privacy'))).toBe(false);
+    expect(ui.items.some(i => i.text === t('setting_privacy_row'))).toBe(false);
   });
 
   it('sits directly below the last toggle and reopens the consent form on tap', () => {
@@ -206,7 +206,7 @@ describe('Privacy settings row (EEA/UK consent)', () => {
     const ui = setup({ ...NO_ADS, privacyOptionsRequired: () => true, showPrivacyOptions });
     ui.settings.open();
     const haptics = ui.items.find(i => i.text === t('setting_haptics'))!;
-    const privacy = ui.items.find(i => i.text === t('setting_privacy'))!;
+    const privacy = ui.items.find(i => i.text === t('setting_privacy_row'))!;
     const danger = ui.items.find(i => i.text?.includes(t('setting_danger_reset')))!;
     expect(privacy.y - haptics.y).toBe(84);
     expect(danger.y - privacy.y).toBe(84);

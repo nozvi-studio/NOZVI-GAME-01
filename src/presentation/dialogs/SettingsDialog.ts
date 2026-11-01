@@ -147,7 +147,7 @@ export class SettingsDialog {
     }
 
     if (showPrivacy) {
-      this.createLinkRow(-modalH / 2 + privacyOffset, t('setting_privacy'), () => {
+      this.createLinkRow(-modalH / 2 + privacyOffset, t('setting_privacy_row'), () => {
         void ads.showPrivacyOptions();
       });
     }
