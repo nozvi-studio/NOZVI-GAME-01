@@ -2,6 +2,7 @@ import type Phaser from 'phaser';
 import { t } from '../i18n.ts';
 import { adsServices } from '../adsServices.ts';
 import { privacyServices, shortId } from '../privacyServices.ts';
+import { openExternal } from '../openExternal.ts';
 import { playUiCue } from '../audio/uiCues.ts';
 import { createDialogCard } from './dialogCard.ts';
 import { createLinkRow, createToggleRow } from './dialogRows.ts';
@@ -47,22 +48,18 @@ export class PrivacyDialog {
       rows.push((c, y) => createLinkRow(scene, c, y, t('privacy_ads'), () => void ads.showPrivacyOptions()));
     }
     if (choices && privacy.offered.includes('analytics')) {
-      rows.push((c, y) =>
-        createLinkRow(
-          scene,
-          c,
-          y,
-          `${t('privacy_your_id')}: ${shortId(choices.userId())}  ·  ${t('privacy_copy')}`,
-          () => {
-            void navigator.clipboard?.writeText(choices.userId()).catch(() => {});
-          }
-        )
-      );
+      rows.push((c, y) => {
+        const label = `${t('privacy_your_id')}: ${shortId(choices.userId())}  ·  ${t('privacy_copy')}`;
+        const row = createLinkRow(scene, c, y, label, () => {
+          const write = navigator.clipboard?.writeText(choices.userId());
+          void write?.then(() => row.setText(`${label}  ·  ${t('privacy_copied')}`)).catch(() => {});
+        });
+      });
     }
     if (privacy.policyUrl) {
       const url = privacy.policyUrl;
       rows.push((c, y) =>
-        createLinkRow(scene, c, y, t('privacy_policy'), () => void window.open(url, '_blank', 'noopener'))
+        createLinkRow(scene, c, y, t('privacy_policy'), () => openExternal(url))
       );
     }
 

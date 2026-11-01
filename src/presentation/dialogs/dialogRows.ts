@@ -9,7 +9,7 @@ export function createLinkRow(
   y: number,
   label: string,
   onTap: () => void
-): void {
+): Phaser.GameObjects.Text {
   const rowLabel = scene.add
     .text(-270, y, label, {
       fontFamily: TYPO_TOKENS.fontFamily.display,
@@ -35,6 +35,7 @@ export function createLinkRow(
   divider.lineStyle(1, COLOR_NUMBERS.icePrimary, 0.15);
   divider.lineBetween(-270, y + 42, 270, y + 42);
   container.add([rowLabel, chevron, hitZone, divider]);
+  return rowLabel;
 }
 
 /** Công tắc gạt 3D Juicy Switch */

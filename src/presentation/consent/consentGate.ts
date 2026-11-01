@@ -1,6 +1,7 @@
 import type { PrivacyPurpose, PrivacyState } from '../../application/privacyChoices.ts';
 import type { CommonTranslationKey } from '../../localization/types.ts';
 import { t } from '../i18n.ts';
+import { openExternal } from '../openExternal.ts';
 import { choicesFor } from './consentModel.ts';
 import type { ConsentAction } from './consentModel.ts';
 
@@ -9,6 +10,8 @@ export type ConsentGateOptions = {
   policyUrl?: string;
   doc?: Document;
   translate?: (key: CommonTranslationKey) => string;
+  /** Mở liên kết chính sách; mặc định `openExternal`. */
+  open?: (url: string) => void;
 };
 
 const BUTTON_CSS =
@@ -61,6 +64,12 @@ export function requestPrivacyChoices(options: ConsentGateOptions): Promise<Priv
       policy.href = options.policyUrl;
       policy.setAttribute('target', '_blank');
       policy.setAttribute('rel', 'noopener');
+      const policyUrl = options.policyUrl;
+      // Giữ href cho trợ năng, nhưng không để WebView điều hướng khỏi màn hình chặn lúc khởi động.
+      policy.addEventListener('click', (event: Event) => {
+        event.preventDefault();
+        (options.open ?? openExternal)(policyUrl);
+      });
       policy.textContent = tr('privacy_policy');
       policy.style.cssText = 'color:#7FD8FF;font-size:15px;';
       overlay.append(policy);

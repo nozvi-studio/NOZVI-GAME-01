@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PrivacyDialog } from '../src/presentation/dialogs/PrivacyDialog.ts';
 import { shortId } from '../src/presentation/privacyServices.ts';
 import { NO_ADS } from '../src/presentation/adsServices.ts';
@@ -25,6 +25,8 @@ describe('shortId', () => {
 });
 
 describe('PrivacyDialog', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
   it('chỉ hiện công tắc cho mục được đưa ra', () => {
     const ui = fakeScene({ ads: NO_ADS, privacy: { choices: choices(), offered: ['diagnostics'] } });
     new PrivacyDialog(ui.scene).open();
@@ -76,5 +78,30 @@ describe('PrivacyDialog', () => {
       expect(control.width).toBeGreaterThanOrEqual(64);
       expect(control.height).toBeGreaterThanOrEqual(64);
     }
+  });
+
+  it('dòng Copy: sao chép xong thì nhãn thêm privacy_copied', async () => {
+    const writeText = vi.fn(() => Promise.resolve());
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    const ui = fakeScene({ ads: NO_ADS, privacy: { choices: choices(), offered: ['analytics'] } });
+    new PrivacyDialog(ui.scene).open();
+    const row = ui.items.find((i) => i.text?.includes('0123…cdef'))!;
+    expect(row.text).not.toContain(t('privacy_copied'));
+    ui.tap(0, row.y);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(writeText).toHaveBeenCalledWith('0123456789abcdef');
+    expect(row.text).toContain(t('privacy_copied'));
+  });
+
+  it('dòng chính sách mở bằng window.open noopener', () => {
+    const open = vi.fn();
+    vi.stubGlobal('window', { open });
+    const ui = fakeScene({
+      ads: NO_ADS,
+      privacy: { choices: choices(), offered: ['diagnostics'], policyUrl: 'https://x.test/p' },
+    });
+    new PrivacyDialog(ui.scene).open();
+    ui.tap(0, ui.items.find((i) => i.text === t('privacy_policy'))!.y);
+    expect(open).toHaveBeenCalledWith('https://x.test/p', '_blank', 'noopener');
   });
 });

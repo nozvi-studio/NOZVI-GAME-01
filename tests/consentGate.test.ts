@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { requestPrivacyChoices } from '../src/presentation/consent/consentGate.ts';
 
 type El = {
@@ -82,5 +82,15 @@ describe('requestPrivacyChoices', () => {
     const without = fakeDoc();
     void requestPrivacyChoices({ offered: ['diagnostics'], doc: without.doc, translate: T });
     expect(without.all.some((e) => e.attrs['data-id'] === 'policy')).toBe(false);
+  });
+
+  test('bấm liên kết chính sách: chặn điều hướng của WebView và mở bằng openExternal', () => {
+    const d = fakeDoc();
+    const open = vi.fn();
+    void requestPrivacyChoices({ offered: ['diagnostics'], policyUrl: 'https://x.test/p', doc: d.doc, translate: T, open });
+    const preventDefault = vi.fn();
+    (d.byId('policy').listeners.click as unknown as (e: unknown) => void)({ preventDefault });
+    expect(preventDefault).toHaveBeenCalledOnce();
+    expect(open).toHaveBeenCalledWith('https://x.test/p');
   });
 });
