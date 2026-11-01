@@ -44,7 +44,9 @@ export function requestPrivacyChoices(options: ConsentGateOptions): Promise<Priv
       'justify-content:center;gap:20px;padding:32px;background:#1A2470;color:#fff;text-align:center;' +
       "font-family:'Be Vietnam Pro',sans-serif;overflow-y:auto;";
 
-    const title = el('h1');
+    const title = el('h1', 'privacy-title');
+    title.setAttribute('id', 'privacy-title');
+    overlay.setAttribute('aria-labelledby', 'privacy-title');
     title.textContent = tr('privacy_title');
     title.style.cssText = 'margin:0;font-size:24px;color:#FFD23F;';
 
@@ -84,8 +86,8 @@ export function requestPrivacyChoices(options: ConsentGateOptions): Promise<Priv
     row.append(reject, accept);
 
     const panel = el('div', 'options-panel');
-    panel.hidden = true;
     panel.style.cssText = 'display:flex;flex-direction:column;gap:14px;width:100%;max-width:440px;text-align:left;';
+    panel.style.display = 'none';
     const switches: Partial<Record<PrivacyPurpose, HTMLInputElement>> = {};
     for (const purpose of offered) {
       const [labelKey, descKey] = LABELS[purpose];
@@ -117,11 +119,15 @@ export function requestPrivacyChoices(options: ConsentGateOptions): Promise<Priv
     optionsToggle.type = 'button';
     optionsToggle.textContent = `${tr('privacy_options')} ▾`;
     optionsToggle.style.cssText = 'background:none;border:0;color:#7FD8FF;font-size:16px;min-height:48px;';
+    optionsToggle.setAttribute('aria-expanded', 'false');
     optionsToggle.addEventListener('click', () => {
-      panel.hidden = !panel.hidden;
+      const open = panel.style.display === 'none';
+      panel.style.display = open ? 'flex' : 'none';
+      optionsToggle.setAttribute('aria-expanded', String(open));
     });
 
     overlay.append(row, optionsToggle, panel);
     doc.body.appendChild(overlay);
+    reject.focus?.();
   });
 }

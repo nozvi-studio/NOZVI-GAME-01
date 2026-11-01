@@ -11,7 +11,7 @@ type El = {
   href?: string;
   children: El[];
   listeners: Record<string, () => void>;
-  style: { cssText: string };
+  style: { cssText: string; display?: string };
   removed: boolean;
 };
 
@@ -58,9 +58,12 @@ describe('requestPrivacyChoices', () => {
     const done = requestPrivacyChoices({ offered: ['analytics'], doc: d.doc, translate: T });
     expect(d.all.some((e) => e.attrs['data-id'] === 'switch-diagnostics')).toBe(false);
     const panel = d.byId('options-panel');
-    expect(panel.hidden).toBe(true);
+    expect(panel.style.display).toBe('none');
+    expect(d.byId('options').attrs['aria-expanded']).toBe('false');
+    expect(d.overlay().attrs['aria-labelledby']).toBe(d.byId('privacy-title').attrs.id);
     d.byId('options').listeners.click();
-    expect(panel.hidden).toBe(false);
+    expect(panel.style.display).toBe('flex');
+    expect(d.byId('options').attrs['aria-expanded']).toBe('true');
     d.byId('switch-analytics').checked = true;
     d.byId('save').listeners.click();
     await expect(done).resolves.toEqual({ analytics: true, diagnostics: false });
