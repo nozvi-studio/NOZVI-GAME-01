@@ -17,6 +17,7 @@ import { selectAnalyticsDriver } from './infrastructure/analyticsSetup.ts';
 import { requestAnalyticsConsent } from './presentation/consent/consentGate.ts';
 import { installCrashTest } from './devtools/crashTest.ts';
 import { APP_VERSION } from './appVersion.ts';
+import { createPrivacyChoices } from './application/privacyChoices.ts';
 import { LevelTracker } from './application/levelTracker.ts';
 import { LEVEL_TRACKER_REGISTRY_KEY } from './presentation/levelTracking.ts';
 import { createProgressRepository } from './infrastructure/progressRepository.ts';
@@ -54,6 +55,7 @@ const analyticsSelection = selectAnalyticsDriver({
   isNative: Capacitor.isNativePlatform(),
   isDev: import.meta.env.DEV,
   build: APP_VERSION,
+  privacy: createPrivacyChoices(getSafeStorage() ?? memoryStorage),
 });
 const platform = createPlatformServices({
   ads: adMobConfig ? createAdMobDriver(AdMob, adMobConfig) : null,

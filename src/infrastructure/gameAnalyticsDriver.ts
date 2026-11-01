@@ -1,7 +1,9 @@
 import type { TelemetryEvent } from '../engine/core/platform/telemetry.ts';
-import { isAnalyticsConsentGranted } from './analyticsConsent.ts';
 import { initInBackground } from '../engine/core/platform/platformServices.ts';
 import type { AnalyticsDriver } from '../engine/core/platform/platformServices.ts';
+import { getSafeStorage } from '../engine/core/platform/safeStorage.ts';
+import type { PrivacyChoices } from '../application/privacyChoices.ts';
+import { clearGameAnalyticsStore } from './gameAnalyticsStore.ts';
 
 export type GameAnalyticsConfig = { gameKey: string; secretKey: string; build: string };
 
@@ -10,9 +12,12 @@ export type ProgressionStatus = 'Start' | 'Complete' | 'Fail';
 /** Phần của SDK mà game dùng; giữ hẹp để test thay bằng đồ giả. Bản thật bọc ở `gameAnalyticsSdk.ts`. */
 export type GameAnalyticsLike = {
   configureBuild(build: string): void;
+  /** Chỉ có tác dụng trước `initialize`. */
+  configureUserId(userId: string): void;
   initialize(gameKey: string, secretKey: string): void;
   /** Phiên đã mở. SDK bỏ hẳn (không xếp hàng) mọi sự kiện gửi trước thời điểm này. */
   isReady(): boolean;
+  setEnabledEventSubmission(flag: boolean): void;
   addProgressionEvent(
     status: ProgressionStatus,
     progression01: string,
@@ -23,12 +28,16 @@ export type GameAnalyticsLike = {
   addDesignEvent(eventId: string, value?: number): void;
 };
 
+export type AnalyticsPrivacy = Pick<PrivacyChoices, 'get' | 'userId' | 'onChange'>;
+
 export type GameAnalyticsOptions = {
   /** Chu kỳ hỏi `isReady` sau khi khởi tạo. */
   readyPollMs?: number;
   /** Quá hạn này mà SDK vẫn chưa sẵn sàng thì bỏ cuộc: mọi sự kiện thành no-op. */
   readyTimeoutMs?: number;
   sleep?: (ms: number) => Promise<void>;
+  /** Nơi SDK lưu sự kiện chưa gửi; mặc định localStorage. */
+  store?: Pick<Storage, 'removeItem'> | null;
 };
 
 export type GameAnalyticsDriver = AnalyticsDriver & {
@@ -64,21 +73,21 @@ function callsFor(event: TelemetryEvent): SdkCall[] {
 }
 
 /**
- * Chưa đồng ý thì không nạp và không khởi tạo SDK (khởi tạo cũng có thể gửi sự kiện phiên). Đồng ý rồi thì
- * SDK nạp bằng `import()` động ở nền (`initInBackground`) và game gọi `warmUp()` ngay để phiên mở sớm.
- * SDK bỏ sự kiện gửi trước khi phiên mở, nên mọi lệnh chờ `isReady()`; tải hỏng, treo hay quá hạn thì
- * mọi lệnh là no-op. Sự kiện khi chưa đồng ý bị bỏ, không giữ lại.
+ * Theo `PrivacyChoices`: chưa đồng ý thì không nạp, không khởi tạo SDK. Đồng ý thì nạp ở nền và gắn userId của
+ * game trước `initialize`. Rút lại thì ngừng gửi và xóa kho sự kiện chưa gửi. SDK không đổi được userId khi đang
+ * chạy, nên bật lại trong cùng phiên chỉ có hiệu lực từ lần mở app sau.
  */
 export function createGameAnalyticsDriver(
   config: GameAnalyticsConfig,
   load: () => Promise<GameAnalyticsLike>,
-  isConsentGranted: () => boolean = isAnalyticsConsentGranted,
+  privacy: AnalyticsPrivacy,
   options: GameAnalyticsOptions = {}
 ): GameAnalyticsDriver {
   const {
     readyPollMs = 200,
     readyTimeoutMs = 10_000,
     sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
+    store = getSafeStorage(),
   } = options;
 
   const waitUntilReady = async (ga: GameAnalyticsLike): Promise<boolean> => {
@@ -90,28 +99,54 @@ export function createGameAnalyticsDriver(
   };
 
   let ready: Promise<GameAnalyticsLike | null> | null = null;
+  /** Đã rút lại sau khi SDK chạy: dừng hẳn tới lần mở sau. */
+  let stopped = false;
+
   const sdk = (): Promise<GameAnalyticsLike | null> =>
     (ready ??= initInBackground(
       'gameanalytics',
       async () => {
         const ga = await load();
         ga.configureBuild(config.build);
+        ga.configureUserId(privacy.userId());
         ga.initialize(config.gameKey, config.secretKey);
         return (await waitUntilReady(ga)) ? ga : null;
       },
       readyTimeoutMs + 5000
     ));
 
+  const active = (): boolean => privacy.get().analytics && !stopped;
+
+  if (!privacy.get().analytics) clearGameAnalyticsStore(store, config.gameKey);
+
+  privacy.onChange((state) => {
+    if (!state.analytics) {
+      if (ready) {
+        stopped = true;
+        void ready.then((ga) => {
+          try {
+            ga?.setEnabledEventSubmission(false);
+          } catch {
+            // SDK hỏng: đằng nào cũng không gửi nữa.
+          }
+        });
+      }
+      clearGameAnalyticsStore(store, config.gameKey);
+      return;
+    }
+    if (!ready && !stopped) void sdk();
+  });
+
   return {
     warmUp() {
-      if (isConsentGranted()) void sdk();
+      if (active()) void sdk();
     },
     track(event) {
-      if (!isConsentGranted()) return;
+      if (!active()) return;
       const calls = callsFor(event);
       if (calls.length === 0) return;
       return sdk().then((ga) => {
-        if (!ga) return;
+        if (!ga || !active()) return;
         for (const call of calls) {
           try {
             call(ga);

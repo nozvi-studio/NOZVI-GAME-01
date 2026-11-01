@@ -4,6 +4,8 @@ import type { GameAnalyticsLike, ProgressionStatus } from './gameAnalyticsDriver
 type GameAnalyticsModule = {
   GameAnalytics: {
     configureBuild(build: string): void;
+    configureUserId(userId: string): void;
+    setEnabledEventSubmission(flag: boolean): void;
     initialize(gameKey: string, secretKey: string): void;
     isSdkReady(needsInitialized: boolean, warn?: boolean, message?: string): boolean;
     addProgressionEvent(
@@ -24,6 +26,8 @@ export async function loadGameAnalytics(): Promise<GameAnalyticsLike> {
   const { GameAnalytics, EGAProgressionStatus } = imported.gameanalytics;
   return {
     configureBuild: (build) => GameAnalytics.configureBuild(build),
+    configureUserId: (userId) => GameAnalytics.configureUserId(userId),
+    setEnabledEventSubmission: (flag) => GameAnalytics.setEnabledEventSubmission(flag),
     initialize: (gameKey, secretKey) => GameAnalytics.initialize(gameKey, secretKey),
     isReady: () => GameAnalytics.isSdkReady(true, false),
     addProgressionEvent: (status, p1, p2, p3, score) =>

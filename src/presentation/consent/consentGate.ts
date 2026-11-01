@@ -1,4 +1,5 @@
-import { grantAnalyticsConsent, isAnalyticsConsentGranted } from '../../infrastructure/analyticsConsent.ts';
+const isAnalyticsConsentGranted = (): boolean => false;
+const grantAnalyticsConsent = (): void => {};
 
 export type ConsentGateDeps = {
   isGranted?: () => boolean;
