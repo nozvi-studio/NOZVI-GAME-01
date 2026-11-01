@@ -4,6 +4,7 @@ import { Capacitor } from '@capacitor/core';
 import { AdMob } from '@capacitor-community/admob';
 import { createAdMobDriver, resolveAdMobConfig } from './engine/core/platform/admobDriver.ts';
 import { ADS_REGISTRY_KEY } from './presentation/adsServices.ts';
+import { PRIVACY_REGISTRY_KEY } from './presentation/privacyServices.ts';
 import { BackgroundScene } from './presentation/scenes/BackgroundScene.ts';
 import { LoadingScene } from './presentation/scenes/LoadingScene.ts';
 import { MenuScene } from './presentation/scenes/MenuScene.ts';
@@ -12,12 +13,12 @@ import { LevelSelectScene } from './presentation/scenes/LevelSelectScene.ts';
 import { FixtureScene } from './presentation/scenes/FixtureScene.ts';
 import { setupAndroidLifecycle } from './engine/core/platform/lifecycle.ts';
 import { createPlatformServices, installGlobalErrorHandlers } from './engine/core/platform/platformServices.ts';
-import { createSentryCrashDriver } from './engine/core/platform/sentryCrashDriver.ts';
+import { createSentryCrashDriver, type ConsentGate } from './engine/core/platform/sentryCrashDriver.ts';
 import { selectAnalyticsDriver } from './infrastructure/analyticsSetup.ts';
 import { requestPrivacyChoices } from './presentation/consent/consentGate.ts';
 import { installCrashTest } from './devtools/crashTest.ts';
 import { APP_VERSION } from './appVersion.ts';
-import { createPrivacyChoices } from './application/privacyChoices.ts';
+import { createPrivacyChoices, type PrivacyPurpose } from './application/privacyChoices.ts';
 import { LevelTracker } from './application/levelTracker.ts';
 import { LEVEL_TRACKER_REGISTRY_KEY } from './presentation/levelTracking.ts';
 import { createProgressRepository } from './infrastructure/progressRepository.ts';
@@ -45,6 +46,8 @@ const adMobConfig = Capacitor.isNativePlatform() ? resolveAdMobConfig(import.met
 if (Capacitor.isNativePlatform() && !adMobConfig) {
   console.warn('[ads] VITE_ADMOB_USE_TEST_ADS=false nhưng thiếu VITE_ADMOB_BANNER_ID / VITE_ADMOB_REWARDED_ID: tắt quảng cáo');
 }
+const privacy = createPrivacyChoices(getSafeStorage() ?? memoryStorage);
+const policyUrl = import.meta.env.VITE_PRIVACY_POLICY_URL || undefined;
 // Không có DSN thì không có driver: mọi lệnh là no-op, game chạy y như chưa gắn SDK.
 // Dev server không gửi lỗi lên Sentry (tránh nhiễu và tốn quota), trừ khi đặt VITE_SENTRY_DEV=true để thử.
 const sentryDsn =
@@ -55,18 +58,31 @@ const analyticsSelection = selectAnalyticsDriver({
   isNative: Capacitor.isNativePlatform(),
   isDev: import.meta.env.DEV,
   build: APP_VERSION,
-  privacy: createPrivacyChoices(getSafeStorage() ?? memoryStorage),
+  privacy,
 });
+/** Mục có trong bản build này; màn đồng ý và dialog Privacy chỉ hiện những mục này. */
+const offeredPurposes: PrivacyPurpose[] = [
+  ...(analyticsSelection.requiresConsent ? (['analytics'] as const) : []),
+  ...(sentryDsn ? (['diagnostics'] as const) : []),
+];
+const diagnosticsGate: ConsentGate = {
+  enabled: () => privacy.get().diagnostics,
+  onChange: (listener) => privacy.onChange((state) => listener(state.diagnostics)),
+};
 const platform = createPlatformServices({
   ads: adMobConfig ? createAdMobDriver(AdMob, adMobConfig) : null,
   crash: sentryDsn
-    ? createSentryCrashDriver({
-        dsn: sentryDsn,
-        release: APP_VERSION,
-        environment: import.meta.env.MODE,
-        appOrigin: window.location.origin,
-        tags: { platform: Capacitor.getPlatform(), native: String(Capacitor.isNativePlatform()) },
-      })
+    ? createSentryCrashDriver(
+        {
+          dsn: sentryDsn,
+          release: APP_VERSION,
+          environment: import.meta.env.MODE,
+          appOrigin: window.location.origin,
+          tags: { platform: Capacitor.getPlatform(), native: String(Capacitor.isNativePlatform()) },
+        },
+        undefined,
+        diagnosticsGate
+      )
     : null,
   analytics: analyticsSelection.driver,
 });
@@ -164,9 +180,11 @@ export async function startGame(options: StartGameOptions = {}): Promise<void> {
   // Splash and first paint use chapter I; Menu, Map and Play switch it afterwards.
   setPcBackground(1);
   await waitForFonts();
-  // GameAnalytics bật thì người chơi phải đồng ý chia sẻ dữ liệu trước khi vào game.
-  if (analyticsSelection.requiresConsent) await requestPrivacyChoices({ offered: analyticsSelection.requiresConsent ? ['analytics'] : [] });
-  // Khởi tạo SDK ngay để phiên mở trước sự kiện đầu tiên (SDK bỏ sự kiện gửi trước khi phiên mở).
+  // Hỏi một lần khi bản build có dịch vụ tùy chọn; lựa chọn nào cũng vào được game.
+  if (offeredPurposes.length > 0 && !privacy.decided()) {
+    privacy.set(await requestPrivacyChoices({ offered: offeredPurposes, policyUrl }));
+  }
+  // Khởi tạo GA ngay nếu đã đồng ý (SDK bỏ sự kiện gửi trước khi phiên mở).
   analyticsSelection.warmUp?.();
 
   // BackgroundScene đứng đầu nên tự khởi động và luôn vẽ dưới cùng; các scene
@@ -196,6 +214,7 @@ export async function startGame(options: StartGameOptions = {}): Promise<void> {
   }
 
   game.registry.set(ADS_REGISTRY_KEY, platform.ads);
+  game.registry.set(PRIVACY_REGISTRY_KEY, { choices: privacy, offered: offeredPurposes, policyUrl });
   // Consent (UMP) rồi mới khởi tạo SDK; không chặn việc dựng game.
   void platform.ads.init();
 

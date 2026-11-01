@@ -4,6 +4,13 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Changed (privacy consent)
+- Consent is now per service and optional: a first-launch screen offers "Reject all" / "Accept all" (equal buttons) and "Options" with one switch per service in this build (Android: gameplay statistics via GameAnalytics and error reports via Sentry; web: error reports only). Declining never blocks play. Choices live in `PrivacyChoices` (`application/privacyChoices.ts`, key `nozvi.privacy.v2`); the old `nozvi.analytics.consent.v1` choice is ignored, so everyone is asked again.
+- Sentry starts only with diagnostics consent (`ConsentGate` in `sentryCrashDriver.ts`); withdrawing calls `close()` and later calls are no-ops; turning it on again re-initialises.
+- GameAnalytics uses a game-owned random user ID (`configureUserId`). Withdrawing stops submission, deletes the SDK's unsent-event store (`GA::<key>::ga_event`, `ga_session`, `ga_progression`, `ga_items`) and creates a new ID. Turning statistics back on in the same session takes effect from the next launch (the SDK cannot change user ID while running).
+- Settings: the EEA/UK-only "Privacy settings" row is replaced by an always-visible "Privacy" row opening `PrivacyDialog` (switches, "Ad choices" for UMP in EEA/UK, the shortened user ID with Copy, Privacy Policy link from `VITE_PRIVACY_POLICY_URL`).
+- New `privacy_*` strings in all ten locales; `setting_privacy` replaced by `setting_privacy_row`.
+
 ### Changed (crash reporting, Sentry)
 - Crash guard (`createCrashReporter`): each error (same source, name, message and first stack line) is reported once per session instead of once per 60 s window, and a session sends at most 30 reports (`maxPerSession`) on top of 10 per minute. A loop error in `update` that ran for 20 minutes used to send 20 reports; now it sends 1.
 - Sentry init (`sentryCrashDriver.ts`): `maxBreadcrumbs` 30; `ignoreErrors` for known noise (`ResizeObserver loop`, `Non-Error promise rejection captured`, `Script error.`); `denyUrls` for browser extension scripts; `beforeBreadcrumb` drops click/input, fetch/xhr (SDK traffic, may expose URLs) and `console.log` (keeps warn/error); `beforeSend` drops events whose stack has frames but none from the game origin (`appOrigin`, set to `window.location.origin`).
