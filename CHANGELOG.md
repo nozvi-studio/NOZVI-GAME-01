@@ -4,6 +4,13 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Changed (crash reporting, Sentry)
+- Crash guard (`createCrashReporter`): each error (same source, name, message and first stack line) is reported once per session instead of once per 60 s window, and a session sends at most 30 reports (`maxPerSession`) on top of 10 per minute. A loop error in `update` that ran for 20 minutes used to send 20 reports; now it sends 1.
+- Sentry init (`sentryCrashDriver.ts`): `maxBreadcrumbs` 30; `ignoreErrors` for known noise (`ResizeObserver loop`, `Non-Error promise rejection captured`, `Script error.`); `denyUrls` for browser extension scripts; `beforeBreadcrumb` drops click/input, fetch/xhr (SDK traffic, may expose URLs) and `console.log` (keeps warn/error); `beforeSend` drops events whose stack has frames but none from the game origin (`appOrigin`, set to `window.location.origin`).
+- Game breadcrumbs: scene changes (`SceneDirector.setTrace`, wired in `main.ts`), `level_complete` / `level_abandon` (`LevelTracker`), and the stuck-hint ad start and outcome (`LevelTracker.note`).
+- The dev server no longer sends to Sentry even with `VITE_SENTRY_DSN` set; set `VITE_SENTRY_DEV=true` in `.env.local` to try it with `__crashTest`.
+- No offline queue on purpose: events raised while offline are dropped (decided 2026-11-01; revisit if Sentry user counts look low next to GA / Play Console).
+
 ### Changed (engine extraction, phases 0 and 1)
 - Game-independent runtime moved to `src/engine/core/`: platform services and drivers, `music`/`sfx` (string ids), `audio-synth`, boot helpers, viewport maths, `TransitionTimeline`, a generic `SceneDirector`, and a generic `Localization` engine. No behaviour change.
 - `SceneDirector` is now generic and takes a `DirectorConfig`; Mirror's instance, keys and routes live in `src/presentation/transitions/director.ts`. Import `director` from there.

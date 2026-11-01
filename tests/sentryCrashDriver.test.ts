@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { createSentryCrashDriver } from '../src/engine/core/platform/sentryCrashDriver.ts';
+import {
+  createSentryCrashDriver,
+  isFromApp,
+  keepBreadcrumb,
+  MAX_BREADCRUMBS,
+} from '../src/engine/core/platform/sentryCrashDriver.ts';
 import type { SentryConfig, SentryLike } from '../src/engine/core/platform/sentryCrashDriver.ts';
 import { createCrashReporter } from '../src/engine/core/platform/platformServices.ts';
 import { installCrashTest } from '../src/devtools/crashTest.ts';
@@ -122,5 +127,49 @@ describe('installCrashTest', () => {
     });
     (target.__crashTest as (k?: string) => void)('capture');
     expect(seen).toEqual([[true, { source: 'crash-test' }]]);
+  });
+});
+
+describe('lọc lỗi và breadcrumb', () => {
+  test('init có giới hạn breadcrumb, ignoreErrors, denyUrls và các hook lọc', async () => {
+    const f = fakeSentry();
+    await createSentryCrashDriver(CONFIG, async () => f.sentry).capture(new Error('x'));
+    const o = f.options();
+    expect(o.maxBreadcrumbs).toBe(MAX_BREADCRUMBS);
+    expect(o.ignoreErrors).toEqual(expect.arrayContaining(['Non-Error promise rejection captured']));
+    expect((o.denyUrls as RegExp[]).some((r) => r.test('chrome-extension://abc/x.js'))).toBe(true);
+    expect(typeof o.beforeSend).toBe('function');
+    expect(typeof o.beforeBreadcrumb).toBe('function');
+  });
+
+  test('keepBreadcrumb bỏ click, request mạng và console.log; giữ game, điều hướng, warn/error', () => {
+    expect(keepBreadcrumb({ category: 'ui.click' })).toBe(false);
+    expect(keepBreadcrumb({ category: 'fetch' })).toBe(false);
+    expect(keepBreadcrumb({ category: 'xhr' })).toBe(false);
+    expect(keepBreadcrumb({ category: 'console', level: 'log' })).toBe(false);
+    expect(keepBreadcrumb({ category: 'console', level: 'warning' })).toBe(true);
+    expect(keepBreadcrumb({ category: 'console', level: 'error' })).toBe(true);
+    expect(keepBreadcrumb({ category: 'game' })).toBe(true);
+    expect(keepBreadcrumb({ category: 'navigation' })).toBe(true);
+  });
+
+  test('isFromApp bỏ lỗi có stack hoàn toàn ngoài code game', () => {
+    const ev = (...files: string[]) => ({ exception: { values: [{ stacktrace: { frames: files.map((filename) => ({ filename })) } }] } });
+    const origin = 'https://localhost';
+    expect(isFromApp(ev('https://localhost/assets/index-abc.js'), origin)).toBe(true);
+    expect(isFromApp(ev('chrome-extension://x/a.js', 'https://localhost/assets/a.js'), origin)).toBe(true);
+    expect(isFromApp(ev('chrome-extension://x/a.js'), origin)).toBe(false);
+    expect(isFromApp({}, origin)).toBe(true);
+    expect(isFromApp(ev('https://other.com/a.js'), undefined)).toBe(true);
+  });
+
+  test('beforeSend trả null cho lỗi ngoài game, giữ lỗi của game', async () => {
+    const f = fakeSentry();
+    await createSentryCrashDriver({ ...CONFIG, appOrigin: 'https://localhost' }, async () => f.sentry).capture(new Error('x'));
+    const beforeSend = f.options().beforeSend as (e: unknown) => unknown;
+    const app = { exception: { values: [{ stacktrace: { frames: [{ filename: 'https://localhost/a.js' }] } }] } };
+    const foreign = { exception: { values: [{ stacktrace: { frames: [{ filename: 'https://ads.example/x.js' }] } }] } };
+    expect(beforeSend(app)).toBe(app);
+    expect(beforeSend(foreign)).toBeNull();
   });
 });

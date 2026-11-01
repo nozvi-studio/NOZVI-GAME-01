@@ -52,6 +52,11 @@ export class LevelTracker {
     });
   }
 
+  /** Ghi một mốc vào breadcrumb của crash reporter (vd. xem quảng cáo hint), không gửi analytics. */
+  note(message: string): void {
+    this.crash?.breadcrumb(message);
+  }
+
   moved(): void {
     if (this.run) this.run.moveCount += 1;
   }
@@ -68,6 +73,7 @@ export class LevelTracker {
     const run = this.run;
     if (!run) return;
     this.run = null;
+    this.crash?.breadcrumb(`level_complete ${run.levelId} stars=${result.stars}`);
     this.analytics.track({
       type: 'level_complete',
       levelId: run.levelId,
@@ -86,6 +92,7 @@ export class LevelTracker {
     const run = this.run;
     if (!run) return;
     this.run = null;
+    this.crash?.breadcrumb(`level_abandon ${run.levelId} ${reason}`);
     const timestamp = this.now();
     this.analytics.track({
       type: 'level_abandon',

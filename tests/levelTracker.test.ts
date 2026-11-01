@@ -166,4 +166,23 @@ describe('LevelTracker gắn ngữ cảnh cho crash reporter', () => {
     new LevelTracker(analytics, () => 0, crash).start('2-18', 'campaign');
     expect(calls).toEqual(['level=2-18', 'chapter=2', 'mode=campaign', 'crumb:level_start 2-18']);
   });
+
+  test('thắng, bỏ màn và note để lại breadcrumb', () => {
+    const crumbs: string[] = [];
+    const analytics: AnalyticsPort = { track() {}, flush() {} };
+    const crash = { capture() {}, breadcrumb: (m: string) => void crumbs.push(m), setContext() {} };
+    const t = new LevelTracker(analytics, () => 0, crash);
+    t.start('1-3', 'campaign');
+    t.note('hint_ad rewarded');
+    t.completed({ elapsedMs: 1000, stars: 2 });
+    t.start('1-4', 'campaign');
+    t.leave('back');
+    expect(crumbs).toEqual([
+      'level_start 1-3',
+      'hint_ad rewarded',
+      'level_complete 1-3 stars=2',
+      'level_start 1-4',
+      'level_abandon 1-4 back',
+    ]);
+  });
 });

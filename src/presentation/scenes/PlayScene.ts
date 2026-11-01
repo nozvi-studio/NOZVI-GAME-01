@@ -526,7 +526,9 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
     if (this.hintAdShowing) return;
     this.hintAdShowing = true;
     this.hintDialog.setLoading(true);
+    this.tracker?.note('hint_ad start');
     const outcome = await adsServices(this).showRewarded();
+    this.tracker?.note(`hint_ad ${outcome}`);
     this.hintAdShowing = false;
     if (!this.sys.isActive()) return;
     this.hintDialog.setLoading(false);

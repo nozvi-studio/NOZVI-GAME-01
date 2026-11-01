@@ -112,7 +112,7 @@ describe('createCrashReporter chống bão lỗi', () => {
     return { now: () => t, advance: (ms: number) => void (t += ms) };
   };
 
-  test('bỏ báo cáo trùng trong cùng cửa sổ, cho qua lại sau cửa sổ', () => {
+  test('mỗi lỗi chỉ báo một lần trong cả phiên, kể cả sau khi cửa sổ trôi qua', () => {
     const c = clock();
     const seen: unknown[] = [];
     const port = createCrashReporter({ capture: (e) => void seen.push(e) }, { now: c.now, windowMs: 1000 });
@@ -120,9 +120,25 @@ describe('createCrashReporter chống bão lỗi', () => {
     port.capture('same');
     port.capture('other');
     expect(seen).toEqual(['same', 'other']);
-    c.advance(1000);
+    c.advance(5000);
     port.capture('same');
-    expect(seen).toEqual(['same', 'other', 'same']);
+    port.capture('new');
+    expect(seen).toEqual(['same', 'other', 'new']);
+  });
+
+  test('giới hạn tổng số báo cáo mỗi phiên', () => {
+    const c = clock();
+    const seen: unknown[] = [];
+    const port = createCrashReporter(
+      { capture: (e) => void seen.push(e) },
+      { maxPerWindow: 2, maxPerSession: 5, windowMs: 1000, now: c.now }
+    );
+    for (let w = 0; w < 10; w++) {
+      port.capture(`a${w}`);
+      port.capture(`b${w}`);
+      c.advance(1000);
+    }
+    expect(seen).toHaveLength(5);
   });
 
   test('giới hạn số báo cáo mỗi cửa sổ', () => {

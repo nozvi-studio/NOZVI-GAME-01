@@ -75,6 +75,8 @@ export function initInBackground<T>(name: string, init: () => Promise<T>, timeou
 export type CrashGuardOptions = {
   /** Số báo cáo tối đa mỗi cửa sổ thời gian; vượt thì bỏ. */
   maxPerWindow?: number;
+  /** Số báo cáo tối đa trong cả phiên (từ lúc mở game); vượt thì bỏ. */
+  maxPerSession?: number;
   maxBreadcrumbsPerWindow?: number;
   windowMs?: number;
   now?: () => number;
@@ -86,18 +88,26 @@ function errorKey(error: unknown, context?: CrashContext): string {
 }
 
 /**
- * Bảo vệ game khỏi chính crash reporter: giới hạn tần suất, bỏ báo cáo trùng trong cùng cửa sổ, và chặn vòng
+ * Bảo vệ game khỏi chính crash reporter: giới hạn tần suất (mỗi cửa sổ và cả phiên), mỗi lỗi chỉ báo một lần
+ * trong phiên (lỗi lặp trong vòng update không gửi lại mỗi phút), và chặn vòng
  * lặp (SDK tự sinh lỗi -> handler toàn cục -> capture -> SDK lại sinh lỗi...).
  */
 export function createCrashReporter(
   driver: CrashDriver | null | undefined,
   options: CrashGuardOptions = {}
 ): CrashReporterPort {
-  const { maxPerWindow = 10, maxBreadcrumbsPerWindow = 100, windowMs = 60_000, now = Date.now } = options;
+  const {
+    maxPerWindow = 10,
+    maxPerSession = 30,
+    maxBreadcrumbsPerWindow = 100,
+    windowMs = 60_000,
+    now = Date.now,
+  } = options;
   let windowStart = now();
   let captured = 0;
   let crumbs = 0;
-  let seen = new Set<string>();
+  let total = 0;
+  const seen = new Set<string>();
   let busy = false;
 
   const roll = (): void => {
@@ -106,7 +116,6 @@ export function createCrashReporter(
       windowStart = t;
       captured = 0;
       crumbs = 0;
-      seen = new Set();
     }
   };
 
@@ -115,9 +124,10 @@ export function createCrashReporter(
       if (!driver || busy) return;
       roll();
       const key = errorKey(error, context);
-      if (captured >= maxPerWindow || seen.has(key)) return;
+      if (captured >= maxPerWindow || total >= maxPerSession || seen.has(key)) return;
       seen.add(key);
       captured += 1;
+      total += 1;
       busy = true;
       try {
         safely(() => driver.capture(error, context));

@@ -45,7 +45,9 @@ if (Capacitor.isNativePlatform() && !adMobConfig) {
   console.warn('[ads] VITE_ADMOB_USE_TEST_ADS=false nhưng thiếu VITE_ADMOB_BANNER_ID / VITE_ADMOB_REWARDED_ID: tắt quảng cáo');
 }
 // Không có DSN thì không có driver: mọi lệnh là no-op, game chạy y như chưa gắn SDK.
-const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
+// Dev server không gửi lỗi lên Sentry (tránh nhiễu và tốn quota), trừ khi đặt VITE_SENTRY_DEV=true để thử.
+const sentryDsn =
+  !import.meta.env.DEV || import.meta.env.VITE_SENTRY_DEV === 'true' ? import.meta.env.VITE_SENTRY_DSN : undefined;
 const analyticsSelection = selectAnalyticsDriver({
   gameKey: import.meta.env.VITE_GA_GAME_KEY,
   secretKey: import.meta.env.VITE_GA_SECRET_KEY,
@@ -60,6 +62,7 @@ const platform = createPlatformServices({
         dsn: sentryDsn,
         release: APP_VERSION,
         environment: import.meta.env.MODE,
+        appOrigin: window.location.origin,
         tags: { platform: Capacitor.getPlatform(), native: String(Capacitor.isNativePlatform()) },
       })
     : null,
@@ -196,6 +199,7 @@ export async function startGame(options: StartGameOptions = {}): Promise<void> {
 
   director.setHost(new PhaserSceneHost(game));
   director.setMusic(music);
+  director.setTrace((from, to, route) => platform.crash.breadcrumb(`scene ${from} > ${to} (${route})`));
 
   game.events.once('ready', () => {
     const webAudio = (game.sound as Phaser.Sound.WebAudioSoundManager).context as
