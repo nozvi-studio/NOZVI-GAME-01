@@ -1,4 +1,5 @@
 import type Phaser from 'phaser';
+import { vi } from 'vitest';
 
 export type FakeCall = {
   owner: number;
@@ -91,3 +92,65 @@ export const readyTextures = {
   }),
   ensure: (pieceId: string, turns: number) => readyTextures.keys(pieceId, turns),
 };
+
+export type Item = {
+  kind: string; x: number; y: number; width: number; height: number;
+  text?: string; style?: Record<string, unknown>; interactive: boolean; destroyed: boolean;
+  children: Item[]; handlers: Map<string, (...args: any[]) => void>;
+};
+
+/** Only the Phaser display/input boundary is faked; dialogs and persistence run unchanged. */
+export function fakeScene(registry: Record<string, unknown>) {
+  const items: Item[] = [];
+  const make = (kind: string, x = 0, y = 0, width = 0, height = 0, text?: string, style?: Record<string, unknown>) => {
+    const item: Item = { kind, x, y, width, height, text, style, interactive: false, destroyed: false, children: [], handlers: new Map() };
+    const proxy = new Proxy(item, {
+      get(target, key) {
+        if (key in target) return target[key as keyof Item];
+        return (...args: any[]) => {
+          if (key === 'on') target.handlers.set(args[0], args[1]);
+          if (key === 'add') target.children.push(...(Array.isArray(args[0]) ? args[0] : [args[0]]));
+          if (key === 'setText') target.text = args[0];
+          if (key === 'setInteractive') target.interactive = true;
+          if (key === 'disableInteractive') target.interactive = false;
+          if (key === 'destroy') target.destroyed = true;
+          if (key === 'setDisplaySize' || key === 'setSize') [target.width, target.height] = args;
+          return proxy;
+        };
+      },
+    });
+    items.push(proxy);
+    return proxy;
+  };
+  const restart = vi.fn();
+  const scene = {
+    scale: { width: 1080, height: 2460 },
+    add: {
+      container: (x: number, y: number) => make('container', x, y),
+      rectangle: (x: number, y: number, w: number, h: number) => make('rectangle', x, y, w, h),
+      zone: (x: number, y: number, w: number, h: number) => make('zone', x, y, w, h),
+      image: (x: number, y: number) => make('image', x, y, 24, 24),
+      graphics: () => make('graphics'),
+      text: (x: number, y: number, text: string, style: Record<string, unknown>) => make('text', x, y, text.length * 12, 30, text, style),
+    },
+    tweens: { add: (config: { onComplete?: () => void }) => config.onComplete?.() },
+    scene: { restart },
+    registry: { get: (key: string) => registry[key] },
+  } as unknown as Phaser.Scene;
+  const hit = (parent: Item, x: number, y: number): Item | undefined => {
+    if (parent.destroyed) return;
+    for (const child of [...parent.children].reverse()) {
+      const found = hit(child, x - child.x, y - child.y);
+      if (found) return found;
+    }
+    if (parent.interactive && Math.abs(x) <= parent.width / 2 && Math.abs(y) <= parent.height / 2) return parent;
+  };
+  const root = () => items.find(i => i.kind === 'container')!;
+  const pointer = { id: 1 };
+  const send = (event: string, x: number, y: number, id = 1) => {
+    const item = hit(root(), x, y);
+    item?.handlers.get(event)?.({ ...pointer, id }, 0, 0, { stopPropagation() {} });
+  };
+  const tap = (x: number, y: number) => { send('pointerdown', x, y); send('pointerup', x, y); };
+  return { scene, items, root, send, tap, restart };
+}

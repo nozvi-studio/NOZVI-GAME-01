@@ -6,10 +6,10 @@ import { designViewBounds } from '../../engine/core/viewport/designViewport.ts';
 import { t, getLocale, resetCosmicFacts } from '../i18n.ts';
 import type { SupportedLocale } from '../../localization/types.ts';
 import { setMotionScale } from '../transitions/motion.ts';
-import { adsServices } from '../adsServices.ts';
 import { audioServices } from '../audio/audioServices.ts';
 import { playUiCue } from '../audio/uiCues.ts';
 import { createDialogPanelInput } from './dialogInput.ts';
+import { PrivacyDialog } from './PrivacyDialog.ts';
 import { createDialogCard } from './dialogCard.ts';
 import { createLinkRow, createToggleRow } from './dialogRows.ts';
 import { LanguageSelectDialog } from './LanguageSelectDialog.ts';
@@ -36,14 +36,11 @@ export class SettingsDialog {
     const canVibrate =
       Capacitor.isNativePlatform() || (typeof navigator !== 'undefined' && 'vibrate' in navigator);
     const modalW = 620;
-    // EEA/UK: the consent message must stay reachable so players can change their choice.
-    const ads = adsServices(this.scene);
-    const showPrivacy = ads.privacyOptionsRequired();
     const hapticsOffset = 462;
     const lastToggleOffset = canVibrate ? hapticsOffset : 378;
     const privacyOffset = lastToggleOffset + 84;
-    const lastRowOffset = showPrivacy ? privacyOffset : lastToggleOffset;
-    const dangerOffset = lastRowOffset + 84;
+    // The Privacy row is always present so players can change their choices at any time.
+    const dangerOffset = privacyOffset + 84;
     // Room under the danger box for the version line.
     const versionRowH = 46;
     const modalH = dangerOffset + 72 / 2 + 34 + versionRowH;
@@ -100,11 +97,9 @@ export class SettingsDialog {
       );
     }
 
-    if (showPrivacy) {
-      createLinkRow(this.scene, this.container, -modalH / 2 + privacyOffset, t('setting_privacy_row'), () => {
-        void ads.showPrivacyOptions();
-      });
-    }
+    createLinkRow(this.scene, this.container, -modalH / 2 + privacyOffset, t('setting_privacy_row'), () => {
+      new PrivacyDialog(this.scene).open();
+    });
 
     // 6. Khu vực nguy hiểm: Xóa tiến trình chơi (tách biệt dưới đáy dạng badge)
     const dangerY = -modalH / 2 + dangerOffset;
