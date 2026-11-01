@@ -58,50 +58,86 @@ export type SentryLike = {
   ): unknown;
   addBreadcrumb(breadcrumb: { message: string; category: string }): unknown;
   setTag(key: string, value: string): unknown;
+  close(timeout?: number): unknown;
 };
+
+/** Đồng ý báo lỗi do game quyết định; engine chỉ cần biết bật hay tắt và khi nào đổi. */
+export type ConsentGate = { enabled(): boolean; onChange(listener: (enabled: boolean) => void): () => void };
+
+export const ALWAYS_ON: ConsentGate = { enabled: () => true, onChange: () => () => {} };
 
 /**
  * Sentry nạp bằng `import()` động và khởi tạo ở nền (`initInBackground`): gói Sentry nằm ở chunk riêng, không
  * nằm trên đường boot. Tải xong thì các lệnh đang chờ chạy tiếp theo đúng thứ tự; tải hỏng hay treo quá
- * hạn thì mọi lệnh thành no-op. Mọi lỗi nuốt ở `createCrashReporter`.
+ * hạn thì mọi lệnh thành no-op. Mọi lỗi nuốt ở `createCrashReporter`. Có `gate` thì chỉ khởi tạo khi được đồng ý;
+ * rút lại thì `close()` và mọi lệnh sau là no-op; bật lại thì khởi tạo lần nữa.
  */
 export function createSentryCrashDriver(
   config: SentryConfig,
-  load: () => Promise<SentryLike> = () => import('@sentry/browser') as unknown as Promise<SentryLike>
+  load: () => Promise<SentryLike> = () => import('@sentry/browser') as unknown as Promise<SentryLike>,
+  gate: ConsentGate = ALWAYS_ON
 ): CrashDriver {
-  const ready = initInBackground('sentry', async () => {
-    const sentry = await load();
-    sentry.init({
-      dsn: config.dsn,
-      release: config.release,
-      environment: config.environment,
-      sendDefaultPii: false,
-      maxBreadcrumbs: MAX_BREADCRUMBS,
-      ignoreErrors: IGNORED_ERRORS,
-      denyUrls: DENIED_URLS,
-      beforeBreadcrumb: (crumb: Crumb) => (keepBreadcrumb(crumb) ? crumb : null),
-      beforeSend: (event: SentryEventLike) => (isFromApp(event, config.appOrigin) ? event : null),
-      ...(config.tags ? { initialScope: { tags: config.tags } } : {}),
-      // Lỗi toàn cục đã đi qua `installGlobalErrorHandlers`; tắt cái của Sentry để không báo hai lần.
-      integrations: (defaults: { name: string }[]) => defaults.filter((i) => i.name !== 'GlobalHandlers'),
+  let ready: Promise<SentryLike | null> | null = null;
+
+  const start = (): Promise<SentryLike | null> => {
+    if (ready) return ready;
+    const mine: Promise<SentryLike | null> = initInBackground('sentry', async () => {
+      const sentry = await load();
+      // Rút lại (hoặc rút rồi bật lại, đã có lượt khởi tạo khác) trong lúc SDK đang tải: không init.
+      if (!gate.enabled() || ready !== mine) return null;
+      sentry.init({
+        dsn: config.dsn,
+        release: config.release,
+        environment: config.environment,
+        sendDefaultPii: false,
+        maxBreadcrumbs: MAX_BREADCRUMBS,
+        ignoreErrors: IGNORED_ERRORS,
+        denyUrls: DENIED_URLS,
+        beforeBreadcrumb: (crumb: Crumb) => (keepBreadcrumb(crumb) ? crumb : null),
+        beforeSend: (event: SentryEventLike) => (isFromApp(event, config.appOrigin) ? event : null),
+        ...(config.tags ? { initialScope: { tags: config.tags } } : {}),
+        // Lỗi toàn cục đã đi qua `installGlobalErrorHandlers`; tắt cái của Sentry để không báo hai lần.
+        integrations: (defaults: { name: string }[]) => defaults.filter((i) => i.name !== 'GlobalHandlers'),
+      });
+      return sentry;
     });
-    return sentry;
+    ready = mine;
+    return mine;
+  };
+
+  /** Chỉ chạy lệnh khi đang được đồng ý; đang tắt thì bỏ, không xếp hàng. */
+  const whenOn = (run: (sentry: SentryLike) => void): Promise<void> | undefined =>
+    gate.enabled() ? start().then((sentry) => void (sentry && gate.enabled() && run(sentry))) : undefined;
+
+  if (gate.enabled()) void start();
+  gate.onChange((on) => {
+    if (on) {
+      void start();
+      return;
+    }
+    const closing = ready;
+    ready = null;
+    void closing?.then((sentry) => {
+      try {
+        void sentry?.close();
+      } catch {
+        // đóng hỏng: lệnh sau vẫn là no-op vì gate đã tắt
+      }
+    });
   });
 
   return {
     capture: (error, context) =>
-      ready.then(
-        (sentry) =>
-          void sentry?.captureException(error, {
-            ...(context ? { extra: { ...context } } : {}),
-            // Lỗi toàn cục là lỗi không ai bắt: để Sentry gắn nhãn "Unhandled" đúng như khi dùng handler của nó.
-            ...(context?.source === 'window.onerror' || context?.source === 'unhandledrejection'
-              ? { mechanism: { handled: false, type: `game.${String(context.source)}` } }
-              : {}),
-          })
+      whenOn((sentry) =>
+        void sentry.captureException(error, {
+          ...(context ? { extra: { ...context } } : {}),
+          // Lỗi toàn cục là lỗi không ai bắt: để Sentry gắn nhãn "Unhandled" đúng như khi dùng handler của nó.
+          ...(context?.source === 'window.onerror' || context?.source === 'unhandledrejection'
+            ? { mechanism: { handled: false, type: `game.${String(context.source)}` } }
+            : {}),
+        })
       ),
-    breadcrumb: (message) =>
-      ready.then((sentry) => void sentry?.addBreadcrumb({ message, category: 'game' })),
-    setContext: (key, value) => ready.then((sentry) => void sentry?.setTag(key, String(value))),
+    breadcrumb: (message) => whenOn((sentry) => void sentry.addBreadcrumb({ message, category: 'game' })),
+    setContext: (key, value) => whenOn((sentry) => void sentry.setTag(key, String(value))),
   };
 }

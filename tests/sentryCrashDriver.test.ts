@@ -5,7 +5,7 @@ import {
   keepBreadcrumb,
   MAX_BREADCRUMBS,
 } from '../src/engine/core/platform/sentryCrashDriver.ts';
-import type { SentryConfig, SentryLike } from '../src/engine/core/platform/sentryCrashDriver.ts';
+import type { ConsentGate, SentryConfig, SentryLike } from '../src/engine/core/platform/sentryCrashDriver.ts';
 import { createCrashReporter } from '../src/engine/core/platform/platformServices.ts';
 import { installCrashTest } from '../src/devtools/crashTest.ts';
 
@@ -25,6 +25,7 @@ function fakeSentry() {
       ),
     addBreadcrumb: (b) => void log.push(`crumb:${b.message}:${b.category}`),
     setTag: (k, v) => void log.push(`tag:${k}=${v}`),
+    close: () => void log.push('close'),
   };
   return { sentry, log, options: () => initOptions };
 }
@@ -171,5 +172,72 @@ describe('lọc lỗi và breadcrumb', () => {
     const foreign = { exception: { values: [{ stacktrace: { frames: [{ filename: 'https://ads.example/x.js' }] } }] } };
     expect(beforeSend(app)).toBe(app);
     expect(beforeSend(foreign)).toBeNull();
+  });
+});
+
+function gate(initial: boolean) {
+  let on = initial;
+  const listeners = new Set<(v: boolean) => void>();
+  const g: ConsentGate = {
+    enabled: () => on,
+    onChange: (l) => {
+      listeners.add(l);
+      return () => void listeners.delete(l);
+    },
+  };
+  return {
+    g,
+    set(v: boolean) {
+      on = v;
+      for (const l of listeners) l(v);
+    },
+  };
+}
+
+describe('Sentry theo đồng ý báo lỗi', () => {
+  test('chưa đồng ý: không init, mọi lệnh là no-op', async () => {
+    const f = fakeSentry();
+    const c = gate(false);
+    const driver = createSentryCrashDriver(CONFIG, async () => f.sentry, c.g);
+    await driver.capture(new Error('a'));
+    await driver.breadcrumb?.('b');
+    await driver.setContext?.('k', 1);
+    expect(f.log).toEqual([]);
+  });
+
+  test('đồng ý thì init ngay (để có session) rồi gửi', async () => {
+    const f = fakeSentry();
+    const c = gate(false);
+    const driver = createSentryCrashDriver(CONFIG, async () => f.sentry, c.g);
+    c.set(true);
+    await vi.waitFor(() => expect(f.log).toContain('init'));
+    await driver.capture(new Error('x'));
+    expect(f.log.filter((l) => l.startsWith('capture'))).toHaveLength(1);
+  });
+
+  test('rút lại thì close và lệnh sau là no-op; bật lại thì init lần nữa', async () => {
+    const f = fakeSentry();
+    const c = gate(true);
+    const driver = createSentryCrashDriver(CONFIG, async () => f.sentry, c.g);
+    await driver.capture(new Error('one'));
+    c.set(false);
+    await vi.waitFor(() => expect(f.log).toContain('close'));
+    await driver.capture(new Error('two'));
+    expect(f.log.some((l) => l.startsWith('capture:two'))).toBe(false);
+    c.set(true);
+    await vi.waitFor(() => expect(f.log.filter((l) => l === 'init')).toHaveLength(2));
+  });
+
+  test('rút lại khi SDK còn đang tải thì không init', async () => {
+    const f = fakeSentry();
+    const c = gate(true);
+    let release!: (s: SentryLike) => void;
+    const driver = createSentryCrashDriver(CONFIG, () => new Promise<SentryLike>((r) => (release = r)), c.g);
+    c.set(false);
+    release(f.sentry);
+    await driver.capture(new Error('late'));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(f.log).not.toContain('init');
+    expect(f.log.some((l) => l.startsWith('capture'))).toBe(false);
   });
 });
