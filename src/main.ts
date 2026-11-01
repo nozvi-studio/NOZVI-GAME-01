@@ -14,7 +14,7 @@ import { setupAndroidLifecycle } from './engine/core/platform/lifecycle.ts';
 import { createPlatformServices, installGlobalErrorHandlers } from './engine/core/platform/platformServices.ts';
 import { createSentryCrashDriver } from './engine/core/platform/sentryCrashDriver.ts';
 import { selectAnalyticsDriver } from './infrastructure/analyticsSetup.ts';
-import { requestAnalyticsConsent } from './presentation/consent/consentGate.ts';
+import { requestPrivacyChoices } from './presentation/consent/consentGate.ts';
 import { installCrashTest } from './devtools/crashTest.ts';
 import { APP_VERSION } from './appVersion.ts';
 import { createPrivacyChoices } from './application/privacyChoices.ts';
@@ -165,7 +165,7 @@ export async function startGame(options: StartGameOptions = {}): Promise<void> {
   setPcBackground(1);
   await waitForFonts();
   // GameAnalytics bật thì người chơi phải đồng ý chia sẻ dữ liệu trước khi vào game.
-  if (analyticsSelection.requiresConsent) await requestAnalyticsConsent();
+  if (analyticsSelection.requiresConsent) await requestPrivacyChoices({ offered: analyticsSelection.requiresConsent ? ['analytics'] : [] });
   // Khởi tạo SDK ngay để phiên mở trước sự kiện đầu tiên (SDK bỏ sự kiện gửi trước khi phiên mở).
   analyticsSelection.warmUp?.();
 
