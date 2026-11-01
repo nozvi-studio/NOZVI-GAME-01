@@ -234,6 +234,31 @@ describe('gameAnalyticsDriver theo lựa chọn quyền riêng tư', () => {
     expect(calls.length).toBe(before);
   });
 
+  test('rút lại khi SDK đang nạp thì không configureUserId hay initialize', async () => {
+    const { sdk, calls } = fakeSdk();
+    const p = fakePrivacy();
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const s = storeSpy();
+    const driver = createGameAnalyticsDriver(
+      CONFIG,
+      async () => {
+        await gate;
+        return sdk;
+      },
+      p,
+      { ...noWait, store: s.store }
+    );
+    driver.warmUp();
+    p.change({ analytics: false }, 'user-2');
+    release();
+    await driver.track(START);
+    await new Promise((r) => setTimeout(r, 5));
+    expect(calls.map((c) => c[0])).not.toContain('initialize');
+    expect(calls.map((c) => c[0])).not.toContain('configureUserId');
+    expect(s.removed).toContain('GA::gk::ga_event');
+  });
+
   test('bật lần đầu trong Settings (SDK chưa chạy) thì khởi tạo với userId hiện tại', async () => {
     const { sdk, calls } = fakeSdk();
     const p = fakePrivacy({ analytics: false });

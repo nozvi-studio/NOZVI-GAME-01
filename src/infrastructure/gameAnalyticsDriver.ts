@@ -107,8 +107,11 @@ export function createGameAnalyticsDriver(
       'gameanalytics',
       async () => {
         const ga = await load();
+        // Rút lại trong lúc đang nạp SDK: không mở phiên, không dùng userId mới.
+        if (!active()) return null;
         ga.configureBuild(config.build);
         ga.configureUserId(privacy.userId());
+        if (!active()) return null;
         ga.initialize(config.gameKey, config.secretKey);
         return (await waitUntilReady(ga)) ? ga : null;
       },
@@ -123,13 +126,15 @@ export function createGameAnalyticsDriver(
     if (!state.analytics) {
       if (ready) {
         stopped = true;
-        void ready.then((ga) => {
-          try {
-            ga?.setEnabledEventSubmission(false);
-          } catch {
-            // SDK hỏng: đằng nào cũng không gửi nữa.
-          }
-        });
+        void ready
+          .then((ga) => {
+            try {
+              ga?.setEnabledEventSubmission(false);
+            } catch {
+              // SDK hỏng: đằng nào cũng không gửi nữa.
+            }
+          })
+          .catch(() => {});
       }
       clearGameAnalyticsStore(store, config.gameKey);
       return;
