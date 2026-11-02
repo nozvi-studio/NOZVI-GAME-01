@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events';
 import { afterEach, expect, it, vi } from 'vitest';
 import { LoadingScene } from '../src/presentation/scenes/LoadingScene.ts';
-import { createPrivacyChoices } from '../src/application/privacyChoices.ts';
+import { createPrivacyChoices, type PrivacyPurpose } from '../src/application/privacyChoices.ts';
 import { LEGAL_VERSION } from '../src/presentation/legal/legalVersion.ts';
 import { closeLegalAcceptance, isLegalAcceptanceOpen } from '../src/presentation/legal/legalAcceptance.ts';
 import { isLegalDocumentOpen } from '../src/presentation/legal/legalViewer.ts';
@@ -23,7 +23,7 @@ vi.mock('../src/presentation/transitions/director.ts', () => ({ director: { boot
 
 afterEach(() => { closeLegalAcceptance(); vi.unstubAllGlobals(); vi.clearAllMocks(); setMotionScale(1); });
 
-async function setup(version?: string, reduced = true) {
+async function setup(version?: string, reduced = true, offered: readonly PrivacyPurpose[] = []) {
   setMotionScale(reduced ? 0 : 1);
   const stored = new Map<string, string>();
   const choices = createPrivacyChoices({ getItem: k => stored.get(k) ?? null, setItem: (k, v) => { stored.set(k, v); } });
@@ -31,7 +31,7 @@ async function setup(version?: string, reduced = true) {
   const d = fakeDocument();
   vi.stubGlobal('document', d.doc);
   vi.stubGlobal('requestAnimationFrame', (fn: () => void) => fn());
-  const ui = fakeScene({ privacy: { choices, offered: [] } });
+  const ui = fakeScene({ privacy: { choices, offered } });
   const scene = new LoadingScene();
   const events = new EventEmitter();
   const gameEvents = new EventEmitter();
@@ -59,7 +59,7 @@ async function setup(version?: string, reduced = true) {
     entry()!.handlers.get('pointerdown')!({}, 0, 0, { stopPropagation });
     expect(stopPropagation).toHaveBeenCalledOnce();
   };
-  return { scene, choices, d, ui, events, input, camera, delayedCall, finish, entry, tap, stop };
+  return { scene, choices, stored, d, ui, events, input, camera, delayedCall, finish, entry, tap, stop };
 }
 
 it.each([undefined, '2025-01-01'])('waits for acceptance when stored version is %s and keeps animating', async version => {
@@ -85,11 +85,11 @@ it.each([undefined, '2025-01-01'])('waits for acceptance when stored version is 
 });
 
 it.each([true, false])('accepts and exits through the existing boot path (reduced motion: %s)', async reduced => {
-  const s = await setup(undefined, reduced);
+  const s = await setup(undefined, reduced, ['analytics', 'diagnostics', 'ads']);
   s.finish(); s.tap();
   s.d.byId('legal-accept').fire('click');
   expect(s.choices.acceptedLegalVersion()).toBe(LEGAL_VERSION);
-  expect(s.choices.get()).toEqual({ analytics: false, diagnostics: false, ads: false });
+  expect(s.choices.get()).toEqual({ analytics: true, diagnostics: true, ads: true });
   expect(s.stop).toHaveBeenCalledWith('LoadingScene');
   expect(director.boot).toHaveBeenCalledWith('MenuScene', {});
   expect(s.delayedCall).toHaveBeenCalledTimes(reduced ? 0 : 1);
@@ -106,7 +106,46 @@ it('keeps previously stored optional choices and user ID unchanged on acceptance
   s.finish(); s.tap(); s.d.byId('legal-accept').fire('click');
   expect(s.choices.get()).toEqual({ analytics: true, diagnostics: false, ads: true });
   expect(s.choices.userId()).toBe(id);
+  expect(changed).toHaveBeenCalledWith({ analytics: true, diagnostics: false, ads: true });
+});
+
+it.each([
+  { offered: [], expected: { analytics: false, diagnostics: false, ads: false } },
+  { offered: ['analytics'], expected: { analytics: true, diagnostics: false, ads: false } },
+  { offered: ['diagnostics'], expected: { analytics: false, diagnostics: true, ads: false } },
+  { offered: ['ads'], expected: { analytics: false, diagnostics: false, ads: true } },
+  { offered: ['analytics', 'diagnostics', 'ads'], expected: { analytics: true, diagnostics: true, ads: true } },
+] as const)('accept enables exactly the offered purposes: $offered', async ({ offered, expected }) => {
+  const s = await setup('2026-11-03', true, offered);
+  const changed = vi.fn(() => {
+    expect(s.choices.acceptedLegalVersion()).toBe('2026-11-03');
+    expect(director.boot).not.toHaveBeenCalled();
+  });
+  s.choices.onChange(changed);
+  s.finish(); s.tap();
+  expect(s.d.byId('legal-notice').textContent.includes('Tapping Agree also turns on')).toBe(offered.length > 0);
+  s.d.byId('legal-accept').fire('click');
+  expect(s.choices.get()).toEqual(expected);
+  expect(changed).toHaveBeenCalledOnce();
+  const saved = createPrivacyChoices({ getItem: k => s.stored.get(k) ?? null, setItem: (k, v) => { s.stored.set(k, v); } });
+  expect(saved.get()).toEqual(expected);
+  expect(saved.acceptedLegalVersion()).toBe(LEGAL_VERSION);
+  expect(director.boot).toHaveBeenCalledOnce();
+});
+
+it.each(['close', 'Escape', 'back'])('%s preserves all stored choices and legal version', async action => {
+  const s = await setup('2025-01-01', true, ['analytics', 'diagnostics', 'ads']);
+  s.choices.set({ analytics: true, diagnostics: false, ads: true });
+  const before = [...s.stored];
+  const changed = vi.fn(); s.choices.onChange(changed);
+  s.finish(); s.tap();
+  if (action === 'Escape') s.d.fake.key('Escape');
+  else if (action === 'back') dismissTopLegalOverlay();
+  else s.d.byId('legal-acceptance-close').fire('click');
+  expect(isLegalAcceptanceOpen()).toBe(false);
+  expect([...s.stored]).toEqual(before);
   expect(changed).not.toHaveBeenCalled();
+  expect(director.boot).not.toHaveBeenCalled();
 });
 
 it('automatically leaves when the current legal version was accepted', async () => {

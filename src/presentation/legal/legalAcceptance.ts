@@ -1,4 +1,5 @@
 import { t } from '../i18n.ts';
+import type { PrivacyPurpose } from '../../application/privacyChoices.ts';
 import { closeLegalDocument, openLegalDocument, type LegalDocumentKind } from './legalViewer.ts';
 import { mountLegalOverlay } from './legalOverlay.ts';
 
@@ -14,7 +15,7 @@ export function closeLegalAcceptance(): void {
   close();
 }
 
-export function openLegalAcceptance(onAccept: () => void): void {
+export function openLegalAcceptance(onAccept: () => void, offered: readonly PrivacyPurpose[] = []): void {
   if (unmount) return;
   const el = <K extends keyof HTMLElementTagNameMap>(tag: K, id?: string): HTMLElementTagNameMap[K] => {
     const node = document.createElement(tag);
@@ -54,6 +55,11 @@ export function openLegalAcceptance(onAccept: () => void): void {
       text.textContent = part;
       notice.append(text);
     }
+  }
+  if (offered.length > 0) {
+    const optional = el('span');
+    optional.textContent = ` ${t('legal_notice_optional')}`;
+    notice.append(optional);
   }
   const hint = el('p', 'legal-settings-hint');
   hint.textContent = t('legal_settings_hint');

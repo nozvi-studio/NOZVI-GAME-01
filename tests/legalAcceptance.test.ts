@@ -5,6 +5,7 @@ import { closeLegalDocument, isLegalDocumentOpen } from '../src/presentation/leg
 import { dismissTopLegalOverlay } from '../src/presentation/legal/legalOverlay.ts';
 import { fakeDocument } from './helpers/fakeDocument.ts';
 import { setLocale, t } from '../src/presentation/i18n.ts';
+import type { PrivacyPurpose } from '../src/application/privacyChoices.ts';
 
 let d: ReturnType<typeof fakeDocument>;
 beforeEach(() => { d = fakeDocument(); vi.stubGlobal('document', d.doc); setLocale('en-US'); });
@@ -78,9 +79,17 @@ it.each(['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touc
 );
 
 it.each(['en-US', 'vi', 'es', 'pt-BR', 'fr', 'de', 'ja', 'ko', 'zh-CN', 'id'] as const)('replaces both notice placeholders in %s', locale => {
-  setLocale(locale); openLegalAcceptance(vi.fn());
+  setLocale(locale); openLegalAcceptance(vi.fn(), ['analytics', 'diagnostics', 'ads']);
   expect(d.byId('legal-notice').textContent).not.toMatch(/\{terms\}|\{privacy\}/);
+  expect(d.byId('legal-notice').textContent).toContain(t('legal_notice_optional'));
   expect(d.tags('a')).toHaveLength(2);
+});
+
+it.each<{ offered: readonly PrivacyPurpose[] }>([{ offered: [] }, { offered: ['analytics'] }, { offered: ['diagnostics'] }, { offered: ['ads'] }])('shows the optional sentence only for offered purposes: $offered', ({ offered }) => {
+  openLegalAcceptance(vi.fn(), offered);
+  const base = 'By continuing, you agree to our Terms of Service and confirm you have read our Privacy Policy.';
+  const optional = ' Tapping Agree also turns on gameplay statistics, error reports and personalised ads.';
+  expect(d.byId('legal-notice').textContent).toBe(base + (offered.length ? optional : ''));
 });
 
 it('wires Android Back before transitions and provides privacy services before Phaser boot', () => {

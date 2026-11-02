@@ -4,6 +4,10 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Changed (Agree enables offered privacy purposes)
+- Agree now enables every offered optional privacy purpose before accepting legal version `2026-11-04`; closing changes nothing, and each purpose can still be turned off in Settings, under Privacy.
+- Updated the notice in all ten locales, showing the optional-purpose sentence only when at least one purpose is offered.
+
 ### Changed (loading terms acceptance and legal viewer)
 - The first loading screen now waits for agreement to legal version `2026-11-03`; optional statistics, error reports and personalised ads retain their saved choices and default to off.
 - Added a plain, offline Privacy Policy and Terms viewer (Vietnamese or English), accessible from the acceptance popup and Settings, with focus handling and Escape/Android Back dismissal.

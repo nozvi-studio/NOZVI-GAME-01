@@ -185,13 +185,14 @@ export class LoadingScene extends Phaser.Scene {
     enter.on('pointerdown', (_pointer: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
       event.stopPropagation();
       if (this.leaving) return;
+      const { choices, offered } = privacyServices(this);
       openLegalAcceptance(() => {
-        const choices = privacyServices(this).choices;
         if (!choices || this.leaving) return;
+        choices.set(Object.fromEntries(offered.map(purpose => [purpose, true])));
         choices.acceptLegal(LEGAL_VERSION);
         enter.disableInteractive();
         this.leave();
-      });
+      }, offered);
     });
   }
 

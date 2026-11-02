@@ -16,6 +16,7 @@ export type CommonTranslationKey =
   | 'loading_tap_hint'
   | 'loading_tap_to_enter'
   | 'legal_notice'
+  | 'legal_notice_optional'
   | 'legal_settings_hint'
   | 'legal_accept'
   | 'legal_close'
