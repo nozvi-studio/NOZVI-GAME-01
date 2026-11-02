@@ -4,6 +4,9 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Changed (privacy consent screen)
+- The first-launch privacy screen now has exactly two equal buttons, "Reject and play" and "Accept and play" (same size and style, the game's yellow candy button), on a card styled like the in-game dialogs. The "Options" panel and its switches are gone from this screen; choosing each service separately is done in Settings, under Privacy. Bullets list only the services in this build (web: error reports only). New keys `privacy_reject_play`, `privacy_accept_play`, `privacy_bullet_play/analytics/diagnostics`, `privacy_settings_hint` in all ten locales; `privacy_intro`, `privacy_options`, `privacy_save`, `privacy_accept_all`, `privacy_reject_all` removed. The word "anonymous" is no longer used (the statistics ID makes the data pseudonymous).
+
 ### Fixed (privacy consent)
 
 - Sentry: if the SDK finished loading after the 8 s start timeout, withdrawing consent did not close it and it kept sending. The driver now tracks the instance that actually ran `init` and closes it on withdrawal.

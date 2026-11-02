@@ -1,34 +1,43 @@
 import { describe, expect, test, vi } from 'vitest';
+import type { PrivacyPurpose } from '../src/application/privacyChoices.ts';
 import { requestPrivacyChoices } from '../src/presentation/consent/consentGate.ts';
 
 type El = {
   tag: string;
   attrs: Record<string, string>;
   textContent: string;
-  type?: string;
-  checked?: boolean;
-  hidden?: boolean;
-  href?: string;
+  type: string;
+  href: string;
   children: El[];
-  listeners: Record<string, () => void>;
-  style: { cssText: string; display?: string };
+  listeners: Record<string, (event?: unknown) => void>;
+  style: { cssText: string };
   removed: boolean;
+  focus?: () => void;
+  setAttribute(k: string, v: string): void;
+  append(...children: El[]): void;
+  appendChild(child: El): void;
+  addEventListener(event: string, listener: (event?: unknown) => void): void;
+  remove(): void;
 };
 
-function fakeDoc() {
+function fakeDoc(withFocus = true) {
   const all: El[] = [];
-  const make = (tag: string): El => {
-    const el: El = { tag, attrs: {}, textContent: '', children: [], listeners: {}, style: { cssText: '' }, removed: false };
-    Object.assign(el, {
-      setAttribute: (k: string, v: string) => void (el.attrs[k] = v),
-      append: (...c: El[]) => void el.children.push(...c),
-      appendChild: (c: El) => void el.children.push(c),
-      addEventListener: (ev: string, fn: () => void) => void (el.listeners[ev] = fn),
-      remove: () => void (el.removed = true),
-    });
+  function make(tag: string): El {
+    const el: El = {
+      tag, attrs: {} as Record<string, string>, textContent: '', type: '', href: '',
+      children: [],
+      listeners: {} as Record<string, (event?: unknown) => void>,
+      style: { cssText: '' }, removed: false,
+      focus: withFocus ? vi.fn() : undefined,
+      setAttribute(k: string, v: string) { this.attrs[k] = v; },
+      append(...c: El[]) { this.children.push(...c); },
+      appendChild(c: El) { this.children.push(c); },
+      addEventListener(ev: string, fn: (event?: unknown) => void) { this.listeners[ev] = fn; },
+      remove() { this.removed = true; },
+    };
     all.push(el);
     return el;
-  };
+  }
   const body = make('body');
   const doc = { createElement: make, body } as unknown as Document;
   const byId = (id: string) => all.find((e) => e.attrs['data-id'] === id)!;
@@ -36,61 +45,79 @@ function fakeDoc() {
 }
 
 const T = (key: string) => key;
+const offerings: PrivacyPurpose[][] = [[], ['analytics'], ['diagnostics'], ['analytics', 'diagnostics']];
 
 describe('requestPrivacyChoices', () => {
-  test('từ chối tất cả: tắt hết và gỡ lớp phủ', async () => {
+  for (const offered of offerings) {
+    test(`Reject disables all purposes (${offered.join(', ')})`, async () => {
+      const d = fakeDoc();
+      const done = requestPrivacyChoices({ offered, doc: d.doc, translate: T });
+      d.byId('reject').listeners.click();
+      await expect(done).resolves.toEqual({ analytics: false, diagnostics: false });
+      expect(d.overlay().removed).toBe(true);
+    });
+
+    test(`Accept enables only offered purposes (${offered.join(', ')})`, async () => {
+      const d = fakeDoc();
+      const done = requestPrivacyChoices({ offered, doc: d.doc, translate: T });
+      d.byId('accept').listeners.click();
+      await expect(done).resolves.toEqual({
+        analytics: offered.includes('analytics'), diagnostics: offered.includes('diagnostics'),
+      });
+      expect(d.overlay().removed).toBe(true);
+    });
+
+    test(`bullets describe only offered services (${offered.join(', ')})`, () => {
+      const d = fakeDoc();
+      void requestPrivacyChoices({ offered, doc: d.doc, translate: T });
+      expect(d.all.filter((e) => e.tag === 'li').map((e) => e.textContent)).toEqual([
+        'privacy_bullet_play',
+        ...(offered.includes('analytics') ? ['privacy_bullet_analytics'] : []),
+        ...(offered.includes('diagnostics') ? ['privacy_bullet_diagnostics'] : []),
+      ]);
+      expect(d.byId('settings-hint').textContent).toBe('privacy_settings_hint');
+    });
+  }
+
+  test('offers exactly two identically styled buttons, Reject first and initially focused', () => {
     const d = fakeDoc();
-    const done = requestPrivacyChoices({ offered: ['analytics', 'diagnostics'], doc: d.doc, translate: T });
-    d.byId('reject').listeners.click();
-    await expect(done).resolves.toEqual({ analytics: false, diagnostics: false });
-    expect(d.overlay().removed).toBe(true);
+    void requestPrivacyChoices({ offered: ['analytics', 'diagnostics'], doc: d.doc, translate: T });
+    const buttons = d.all.filter((e) => e.tag === 'button');
+    expect(buttons).toEqual([d.byId('reject'), d.byId('accept')]);
+    expect(buttons.map((e) => e.type)).toEqual(['button', 'button']);
+    expect(buttons.map((e) => e.textContent)).toEqual(['privacy_reject_play', 'privacy_accept_play']);
+    expect(buttons[0].style.cssText).toBe(buttons[1].style.cssText);
+    expect(d.byId('actions').children).toEqual(buttons);
+    expect(d.all.some((e) => ['options', 'options-panel', 'save'].includes(e.attrs['data-id']) ||
+      e.attrs['data-id']?.startsWith('switch-'))).toBe(false);
+    expect(d.overlay().attrs).toMatchObject({ role: 'dialog', 'aria-modal': 'true',
+      'aria-labelledby': d.byId('privacy-title').attrs.id });
+    expect(d.byId('privacy-title').textContent).toBe('privacy_title');
+    expect(d.byId('reject').focus).toHaveBeenCalledOnce();
   });
 
-  test('đồng ý tất cả trên web chỉ bật báo lỗi', async () => {
-    const d = fakeDoc();
-    const done = requestPrivacyChoices({ offered: ['diagnostics'], doc: d.doc, translate: T });
-    d.byId('accept').listeners.click();
-    await expect(done).resolves.toEqual({ analytics: false, diagnostics: true });
+  test('supports documents without focus', () => {
+    const d = fakeDoc(false);
+    expect(() => requestPrivacyChoices({ offered: [], doc: d.doc, translate: T })).not.toThrow();
   });
 
-  test('chỉ hiện công tắc cho mục được đưa ra; Tùy chọn mở phần công tắc; Lưu theo công tắc', async () => {
-    const d = fakeDoc();
-    const done = requestPrivacyChoices({ offered: ['analytics'], doc: d.doc, translate: T });
-    expect(d.all.some((e) => e.attrs['data-id'] === 'switch-diagnostics')).toBe(false);
-    const panel = d.byId('options-panel');
-    expect(panel.style.display).toBe('none');
-    expect(d.byId('options').attrs['aria-expanded']).toBe('false');
-    expect(d.overlay().attrs['aria-labelledby']).toBe(d.byId('privacy-title').attrs.id);
-    d.byId('options').listeners.click();
-    expect(panel.style.display).toBe('flex');
-    expect(d.byId('options').attrs['aria-expanded']).toBe('true');
-    d.byId('switch-analytics').checked = true;
-    d.byId('save').listeners.click();
-    await expect(done).resolves.toEqual({ analytics: true, diagnostics: false });
-  });
-
-  test('hai nút nhanh có cùng kiểu chữ và kích thước', () => {
-    const d = fakeDoc();
-    void requestPrivacyChoices({ offered: ['diagnostics'], doc: d.doc, translate: T });
-    expect(d.byId('accept').style.cssText).toBe(d.byId('reject').style.cssText);
-  });
-
-  test('có URL thì hiện link chính sách, không có thì ẩn', () => {
+  test('shows the policy link only when a URL is provided', () => {
     const withUrl = fakeDoc();
     void requestPrivacyChoices({ offered: ['diagnostics'], policyUrl: 'https://x.test/p', doc: withUrl.doc, translate: T });
     expect(withUrl.byId('policy').href).toBe('https://x.test/p');
     const without = fakeDoc();
     void requestPrivacyChoices({ offered: ['diagnostics'], doc: without.doc, translate: T });
-    expect(without.all.some((e) => e.attrs['data-id'] === 'policy')).toBe(false);
+    expect(without.byId('policy')).toBeUndefined();
   });
 
-  test('bấm liên kết chính sách: chặn điều hướng của WebView và mở bằng openExternal', () => {
+  test('prevents policy navigation and calls the injected opener', () => {
     const d = fakeDoc();
     const open = vi.fn();
     void requestPrivacyChoices({ offered: ['diagnostics'], policyUrl: 'https://x.test/p', doc: d.doc, translate: T, open });
     const preventDefault = vi.fn();
-    (d.byId('policy').listeners.click as unknown as (e: unknown) => void)({ preventDefault });
+    d.byId('policy').listeners.click({ preventDefault });
     expect(preventDefault).toHaveBeenCalledOnce();
+    expect(open).toHaveBeenCalledOnce();
     expect(open).toHaveBeenCalledWith('https://x.test/p');
   });
 });
