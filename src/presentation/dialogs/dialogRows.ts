@@ -45,9 +45,11 @@ export function createToggleRow(
   y: number,
   label: string,
   initialValue: boolean,
-  onChange: (val: boolean) => void
+  onChange: (val: boolean) => void,
+  confirm?: (next: boolean) => Promise<boolean>
 ): void {
   let isChecked = initialValue;
+  let pending = false;
 
   const rowLabel = scene.add
     .text(-270, y, label, {
@@ -107,11 +109,19 @@ export function createToggleRow(
 
   const hitZone = scene.add.zone(0, y, 560, 84).setInteractive({ useHandCursor: true });
 
-  hitZone.on('pointerdown', () => {
-    isChecked = !isChecked;
-    drawSwitch();
-    onChange(isChecked);
-    playUiCue(scene, 'tap');
+  hitZone.on('pointerdown', async () => {
+    if (pending) return;
+    const next = !isChecked;
+    pending = true;
+    try {
+      if (confirm && !(await confirm(next))) return;
+      isChecked = next;
+      drawSwitch();
+      onChange(next);
+      playUiCue(scene, 'tap');
+    } finally {
+      pending = false;
+    }
   });
 
   const divider = scene.add.graphics();

@@ -94,7 +94,7 @@ export const readyTextures = {
 };
 
 export type Item = {
-  kind: string; x: number; y: number; width: number; height: number;
+  kind: string; x: number; y: number; width: number; height: number; depth: number;
   text?: string; style?: Record<string, unknown>; interactive: boolean; destroyed: boolean;
   children: Item[]; handlers: Map<string, (...args: any[]) => void>;
 };
@@ -103,7 +103,7 @@ export type Item = {
 export function fakeScene(registry: Record<string, unknown>) {
   const items: Item[] = [];
   const make = (kind: string, x = 0, y = 0, width = 0, height = 0, text?: string, style?: Record<string, unknown>) => {
-    const item: Item = { kind, x, y, width, height, text, style, interactive: false, destroyed: false, children: [], handlers: new Map() };
+    const item: Item = { kind, x, y, width, height, depth: 0, text, style, interactive: false, destroyed: false, children: [], handlers: new Map() };
     const proxy = new Proxy(item, {
       get(target, key) {
         if (key in target) return target[key as keyof Item];
@@ -111,6 +111,7 @@ export function fakeScene(registry: Record<string, unknown>) {
           if (key === 'on') target.handlers.set(args[0], args[1]);
           if (key === 'add') target.children.push(...(Array.isArray(args[0]) ? args[0] : [args[0]]));
           if (key === 'setText') target.text = args[0];
+          if (key === 'setDepth') target.depth = args[0];
           if (key === 'setInteractive') target.interactive = true;
           if (key === 'disableInteractive') target.interactive = false;
           if (key === 'destroy') target.destroyed = true;
@@ -148,7 +149,9 @@ export function fakeScene(registry: Record<string, unknown>) {
   const root = () => items.find(i => i.kind === 'container')!;
   const pointer = { id: 1 };
   const send = (event: string, x: number, y: number, id = 1) => {
-    const item = hit(root(), x, y);
+    const children = new Set(items.flatMap((i) => i.children));
+    const roots = items.filter((i) => i.kind === 'container' && !children.has(i)).sort((a, b) => b.depth - a.depth);
+    const item = roots.map((i) => hit(i, x, y)).find(Boolean);
     item?.handlers.get(event)?.({ ...pointer, id }, 0, 0, { stopPropagation() {} });
   };
   const tap = (x: number, y: number) => { send('pointerdown', x, y); send('pointerup', x, y); };

@@ -52,13 +52,74 @@ describe('PrivacyDialog', () => {
     expect(c.set).toHaveBeenLastCalledWith({ ads: false });
   });
 
-  it('bấm công tắc ghi vào PrivacyChoices', () => {
+  it('bấm công tắc ghi vào PrivacyChoices', async () => {
     const c = choices();
     const ui = fakeScene({ ads: NO_ADS, privacy: { choices: c, offered: ['analytics', 'diagnostics'] } });
     new PrivacyDialog(ui.scene).open();
     const row = ui.items.find((i) => i.text === t('privacy_analytics'))!;
     ui.tap(200, row.y);
+    await Promise.resolve();
     expect(c.set).toHaveBeenCalledWith({ analytics: true });
+    expect(ui.items.some((i) => i.text === t('privacy_withdraw_title'))).toBe(false);
+  });
+
+  it('shows and copies the full current ID before confirming withdrawal, then refreshes the ID row', async () => {
+    const oldId = '01234567-89ab-cdef-0123-456789abcdef';
+    const newId = 'fedcba98-7654-3210-fedc-ba9876543210';
+    let id = oldId;
+    const c = { ...choices({ analytics: true, diagnostics: false, ads: false }), userId: () => id };
+    c.set.mockImplementation(() => { id = newId; });
+    const writeText = vi.fn(() => Promise.resolve());
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    const ui = fakeScene({ ads: NO_ADS, privacy: { choices: c, offered: ['analytics'] } });
+    new PrivacyDialog(ui.scene).open();
+    const idRow = ui.items.find((i) => i.text?.includes(shortId(oldId)))!;
+    ui.tap(200, ui.items.find((i) => i.text === t('privacy_analytics'))!.y);
+    expect(c.set).not.toHaveBeenCalled();
+    const card = ui.items.find((i) => i.kind === 'container' && i.children.some((child) => child.text === t('privacy_withdraw_title')))!;
+    expect(card).toBeDefined();
+    expect(card.children.some((i) => i.text === oldId)).toBe(true);
+    ui.tap(0, card.children.find((i) => i.text === t('privacy_copy'))!.y);
+    await Promise.resolve();
+    expect(writeText).toHaveBeenCalledWith(oldId);
+    expect(card.children.some((i) => i.text?.includes(t('privacy_copied')))).toBe(true);
+    ui.tap(0, card.children.find((i) => i.text === t('privacy_withdraw_confirm'))!.y);
+    await Promise.resolve();
+    expect(c.set).toHaveBeenCalledOnce();
+    expect(c.set).toHaveBeenCalledWith({ analytics: false });
+    expect(card.destroyed).toBe(true);
+    expect(idRow.text).toContain(shortId(newId));
+    expect(idRow.text).not.toContain(shortId(oldId));
+    ui.tap(0, idRow.y);
+    await Promise.resolve();
+    expect(writeText).toHaveBeenLastCalledWith(newId);
+  });
+
+  it.each(['cancel', 'close', 'backdrop'])('keeps statistics enabled after %s and allows retry', async (action) => {
+    const c = choices({ analytics: true, diagnostics: false, ads: false });
+    const ui = fakeScene({ ads: NO_ADS, privacy: { choices: c, offered: ['analytics'] } });
+    new PrivacyDialog(ui.scene).open();
+    const analytics = ui.items.find((i) => i.text === t('privacy_analytics'))!;
+    ui.tap(200, analytics.y);
+    const card = ui.items.filter((i) => i.kind === 'container').at(-1)!;
+    if (action === 'cancel') ui.tap(0, card.children.find((i) => i.text === t('privacy_withdraw_cancel'))!.y);
+    else if (action === 'close') {
+      const close = card.children.find((i) => i.kind === 'zone' && i.width === 64)!;
+      ui.tap(close.x, close.y);
+    } else {
+      const backdrop = card.children.find((i) => i.kind === 'rectangle')!;
+      const panel = card.children.find((i) => i.kind === 'zone' && i.x === 0 && i.y === 0)!;
+      const x = (panel.width + backdrop.width) / 4;
+      expect(x).toBeGreaterThan(panel.width / 2);
+      expect(x).toBeLessThan(backdrop.width / 2);
+      ui.tap(x, 0);
+    }
+    await Promise.resolve();
+    expect(c.set).not.toHaveBeenCalled();
+    expect(c.get().analytics).toBe(true);
+    expect(card.destroyed).toBe(true);
+    ui.tap(200, analytics.y);
+    expect(ui.items.filter((i) => i.text === t('privacy_withdraw_title'))).toHaveLength(2);
   });
 
   it('dòng quảng cáo chỉ hiện khi UMP yêu cầu và mở UMP', () => {

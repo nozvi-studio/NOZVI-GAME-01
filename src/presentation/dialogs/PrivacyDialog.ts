@@ -6,6 +6,8 @@ import { openExternal } from '../openExternal.ts';
 import { playUiCue } from '../audio/uiCues.ts';
 import { createDialogCard } from './dialogCard.ts';
 import { createLinkRow, createToggleRow } from './dialogRows.ts';
+import { copyPrivacyId } from './copyPrivacyId.ts';
+import { confirmWithdrawStats } from './WithdrawStatsDialog.ts';
 
 const ROW_STEP = 84;
 const FIRST_ROW = 126;
@@ -28,12 +30,18 @@ export class PrivacyDialog {
     const privacy = privacyServices(scene);
     const ads = adsServices(scene);
     const choices = privacy.choices;
+    let refreshIdRow = () => {};
     const rows: Array<(container: Phaser.GameObjects.Container, y: number) => void> = [];
 
     if (choices && privacy.offered.includes('analytics')) {
       rows.push((c, y) =>
-        createToggleRow(scene, c, y, t('privacy_analytics'), choices.get().analytics, (on) =>
-          choices.set({ analytics: on })
+        createToggleRow(
+          scene, c, y, t('privacy_analytics'), choices.get().analytics,
+          (on) => {
+            choices.set({ analytics: on });
+            refreshIdRow();
+          },
+          (next) => next ? Promise.resolve(true) : confirmWithdrawStats(scene, choices.userId())
         )
       );
     }
@@ -56,11 +64,14 @@ export class PrivacyDialog {
     }
     if (choices && privacy.offered.includes('analytics')) {
       rows.push((c, y) => {
-        const label = `${t('privacy_your_id')}: ${shortId(choices.userId())}  ·  ${t('privacy_copy')}`;
-        const row = createLinkRow(scene, c, y, label, () => {
-          const write = navigator.clipboard?.writeText(choices.userId());
-          void write?.then(() => row.setText(`${label}  ·  ${t('privacy_copied')}`)).catch(() => {});
+        const label = () => `${t('privacy_your_id')}: ${shortId(choices.userId())}  ·  ${t('privacy_copy')}`;
+        const row = createLinkRow(scene, c, y, label(), () => {
+          const copiedId = choices.userId();
+          void copyPrivacyId(copiedId, () => {
+            if (this.container && choices.userId() === copiedId) row.setText(`${label()}  ·  ${t('privacy_copied')}`);
+          });
         });
+        refreshIdRow = () => { row.setText(label()); };
       });
     }
     if (privacy.policyUrl) {

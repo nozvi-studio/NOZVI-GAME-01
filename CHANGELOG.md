@@ -4,6 +4,10 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Added (keep ID before withdrawing statistics)
+- Turning off gameplay statistics now asks for confirmation and shows the full current ID with Copy, so players can keep it for a later deletion request.
+- Confirming creates a new ID and refreshes the Privacy ID row; cancelling keeps statistics and the current ID unchanged. Available in all ten locales.
+
 ### Changed (consent buttons)
 - Shortened the first-launch buttons to Accept / Reject in all ten locales; Reject uses the dark candy palette on the left, while Accept keeps yellow on the right, with shared sizing and typography.
 
