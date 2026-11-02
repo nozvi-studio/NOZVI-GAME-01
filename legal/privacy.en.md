@@ -12,7 +12,7 @@ Thank you for playing Nozvi. This policy explains what data we collect when you 
 **At a glance**
 
 - The Game has no accounts and never asks for your name, email or phone number.
-- Gameplay statistics and error reports are switched on only if you agree. You can play fully if you decline.
+- When you choose Agree at the start, the Game turns on gameplay statistics, error reports and personalised ads. You can turn each off at any time and still play fully.
 - The Android version shows ads provided by Google AdMob. Ads are personalised only if you agree; if you decline you still see ads, but they are not personalised.
 - You can change your choices at any time in **Settings, under Privacy**.
 - We do not sell your data.
@@ -89,9 +89,9 @@ The Game is currently published in Vietnam and Singapore. We process data under 
 
 ## 4. Your privacy choices
 
-You control whether non-essential data is shared. Declining never affects your ability to play.
+You control whether non-essential data is shared. Turning these items off never affects your ability to play.
 
-**Consent before processing.** Before any processing that relies on your consent (gameplay statistics, error reports, personalised ads), the Game asks for your choice, and declining is as easy as agreeing. Until you agree, these services are not initialised and receive no data. Only the services present in the version you use are listed.
+**Consent before processing.** When you first start playing, the Game states clearly that choosing Agree also turns on gameplay statistics, error reports and personalised ads, and that you can turn each off in Settings. Until you choose Agree, these services are not initialised and receive no data. Only the services present in the version you use are listed.
 
 **Changing your choices.** You can review and change each choice at any time in the Game's privacy settings. Changes take effect immediately:
 
@@ -103,8 +103,8 @@ Withdrawing consent does not affect the lawfulness of processing before the with
 
 **Advertising.** Some versions of the Game show ads provided by Google AdMob, including rewarded ads that you watch only when you choose to.
 
-- **If you agree,** ads may be personalised based on your device's advertising ID and your past activity.
-- **If you do not agree,** you still see ads, but they are not personalised; they are chosen by context and approximate location.
+- **When Personalised ads is on,** ads may be personalised based on your device's advertising ID and your past activity.
+- **If you turn Personalised ads off,** you still see ads, but they are not personalised; they are chosen by context and approximate location.
 - **Even when ads are not personalised,** Google still processes your IP address and device information, and may use the advertising ID for frequency capping, aggregated reporting and fraud prevention.
 
 In some regions Google may show an additional consent notice required by local law.

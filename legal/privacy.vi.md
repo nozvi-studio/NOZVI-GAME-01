@@ -12,7 +12,7 @@ Cảm ơn bạn đã chơi Nozvi. Chính sách này giải thích chúng tôi th
 **Tóm tắt nhanh**
 
 - Trò chơi không có tài khoản, không hỏi tên, email hay số điện thoại của bạn.
-- Thống kê cách chơi và báo lỗi chỉ bật khi bạn đồng ý. Từ chối vẫn chơi đầy đủ.
+- Khi bạn chọn Đồng ý lúc bắt đầu, Trò chơi bật thống kê cách chơi, báo lỗi và quảng cáo cá nhân hóa. Bạn tắt từng mục bất cứ lúc nào và vẫn chơi đầy đủ.
 - Bản Android có quảng cáo do Google AdMob cung cấp. Quảng cáo chỉ được cá nhân hóa khi bạn đồng ý; từ chối thì vẫn có quảng cáo nhưng không cá nhân hóa.
 - Bạn đổi lựa chọn bất cứ lúc nào trong **Cài đặt, mục Quyền riêng tư**.
 - Chúng tôi không bán dữ liệu của bạn.
@@ -89,9 +89,9 @@ Trò chơi hiện phát hành tại Việt Nam và Singapore. Chúng tôi xử l
 
 ## 4. Lựa chọn quyền riêng tư của bạn
 
-Bạn kiểm soát việc chia sẻ dữ liệu không thiết yếu. Từ chối không ảnh hưởng đến việc chơi.
+Bạn kiểm soát việc chia sẻ dữ liệu không thiết yếu. Tắt các mục này không ảnh hưởng đến việc chơi.
 
-**Xin đồng ý trước khi xử lý.** Trước khi xử lý bất kỳ dữ liệu nào dựa trên sự đồng ý (thống kê cách chơi, báo lỗi, quảng cáo cá nhân hóa), Trò chơi hỏi ý kiến của bạn, và việc từ chối thuận tiện như việc đồng ý. Cho đến khi bạn đồng ý, các dịch vụ này không được khởi tạo và không nhận dữ liệu. Chỉ những dịch vụ có trong phiên bản bạn đang dùng mới được nêu.
+**Xin đồng ý trước khi xử lý.** Khi bắt đầu chơi lần đầu, Trò chơi thông báo rõ rằng việc chọn Đồng ý cũng bật thống kê cách chơi, báo lỗi và quảng cáo cá nhân hóa, và bạn có thể tắt từng mục trong Cài đặt. Trước khi bạn chọn Đồng ý, các dịch vụ này không được khởi tạo và không nhận dữ liệu. Chỉ những dịch vụ có trong phiên bản bạn đang dùng mới được nêu.
 
 **Thay đổi lựa chọn.** Bạn có thể xem và thay đổi từng lựa chọn bất cứ lúc nào trong phần cài đặt quyền riêng tư của Trò chơi. Thay đổi có hiệu lực ngay:
 
@@ -103,8 +103,8 @@ Việc rút lại đồng ý không ảnh hưởng đến tính hợp pháp củ
 
 **Quảng cáo.** Một số phiên bản của Trò chơi có quảng cáo do Google AdMob cung cấp, bao gồm quảng cáo có thưởng mà bạn chỉ xem khi tự chọn.
 
-- **Nếu bạn đồng ý,** quảng cáo có thể được cá nhân hóa dựa trên mã quảng cáo của thiết bị và hoạt động trước đó của bạn.
-- **Nếu bạn không đồng ý,** bạn vẫn thấy quảng cáo, nhưng chúng không được cá nhân hóa mà được chọn theo ngữ cảnh và vị trí gần đúng.
+- **Khi Quảng cáo cá nhân hóa được bật,** quảng cáo có thể được cá nhân hóa dựa trên mã quảng cáo của thiết bị và hoạt động trước đó của bạn.
+- **Nếu bạn tắt Quảng cáo cá nhân hóa,** bạn vẫn thấy quảng cáo, nhưng chúng không được cá nhân hóa mà được chọn theo ngữ cảnh và vị trí gần đúng.
 - **Ngay cả khi không cá nhân hóa,** Google vẫn xử lý địa chỉ IP, thông tin thiết bị, và có thể dùng mã quảng cáo để giới hạn tần suất, báo cáo tổng hợp và chống gian lận.
 
 Ở một số khu vực, Google có thể hiển thị thêm thông báo đồng ý riêng theo quy định địa phương.
