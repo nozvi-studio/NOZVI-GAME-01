@@ -6,6 +6,9 @@ export const PRIVACY_STORAGE_KEY = 'nozvi.privacy.v3';
 export interface PrivacyChoices {
   get(): PrivacyState;
   decided(): boolean;
+  acceptedLegalVersion(): string | null;
+  /** Legal acceptance is independent of optional data-processing choices. */
+  acceptLegal(version: string): void;
   /** Lưu lựa chọn, đánh dấu đã quyết định và báo cho người nghe. Rút lại thống kê thì đổi userId. */
   set(next: Partial<PrivacyState>): void;
   /** Mã ngẫu nhiên gửi kèm thống kê; người chơi đưa mã này khi yêu cầu xóa dữ liệu. */
@@ -13,7 +16,7 @@ export interface PrivacyChoices {
   onChange(listener: (state: PrivacyState) => void): () => void;
 }
 
-type Stored = PrivacyState & { decided: boolean; userId: string };
+type Stored = PrivacyState & { decided: boolean; userId: string; acceptedLegalVersion: string | null };
 
 function randomId(): string {
   const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
@@ -38,7 +41,10 @@ function parse(raw: string | null): Stored | null {
     ) {
       return null;
     }
-    return { analytics: v.analytics, diagnostics: v.diagnostics, ads: v.ads, decided: v.decided, userId: v.userId };
+    return {
+      analytics: v.analytics, diagnostics: v.diagnostics, ads: v.ads, decided: v.decided, userId: v.userId,
+      acceptedLegalVersion: typeof v.acceptedLegalVersion === 'string' ? v.acceptedLegalVersion : null,
+    };
   } catch {
     return null;
   }
@@ -57,7 +63,9 @@ export function createPrivacyChoices(
     readFailed = true;
   }
   const parsed = parse(raw);
-  let state: Stored = parsed ?? { analytics: false, diagnostics: false, ads: false, decided: false, userId: newId() };
+  let state: Stored = parsed ?? {
+    analytics: false, diagnostics: false, ads: false, decided: false, userId: newId(), acceptedLegalVersion: null,
+  };
   const listeners = new Set<(s: PrivacyState) => void>();
 
   const persist = (): void => {
@@ -74,10 +82,16 @@ export function createPrivacyChoices(
   return {
     get: () => ({ analytics: state.analytics, diagnostics: state.diagnostics, ads: state.ads }),
     decided: () => state.decided,
+    acceptedLegalVersion: () => state.acceptedLegalVersion,
+    acceptLegal(version) {
+      state = { ...state, acceptedLegalVersion: version };
+      persist();
+    },
     userId: () => state.userId,
     set(next) {
       const withdrawnAnalytics = state.analytics && next.analytics === false;
       state = {
+        ...state,
         analytics: next.analytics ?? state.analytics,
         diagnostics: next.diagnostics ?? state.diagnostics,
         ads: next.ads ?? state.ads,

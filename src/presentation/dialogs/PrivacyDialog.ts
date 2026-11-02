@@ -2,7 +2,7 @@ import type Phaser from 'phaser';
 import { t } from '../i18n.ts';
 import { adsServices } from '../adsServices.ts';
 import { privacyServices, shortId } from '../privacyServices.ts';
-import { openExternal } from '../openExternal.ts';
+import { openLegalDocument } from '../legal/legalViewer.ts';
 import { playUiCue } from '../audio/uiCues.ts';
 import { createDialogCard } from './dialogCard.ts';
 import { createLinkRow, createToggleRow } from './dialogRows.ts';
@@ -74,12 +74,8 @@ export class PrivacyDialog {
         refreshIdRow = () => { row.setText(label()); };
       });
     }
-    if (privacy.policyUrl) {
-      const url = privacy.policyUrl;
-      rows.push((c, y) =>
-        createLinkRow(scene, c, y, t('privacy_policy'), () => openExternal(url))
-      );
-    }
+    rows.push((c, y) => createLinkRow(scene, c, y, t('privacy_policy'), () => openLegalDocument('privacy')));
+    rows.push((c, y) => createLinkRow(scene, c, y, t('terms_of_service'), () => openLegalDocument('terms')));
 
     // Title band + rows + bottom margin, so the card fits the rows present.
     const modalH = FIRST_ROW + rows.length * ROW_STEP + 60;

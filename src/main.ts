@@ -15,7 +15,7 @@ import { setupAndroidLifecycle } from './engine/core/platform/lifecycle.ts';
 import { createPlatformServices, installGlobalErrorHandlers } from './engine/core/platform/platformServices.ts';
 import { createSentryCrashDriver, type ConsentGate } from './engine/core/platform/sentryCrashDriver.ts';
 import { selectAnalyticsDriver } from './infrastructure/analyticsSetup.ts';
-import { requestPrivacyChoices } from './presentation/consent/consentGate.ts';
+import { dismissTopLegalOverlay } from './presentation/legal/legalOverlay.ts';
 import { installCrashTest } from './devtools/crashTest.ts';
 import { APP_VERSION } from './appVersion.ts';
 import { createPrivacyChoices, type PrivacyPurpose } from './application/privacyChoices.ts';
@@ -47,7 +47,6 @@ if (Capacitor.isNativePlatform() && !adMobConfig) {
   console.warn('[ads] VITE_ADMOB_USE_TEST_ADS=false nhưng thiếu VITE_ADMOB_BANNER_ID / VITE_ADMOB_REWARDED_ID: tắt quảng cáo');
 }
 const privacy = createPrivacyChoices(getSafeStorage() ?? memoryStorage);
-const policyUrl = import.meta.env.VITE_PRIVACY_POLICY_URL || undefined;
 // Không có DSN thì không có driver: mọi lệnh là no-op, game chạy y như chưa gắn SDK.
 // Dev server không gửi lỗi lên Sentry (tránh nhiễu và tốn quota), trừ khi đặt VITE_SENTRY_DEV=true để thử.
 const sentryDsn =
@@ -60,7 +59,7 @@ const analyticsSelection = selectAnalyticsDriver({
   build: APP_VERSION,
   privacy,
 });
-/** Mục có trong bản build này; màn đồng ý và dialog Privacy chỉ hiện những mục này. */
+/** Mục có trong bản build này; dialog Privacy chỉ hiện những mục này. */
 const offeredPurposes: PrivacyPurpose[] = [
   ...(analyticsSelection.requiresConsent ? (['analytics'] as const) : []),
   ...(sentryDsn ? (['diagnostics'] as const) : []),
@@ -181,16 +180,17 @@ export async function startGame(options: StartGameOptions = {}): Promise<void> {
   // Splash and first paint use chapter I; Menu, Map and Play switch it afterwards.
   setPcBackground(1);
   await waitForFonts();
-  // Hỏi một lần khi bản build có dịch vụ tùy chọn; lựa chọn nào cũng vào được game.
-  if (offeredPurposes.length > 0 && !privacy.decided()) {
-    privacy.set(await requestPrivacyChoices({ offered: offeredPurposes, policyUrl }));
-  }
   // Khởi tạo GA ngay nếu đã đồng ý (SDK bỏ sự kiện gửi trước khi phiên mở).
   analyticsSelection.warmUp?.();
 
   // BackgroundScene đứng đầu nên tự khởi động và luôn vẽ dưới cùng; các scene
   // khác chỉ chạy khi SceneDirector gọi.
   const game = new Phaser.Game({
+    callbacks: {
+      preBoot: (game) => {
+        game.registry.set(PRIVACY_REGISTRY_KEY, { choices: privacy, offered: offeredPurposes });
+      },
+    },
     type: Phaser.AUTO,
     parent: 'game',
     disableContextMenu: true,
@@ -215,7 +215,6 @@ export async function startGame(options: StartGameOptions = {}): Promise<void> {
   }
 
   game.registry.set(ADS_REGISTRY_KEY, platform.ads);
-  game.registry.set(PRIVACY_REGISTRY_KEY, { choices: privacy, offered: offeredPurposes, policyUrl });
   // Consent (UMP) rồi mới khởi tạo SDK; không chặn việc dựng game.
   void platform.ads.init();
 
@@ -289,6 +288,7 @@ export async function startGame(options: StartGameOptions = {}): Promise<void> {
 
   setupAndroidLifecycle({
     onHardwareBack: () => {
+      if (dismissTopLegalOverlay()) return;
       if (director.isTransitioning()) {
         director.skip();
         return;

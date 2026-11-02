@@ -4,9 +4,11 @@ import { shortId } from '../src/presentation/privacyServices.ts';
 import { NO_ADS } from '../src/presentation/adsServices.ts';
 import { t } from '../src/presentation/i18n.ts';
 import { fakeScene } from './helpers/fakeScene.ts';
+import { openLegalDocument } from '../src/presentation/legal/legalViewer.ts';
 
 vi.mock('phaser', () => ({ default: {} }));
 vi.mock('../src/presentation/audio/uiCues.ts', () => ({ playUiCue: () => {} }));
+vi.mock('../src/presentation/legal/legalViewer.ts', () => ({ openLegalDocument: vi.fn() }));
 
 function choices(initial = { analytics: false, diagnostics: false, ads: false }) {
   let state = { ...initial };
@@ -172,15 +174,17 @@ describe('PrivacyDialog', () => {
     expect(row.text).toContain(t('privacy_copied'));
   });
 
-  it('dòng chính sách mở bằng window.open noopener', () => {
-    const open = vi.fn();
-    vi.stubGlobal('window', { open });
+  it.each([undefined, 'https://x.test/p'])('always shows both bundled document rows (policy URL: %s)', (policyUrl) => {
+    vi.mocked(openLegalDocument).mockClear();
     const ui = fakeScene({
       ads: NO_ADS,
-      privacy: { choices: choices(), offered: ['diagnostics'], policyUrl: 'https://x.test/p' },
+      privacy: { choices: choices(), offered: ['diagnostics'], policyUrl },
     });
     new PrivacyDialog(ui.scene).open();
     ui.tap(0, ui.items.find((i) => i.text === t('privacy_policy'))!.y);
-    expect(open).toHaveBeenCalledWith('https://x.test/p', '_blank', 'noopener');
+    expect(openLegalDocument).toHaveBeenLastCalledWith('privacy');
+    ui.tap(0, ui.items.find((i) => i.text === t('terms_of_service'))!.y);
+    expect(openLegalDocument).toHaveBeenLastCalledWith('terms');
+    expect(openLegalDocument).toHaveBeenCalledTimes(2);
   });
 });

@@ -14,6 +14,41 @@ function ids() {
 }
 
 describe('createPrivacyChoices', () => {
+  test('accepting legal terms persists independently of service choices and keeps the ID', () => {
+    const m = memory();
+    const c = createPrivacyChoices(m.store, ids());
+    const changed = vi.fn();
+    c.onChange(changed);
+    expect(c.acceptedLegalVersion()).toBeNull();
+    c.acceptLegal('2026-11-03');
+    expect(createPrivacyChoices(m.store).acceptedLegalVersion()).toBe('2026-11-03');
+    expect(c.get()).toEqual({ analytics: false, diagnostics: false, ads: false });
+    expect(c.userId()).toBe('id-1');
+    expect(c.decided()).toBe(false);
+    expect(changed).not.toHaveBeenCalled();
+    c.set({ diagnostics: true });
+    expect(createPrivacyChoices(m.store).acceptedLegalVersion()).toBe('2026-11-03');
+  });
+
+  test.each([undefined, null, 123])('old records and invalid legal versions retain choices: %s', (acceptedLegalVersion) => {
+    const state = { analytics: true, diagnostics: false, ads: true };
+    const m = memory(JSON.stringify({ ...state, decided: true, userId: 'existing', acceptedLegalVersion }));
+    const c = createPrivacyChoices(m.store, ids());
+    expect(c.acceptedLegalVersion()).toBeNull();
+    expect(c.get()).toEqual(state);
+    expect(c.decided()).toBe(true);
+    expect(c.userId()).toBe('existing');
+    c.acceptLegal('2026-11-03');
+    expect(createPrivacyChoices(m.store).get()).toEqual(state);
+    expect(c.userId()).toBe('existing');
+  });
+
+  test('legal acceptance survives storage failures in this session', () => {
+    const c = createPrivacyChoices({ getItem: () => null, setItem: () => { throw new Error('full'); } });
+    c.acceptLegal('2026-11-03');
+    expect(c.acceptedLegalVersion()).toBe('2026-11-03');
+  });
+
   test('stores ads consent and preserves userId when ads are withdrawn', () => {
     const m = memory();
     const c = createPrivacyChoices(m.store, ids());

@@ -5,10 +5,9 @@ import type { PrivacyChoices, PrivacyPurpose } from '../application/privacyChoic
 export const PRIVACY_REGISTRY_KEY = 'privacy';
 
 export type PrivacyServices = {
-  choices: Pick<PrivacyChoices, 'get' | 'set' | 'userId'> | null;
+  choices: Pick<PrivacyChoices, 'get' | 'set' | 'userId' | 'acceptedLegalVersion' | 'acceptLegal'> | null;
   /** Mục có trong bản build này (web: chỉ diagnostics). */
   offered: readonly PrivacyPurpose[];
-  policyUrl?: string;
 };
 
 export const NO_PRIVACY: PrivacyServices = { choices: null, offered: [] };

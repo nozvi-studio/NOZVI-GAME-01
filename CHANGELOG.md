@@ -4,6 +4,11 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Changed (loading terms acceptance and legal viewer)
+- The first loading screen now waits for agreement to legal version `2026-11-03`; optional statistics, error reports and personalised ads retain their saved choices and default to off.
+- Added a plain, offline Privacy Policy and Terms viewer (Vietnamese or English), accessible from the acceptance popup and Settings, with focus handling and Escape/Android Back dismissal.
+- Removed the pre-game privacy consent screen and its unused strings; the new loading step and notice are translated into all ten locales.
+
 ### Added (legal documents)
 - `legal/privacy.vi.md`, `legal/privacy.en.md` (Privacy Policy v3, exported from the working draft) and `legal/terms.vi.md`, `legal/terms.en.md` (Terms of Service for Nozvi: publisher Nozvi, Vietnamese law, Ho Chi Minh City courts, no in-app purchase section, consumer-law carve-outs, Vietnamese prevails for users in Vietnam). Single source for the in-game viewer and the future public pages.
 
