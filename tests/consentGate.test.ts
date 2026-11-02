@@ -80,15 +80,25 @@ describe('requestPrivacyChoices', () => {
     });
   }
 
-  test('offers exactly two identically styled buttons, Reject first and initially focused', () => {
+  test('offers two buttons with equal geometry and typography, Accept on the right and Reject initially focused', () => {
     const d = fakeDoc();
     void requestPrivacyChoices({ offered: ['analytics', 'diagnostics'], doc: d.doc, translate: T });
     const buttons = d.all.filter((e) => e.tag === 'button');
     expect(buttons).toEqual([d.byId('reject'), d.byId('accept')]);
     expect(buttons.map((e) => e.type)).toEqual(['button', 'button']);
-    expect(buttons.map((e) => e.textContent)).toEqual(['privacy_reject_play', 'privacy_accept_play']);
-    expect(buttons[0].style.cssText).toBe(buttons[1].style.cssText);
+    expect(buttons.map((e) => e.textContent)).toEqual(['privacy_reject', 'privacy_accept']);
+    for (const property of [
+      'box-sizing', 'width', 'min-width', 'min-height', 'padding', 'border-radius',
+      'border-width', 'border-style', 'box-shadow', 'font-family', 'font-size', 'font-weight', 'line-height',
+    ]) {
+      const declaration = new RegExp(`(?:^|;)${property}:([^;]+);`);
+      const rejectValue = declaration.exec(buttons[0].style.cssText)?.[1];
+      const acceptValue = declaration.exec(buttons[1].style.cssText)?.[1];
+      expect(rejectValue, property).toBeDefined();
+      expect(rejectValue, property).toBe(acceptValue);
+    }
     expect(d.byId('actions').children).toEqual(buttons);
+    expect(d.byId('actions').children[1]).toBe(d.byId('accept'));
     expect(d.all.some((e) => ['options', 'options-panel', 'save'].includes(e.attrs['data-id']) ||
       e.attrs['data-id']?.startsWith('switch-'))).toBe(false);
     expect(d.overlay().attrs).toMatchObject({ role: 'dialog', 'aria-modal': 'true',

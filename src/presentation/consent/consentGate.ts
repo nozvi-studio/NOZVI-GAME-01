@@ -20,14 +20,20 @@ export function requestPrivacyChoices(options: ConsentGateOptions): Promise<Priv
   const doc = options.doc ?? document;
   const tr = options.translate ?? t;
   const { offered } = options;
-  // Same candy face, outline and lower shadow as HintDialog's primary button.
-  const buttonCss =
+  // Shared candy geometry and typography; only the palette differs.
+  const buttonBaseCss =
     'box-sizing:border-box;width:100%;min-width:0;min-height:56px;padding:10px 12px;' +
-    'border-radius:20px;border:2.5px solid #3B2779;' +
-    'background:linear-gradient(to bottom,#FFD54F 0%,#FFD54F 65%,#FFA800 65%,#FFA800 100%);' +
-    'box-shadow:0 5px 0 #22145A;color:#22145A;cursor:pointer;' +
+    'border-radius:20px;border-width:2.5px;border-style:solid;' +
+    'box-shadow:0 5px 0 var(--button-shadow-color);cursor:pointer;' +
     `font-family:${TYPO_TOKENS.fontFamily.display};font-size:18px;font-weight:700;line-height:1.3;` +
     'text-align:center;overflow-wrap:anywhere;';
+  // HintDialog's yellow primary button and dialogCard's dark close button.
+  const acceptColors =
+    'background:linear-gradient(to bottom,#FFD54F 0%,#FFD54F 65%,#FFA800 65%,#FFA800 100%);' +
+    'border-color:#3B2779;color:#22145A;--button-shadow-color:#22145A;';
+  const rejectColors =
+    'background:linear-gradient(to bottom,#273677 0%,#273677 65%,#0E1438 65%,#0E1438 100%);' +
+    'border-color:#7FD8FF;color:#FFFFFF;--button-shadow-color:#0E1438;';
 
   return new Promise((resolve) => {
     const el = <K extends keyof HTMLElementTagNameMap>(tag: K, id?: string): HTMLElementTagNameMap[K] => {
@@ -111,13 +117,13 @@ export function requestPrivacyChoices(options: ConsentGateOptions): Promise<Priv
     const row = el('div', 'actions');
     const reject = el('button', 'reject');
     reject.type = 'button';
-    reject.textContent = tr('privacy_reject_play');
-    reject.style.cssText = buttonCss;
+    reject.textContent = tr('privacy_reject');
+    reject.style.cssText = buttonBaseCss + rejectColors;
     reject.addEventListener('click', () => finish('reject_all'));
     const accept = el('button', 'accept');
     accept.type = 'button';
-    accept.textContent = tr('privacy_accept_play');
-    accept.style.cssText = buttonCss;
+    accept.textContent = tr('privacy_accept');
+    accept.style.cssText = buttonBaseCss + acceptColors;
     accept.addEventListener('click', () => finish('accept_all'));
     row.append(reject, accept);
     content.append(row);

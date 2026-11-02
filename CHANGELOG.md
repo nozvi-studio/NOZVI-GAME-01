@@ -4,6 +4,9 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Changed (consent buttons)
+- Shortened the first-launch buttons to Accept / Reject in all ten locales; Reject uses the dark candy palette on the left, while Accept keeps yellow on the right, with shared sizing and typography.
+
 ### Added (personalised ads consent)
 - Android builds with AdMob now offer personalised ads consent; Accept and play includes it, while Reject and play keeps ads non-personalised.
 - Settings, under Privacy, has a Personalised ads toggle above Ad choices; banner and rewarded requests read the current choice and set `npa` when it is off.
