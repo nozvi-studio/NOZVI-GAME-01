@@ -14,17 +14,48 @@ function ids() {
 }
 
 describe('createPrivacyChoices', () => {
-  test('mặc định tắt cả hai và chưa quyết định', () => {
+  test('stores ads consent and preserves userId when ads are withdrawn', () => {
+    const m = memory();
+    const c = createPrivacyChoices(m.store, ids());
+    c.set({ analytics: true, ads: true });
+    const id = c.userId();
+    const again = createPrivacyChoices(m.store, ids());
+    expect(again.get()).toEqual({ analytics: true, diagnostics: false, ads: true });
+    again.set({ ads: false });
+    expect(again.userId()).toBe(id);
+    expect(again.get()).toEqual({ analytics: true, diagnostics: false, ads: false });
+  });
+
+  test.each([undefined, 'yes', 1, null])('requires a boolean ads value in stored records: %s', (ads) => {
+    const raw = JSON.stringify({ analytics: true, diagnostics: true, ads, decided: true, userId: 'old' });
+    const c = createPrivacyChoices(memory(raw).store, ids());
+    expect(c.decided()).toBe(false);
+    expect(c.get()).toEqual({ analytics: false, diagnostics: false, ads: false });
+  });
+
+  test('ignores previous privacy storage versions and asks again', () => {
+    const m = memory();
+    const previousKey = 'nozvi.privacy.' + 'v2';
+    const old = JSON.stringify({ analytics: true, diagnostics: true, decided: true, userId: 'old' });
+    m.map.set(previousKey, old);
+    const c = createPrivacyChoices(m.store, ids());
+    expect(c.decided()).toBe(false);
+    expect(c.get()).toEqual({ analytics: false, diagnostics: false, ads: false });
+    expect(m.map.get(previousKey)).toBe(old);
+    expect(m.map.has('nozvi.privacy.v3')).toBe(true);
+  });
+
+  test('mặc định tắt cả ba và chưa quyết định', () => {
     const c = createPrivacyChoices(memory().store, ids());
-    expect(c.get()).toEqual({ analytics: false, diagnostics: false });
+    expect(c.get()).toEqual({ analytics: false, diagnostics: false, ads: false });
     expect(c.decided()).toBe(false);
   });
 
   test('set lưu xuống storage, đánh dấu đã quyết định, đọc lại đúng', () => {
     const m = memory();
-    createPrivacyChoices(m.store, ids()).set({ analytics: true, diagnostics: false });
+    createPrivacyChoices(m.store, ids()).set({ analytics: true, diagnostics: false, ads: false });
     const again = createPrivacyChoices(m.store, ids());
-    expect(again.get()).toEqual({ analytics: true, diagnostics: false });
+    expect(again.get()).toEqual({ analytics: true, diagnostics: false, ads: false });
     expect(again.decided()).toBe(true);
   });
 
@@ -58,6 +89,7 @@ describe('createPrivacyChoices', () => {
     expect(createPrivacyChoices(memory('{"analytics":"yes","decided":true}').store, ids()).get()).toEqual({
       analytics: false,
       diagnostics: false,
+      ads: false,
     });
   });
 
@@ -76,7 +108,7 @@ describe('createPrivacyChoices', () => {
     off();
     c.set({ analytics: false });
     expect(seen).toHaveBeenCalledOnce();
-    expect(seen).toHaveBeenCalledWith({ analytics: true, diagnostics: false });
+    expect(seen).toHaveBeenCalledWith({ analytics: true, diagnostics: false, ads: false });
   });
 
   test('listener ném lỗi không chặn listener khác', () => {
@@ -100,6 +132,6 @@ describe('createPrivacyChoices', () => {
     m.map.set('nozvi.analytics.consent.v1', 'granted');
     const c = createPrivacyChoices(m.store, ids());
     expect(c.decided()).toBe(false);
-    expect(c.get()).toEqual({ analytics: false, diagnostics: false });
+    expect(c.get()).toEqual({ analytics: false, diagnostics: false, ads: false });
   });
 });

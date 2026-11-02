@@ -44,6 +44,13 @@ export class PrivacyDialog {
         )
       );
     }
+    if (choices && privacy.offered.includes('ads')) {
+      rows.push((c, y) =>
+        createToggleRow(scene, c, y, t('privacy_personalized_ads'), choices.get().ads, (on) =>
+          choices.set({ ads: on })
+        )
+      );
+    }
     if (ads.privacyOptionsRequired()) {
       rows.push((c, y) => createLinkRow(scene, c, y, t('privacy_ads'), () => void ads.showPrivacyOptions()));
     }

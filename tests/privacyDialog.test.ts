@@ -8,7 +8,7 @@ import { fakeScene } from './helpers/fakeScene.ts';
 vi.mock('phaser', () => ({ default: {} }));
 vi.mock('../src/presentation/audio/uiCues.ts', () => ({ playUiCue: () => {} }));
 
-function choices(initial = { analytics: false, diagnostics: false }) {
+function choices(initial = { analytics: false, diagnostics: false, ads: false }) {
   let state = { ...initial };
   return {
     get: () => state,
@@ -32,6 +32,24 @@ describe('PrivacyDialog', () => {
     new PrivacyDialog(ui.scene).open();
     expect(ui.items.some((i) => i.text === t('privacy_diagnostics'))).toBe(true);
     expect(ui.items.some((i) => i.text === t('privacy_analytics'))).toBe(false);
+    expect(ui.items.some((i) => i.text === t('privacy_personalized_ads'))).toBe(false);
+  });
+
+  it('shows the offered ads toggle above UMP and saves each change', () => {
+    const c = choices();
+    const ui = fakeScene({
+      ads: { ...NO_ADS, privacyOptionsRequired: () => true },
+      privacy: { choices: c, offered: ['ads'] },
+    });
+    new PrivacyDialog(ui.scene).open();
+    const row = ui.items.find((i) => i.text === t('privacy_personalized_ads'))!;
+    const ump = ui.items.find((i) => i.text === t('privacy_ads'))!;
+    expect(row).toBeDefined();
+    expect(row.y).toBeLessThan(ump.y);
+    ui.tap(200, row.y);
+    expect(c.set).toHaveBeenLastCalledWith({ ads: true });
+    ui.tap(200, row.y);
+    expect(c.set).toHaveBeenLastCalledWith({ ads: false });
   });
 
   it('bấm công tắc ghi vào PrivacyChoices', () => {

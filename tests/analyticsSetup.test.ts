@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { selectAnalyticsDriver } from '../src/infrastructure/analyticsSetup.ts';
 
-const PRIVACY = { get: () => ({ analytics: false, diagnostics: false }), userId: () => 'u', onChange: () => () => {} };
+const PRIVACY = { get: () => ({ analytics: false, diagnostics: false, ads: false }), userId: () => 'u', onChange: () => () => {} };
 const KEYS = { gameKey: 'gk', secretKey: 'sk', build: '1.0.0' };
 
 describe('selectAnalyticsDriver', () => {

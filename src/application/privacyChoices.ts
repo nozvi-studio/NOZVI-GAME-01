@@ -1,7 +1,7 @@
-export type PrivacyPurpose = 'analytics' | 'diagnostics';
-export type PrivacyState = { analytics: boolean; diagnostics: boolean };
+export type PrivacyPurpose = 'analytics' | 'diagnostics' | 'ads';
+export type PrivacyState = { analytics: boolean; diagnostics: boolean; ads: boolean };
 
-export const PRIVACY_STORAGE_KEY = 'nozvi.privacy.v2';
+export const PRIVACY_STORAGE_KEY = 'nozvi.privacy.v3';
 
 export interface PrivacyChoices {
   get(): PrivacyState;
@@ -31,13 +31,14 @@ function parse(raw: string | null): Stored | null {
     if (
       typeof v.analytics !== 'boolean' ||
       typeof v.diagnostics !== 'boolean' ||
+      typeof v.ads !== 'boolean' ||
       typeof v.decided !== 'boolean' ||
       typeof v.userId !== 'string' ||
       v.userId.length === 0
     ) {
       return null;
     }
-    return { analytics: v.analytics, diagnostics: v.diagnostics, decided: v.decided, userId: v.userId };
+    return { analytics: v.analytics, diagnostics: v.diagnostics, ads: v.ads, decided: v.decided, userId: v.userId };
   } catch {
     return null;
   }
@@ -56,7 +57,7 @@ export function createPrivacyChoices(
     readFailed = true;
   }
   const parsed = parse(raw);
-  let state: Stored = parsed ?? { analytics: false, diagnostics: false, decided: false, userId: newId() };
+  let state: Stored = parsed ?? { analytics: false, diagnostics: false, ads: false, decided: false, userId: newId() };
   const listeners = new Set<(s: PrivacyState) => void>();
 
   const persist = (): void => {
@@ -71,7 +72,7 @@ export function createPrivacyChoices(
   if (!parsed && !readFailed) persist();
 
   return {
-    get: () => ({ analytics: state.analytics, diagnostics: state.diagnostics }),
+    get: () => ({ analytics: state.analytics, diagnostics: state.diagnostics, ads: state.ads }),
     decided: () => state.decided,
     userId: () => state.userId,
     set(next) {
@@ -79,11 +80,12 @@ export function createPrivacyChoices(
       state = {
         analytics: next.analytics ?? state.analytics,
         diagnostics: next.diagnostics ?? state.diagnostics,
+        ads: next.ads ?? state.ads,
         decided: true,
         userId: withdrawnAnalytics ? newId() : state.userId,
       };
       persist();
-      const snapshot = { analytics: state.analytics, diagnostics: state.diagnostics };
+      const snapshot = { analytics: state.analytics, diagnostics: state.diagnostics, ads: state.ads };
       for (const listener of [...listeners]) {
         try {
           listener(snapshot);

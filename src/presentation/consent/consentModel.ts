@@ -14,5 +14,5 @@ export function choicesFor(
     if (action === 'reject_all') return false;
     return switches[purpose] === true;
   };
-  return { analytics: pick('analytics'), diagnostics: pick('diagnostics') };
+  return { analytics: pick('analytics'), diagnostics: pick('diagnostics'), ads: pick('ads') };
 }

@@ -45,7 +45,7 @@ function fakeDoc(withFocus = true) {
 }
 
 const T = (key: string) => key;
-const offerings: PrivacyPurpose[][] = [[], ['analytics'], ['diagnostics'], ['analytics', 'diagnostics']];
+const offerings: PrivacyPurpose[][] = [[], ['analytics'], ['diagnostics'], ['analytics', 'diagnostics'], ['ads'], ['analytics', 'diagnostics', 'ads']];
 
 describe('requestPrivacyChoices', () => {
   for (const offered of offerings) {
@@ -53,7 +53,7 @@ describe('requestPrivacyChoices', () => {
       const d = fakeDoc();
       const done = requestPrivacyChoices({ offered, doc: d.doc, translate: T });
       d.byId('reject').listeners.click();
-      await expect(done).resolves.toEqual({ analytics: false, diagnostics: false });
+      await expect(done).resolves.toEqual({ analytics: false, diagnostics: false, ads: false });
       expect(d.overlay().removed).toBe(true);
     });
 
@@ -62,7 +62,7 @@ describe('requestPrivacyChoices', () => {
       const done = requestPrivacyChoices({ offered, doc: d.doc, translate: T });
       d.byId('accept').listeners.click();
       await expect(done).resolves.toEqual({
-        analytics: offered.includes('analytics'), diagnostics: offered.includes('diagnostics'),
+        analytics: offered.includes('analytics'), diagnostics: offered.includes('diagnostics'), ads: offered.includes('ads'),
       });
       expect(d.overlay().removed).toBe(true);
     });
@@ -74,6 +74,7 @@ describe('requestPrivacyChoices', () => {
         'privacy_bullet_play',
         ...(offered.includes('analytics') ? ['privacy_bullet_analytics'] : []),
         ...(offered.includes('diagnostics') ? ['privacy_bullet_diagnostics'] : []),
+        ...(offered.includes('ads') ? ['privacy_bullet_ads'] : []),
       ]);
       expect(d.byId('settings-hint').textContent).toBe('privacy_settings_hint');
     });

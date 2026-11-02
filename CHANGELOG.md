@@ -4,6 +4,11 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Added (personalised ads consent)
+- Android builds with AdMob now offer personalised ads consent; Accept and play includes it, while Reject and play keeps ads non-personalised.
+- Settings, under Privacy, has a Personalised ads toggle above Ad choices; banner and rewarded requests read the current choice and set `npa` when it is off.
+- Privacy storage uses `nozvi.privacy.v3` to ask everyone again; withdrawing ads leaves the statistics ID unchanged. Consent text is available in all ten locales.
+
 ### Changed (privacy consent screen)
 - The first-launch privacy screen now has exactly two equal buttons, "Reject and play" and "Accept and play" (same size and style, the game's yellow candy button), on a card styled like the in-game dialogs. The "Options" panel and its switches are gone from this screen; choosing each service separately is done in Settings, under Privacy. Bullets list only the services in this build (web: error reports only). New keys `privacy_reject_play`, `privacy_accept_play`, `privacy_bullet_play/analytics/diagnostics`, `privacy_settings_hint` in all ten locales; `privacy_intro`, `privacy_options`, `privacy_save`, `privacy_accept_all`, `privacy_reject_all` removed. The word "anonymous" is no longer used (the statistics ID makes the data pseudonymous).
 

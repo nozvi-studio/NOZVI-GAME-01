@@ -5,7 +5,7 @@ import type { TelemetryEvent } from '../src/engine/core/platform/telemetry.ts';
 import type { PrivacyState } from '../src/application/privacyChoices.ts';
 
 function fakePrivacy(initial: Partial<PrivacyState> = { analytics: true }) {
-  let state: PrivacyState = { analytics: false, diagnostics: false, ...initial };
+  let state: PrivacyState = { analytics: false, diagnostics: false, ads: false, ...initial };
   let id = 'user-1';
   const listeners = new Set<(s: PrivacyState) => void>();
   return {

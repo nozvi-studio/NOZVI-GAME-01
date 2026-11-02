@@ -64,13 +64,14 @@ const analyticsSelection = selectAnalyticsDriver({
 const offeredPurposes: PrivacyPurpose[] = [
   ...(analyticsSelection.requiresConsent ? (['analytics'] as const) : []),
   ...(sentryDsn ? (['diagnostics'] as const) : []),
+  ...(adMobConfig ? (['ads'] as const) : []),
 ];
 const diagnosticsGate: ConsentGate = {
   enabled: () => privacy.get().diagnostics,
   onChange: (listener) => privacy.onChange((state) => listener(state.diagnostics)),
 };
 const platform = createPlatformServices({
-  ads: adMobConfig ? createAdMobDriver(AdMob, adMobConfig) : null,
+  ads: adMobConfig ? createAdMobDriver(AdMob, { ...adMobConfig, personalizedAds: () => privacy.get().ads }) : null,
   crash: sentryDsn
     ? createSentryCrashDriver(
         {

@@ -203,6 +203,44 @@ describe('AdMob driver: rewarded', () => {
   });
 });
 
+describe('AdMob personalised ads consent', () => {
+  test.each([true, false])('banner reads consent at request time: %s', async (allowed) => {
+    const { plugin, raw } = fakePlugin();
+    let personalized = !allowed;
+    const driver = createAdMobDriver(plugin, { ...CONFIG, personalizedAds: () => personalized });
+    await driver.init();
+    personalized = allowed;
+    await driver.showBanner();
+    expect(raw.showBanner).toHaveBeenCalledWith(expect.objectContaining({ npa: !allowed }));
+  });
+
+  test('rewarded reads current consent for every request', async () => {
+    const { plugin, raw } = fakePlugin({
+      prepareRewardVideoAd: vi.fn(async () => { throw new Error('no fill'); }),
+    });
+    let personalized = true;
+    const driver = createAdMobDriver(plugin, { ...CONFIG, personalizedAds: () => personalized });
+    for (const allowed of [true, false, true]) {
+      personalized = allowed;
+      await driver.showRewarded();
+      expect(raw.prepareRewardVideoAd).toHaveBeenLastCalledWith({
+        adId: CONFIG.rewarded, isTesting: true, npa: !allowed,
+      });
+    }
+  });
+
+  test('omitting the callback preserves personalised requests', async () => {
+    const { plugin, raw } = fakePlugin({
+      prepareRewardVideoAd: vi.fn(async () => { throw new Error('no fill'); }),
+    });
+    const driver = createAdMobDriver(plugin, CONFIG);
+    await driver.showBanner();
+    await driver.showRewarded();
+    expect(raw.showBanner).toHaveBeenCalledWith(expect.objectContaining({ npa: false }));
+    expect(raw.prepareRewardVideoAd).toHaveBeenCalledWith(expect.objectContaining({ npa: false }));
+  });
+});
+
 describe('AdsPort', () => {
   test('không có driver: mọi lệnh là no-op', async () => {
     const ads = createAds(null);

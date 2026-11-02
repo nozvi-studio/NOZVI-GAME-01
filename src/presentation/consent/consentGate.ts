@@ -76,6 +76,7 @@ export function requestPrivacyChoices(options: ConsentGateOptions): Promise<Priv
     const bulletKeys: CommonTranslationKey[] = ['privacy_bullet_play'];
     if (offered.includes('analytics')) bulletKeys.push('privacy_bullet_analytics');
     if (offered.includes('diagnostics')) bulletKeys.push('privacy_bullet_diagnostics');
+    if (offered.includes('ads')) bulletKeys.push('privacy_bullet_ads');
     for (const key of bulletKeys) {
       const bullet = el('li', key);
       bullet.textContent = tr(key);
