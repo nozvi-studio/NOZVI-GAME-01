@@ -4,6 +4,9 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Added (legal documents)
+- `legal/privacy.vi.md`, `legal/privacy.en.md` (Privacy Policy v3, exported from the working draft) and `legal/terms.vi.md`, `legal/terms.en.md` (Terms of Service for Nozvi: publisher Nozvi, Vietnamese law, Ho Chi Minh City courts, no in-app purchase section, consumer-law carve-outs, Vietnamese prevails for users in Vietnam). Single source for the in-game viewer and the future public pages.
+
 ### Added (keep ID before withdrawing statistics)
 - Turning off gameplay statistics now asks for confirmation and shows the full current ID with Copy, so players can keep it for a later deletion request.
 - Confirming creates a new ID and refreshes the Privacy ID row; cancelling keeps statistics and the current ID unchanged. Available in all ten locales.
