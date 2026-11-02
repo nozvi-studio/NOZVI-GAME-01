@@ -125,6 +125,18 @@ describe('SceneDirector', () => {
     expect(host.input.PlayScene).toBe(true);
   });
 
+  test('setTrace được gọi khi chuyển cảnh bắt đầu, không gọi khi go bị từ chối; trace ném lỗi không chặn chuyển cảnh', () => {
+    const { director, menu } = setup();
+    const seen: string[] = [];
+    director.setTrace((from, to, route) => {
+      seen.push(`${from}>${to}:${route}`);
+      throw new Error('trace broke');
+    });
+    expect(director.go(menu, 'PlayScene', {}, { route: 'menu-to-play' })).toBe(true);
+    expect(director.go(menu, 'PlayScene', {}, { route: 'menu-to-play' })).toBe(false);
+    expect(seen).toEqual(['MenuScene>PlayScene:menu-to-play']);
+  });
+
   test('đang chuyển thì go trả false (chống bấm hai lần)', () => {
     const { director, menu } = setup();
     expect(director.go(menu, 'PlayScene', {}, { route: 'menu-to-play' })).toBe(true);

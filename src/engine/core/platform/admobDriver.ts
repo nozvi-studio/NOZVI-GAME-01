@@ -13,6 +13,8 @@ export type AdMobConfig = {
   rewarded: string;
   /** true: yêu cầu quảng cáo thử của Google (không tính tiền, không rủi ro bị khoá tài khoản). */
   testing: boolean;
+  /** Read the player's current choice for each ad request. Defaults to true. */
+  personalizedAds?: () => boolean;
 };
 
 /** ID thử công khai của Google: https://developers.google.com/admob/android/test-ads */
@@ -62,6 +64,7 @@ export function createAdMobDriver(
   options: { startTimeoutMs?: number } = {}
 ): AdsDriver {
   const startTimeoutMs = options.startTimeoutMs ?? REWARDED_START_TIMEOUT_MS;
+  const personalizedAds = config.personalizedAds ?? (() => true);
   let ready: Promise<boolean> | null = null;
   let sdkReady = false;
   let privacyRequired = false;
@@ -99,6 +102,7 @@ export function createAdMobDriver(
         adSize: BannerAdSize.ADAPTIVE_BANNER,
         position: BannerAdPosition.BOTTOM_CENTER,
         isTesting: config.testing,
+        npa: !personalizedAds(),
       });
     } else if (wantBanner && banner === 'hidden') {
       banner = 'shown';
@@ -148,7 +152,7 @@ export function createAdMobDriver(
         );
         // Không await: tải treo thì để đồng hồ ở trên cắt, và quảng cáo đến muộn sau đó không được bật lên nữa.
         admob
-          .prepareRewardVideoAd({ adId: config.rewarded, isTesting: config.testing })
+          .prepareRewardVideoAd({ adId: config.rewarded, isTesting: config.testing, npa: !personalizedAds() })
           .then(() => {
             if (settled) return;
             // Plugin chỉ resolve lời gọi này khi có thưởng; đóng sớm thì nó treo, nên không await.

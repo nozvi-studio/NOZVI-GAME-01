@@ -62,6 +62,8 @@ import { capacitorHapticsDriver } from '../../engine/core/platform/capacitorHapt
 import { Capacitor } from '@capacitor/core';
 import type { BackgroundScene } from './BackgroundScene.ts';
 import { audioServices } from '../audio/audioServices.ts';
+import { levelTracker } from '../levelTracking.ts';
+import type { LevelTracker } from '../../application/levelTracker.ts';
 import { chapterOfLevelId, setPcBackground } from '../sky/pcBackground.ts';
 import { PlayTiltMotes } from '../sky/PlayTiltMotes.ts';
 
@@ -78,6 +80,8 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
   private endlessChapter = 1;
   private endlessLevel = 1;
   private controller!: PlayController;
+  /** Null in harness (dev) runs and when main.ts registered none: nothing is tracked. */
+  private tracker: LevelTracker | null = null;
   private boardRenderer!: BoardRenderer;
   private snapAssist: SnapAssist = NO_ASSIST;
   private textureCache!: PieceTextureCache;
@@ -214,6 +218,8 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
       this.mode === 'campaign',
       true // eye retired: the dashed outline is always on; saved showTarget is ignored
     );
+    this.startTracking();
+    this.events.once('shutdown', () => this.tracker?.leave('shutdown'));
 
     // Texture mảnh vẽ rải mỗi khung một mảnh trong update(), không vẽ trong
     // create() để handoff của chuyển cảnh F1 không có khung > 50 ms.
@@ -520,7 +526,9 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
     if (this.hintAdShowing) return;
     this.hintAdShowing = true;
     this.hintDialog.setLoading(true);
+    this.tracker?.note('hint_ad start');
     const outcome = await adsServices(this).showRewarded();
+    this.tracker?.note(`hint_ad ${outcome}`);
     this.hintAdShowing = false;
     if (!this.sys.isActive()) return;
     this.hintDialog.setLoading(false);
@@ -584,11 +592,34 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
     if (transition) this.tutorial?.controller.onEvent('double-tap');
   }
 
+  /** Mở một lượt theo dõi cho màn đang chơi; endless dùng mã `endless-<chương>-<số>` vì id pool bị lặp. */
+  private startTracking(): void {
+    this.tracker = this.mode === 'harness' ? null : levelTracker(this);
+    if (this.mode === 'endless') {
+      this.tracker?.start(`endless-${this.endlessChapter}-${this.endlessLevel}`, 'endless', this.endlessChapter);
+    } else if (this.mode === 'campaign') {
+      this.tracker?.start(this.level.id, 'campaign');
+    }
+  }
+
+  private trackCommand(prev: PuzzleState, subject: FeedbackSubject): void {
+    if (!this.tracker) return;
+    if (subject.command === 'move') this.tracker.moved();
+    else if (subject.command === 'rotate') this.tracker.rotated();
+    else if (subject.command === 'reset') {
+      // Reset sau khi thắng là chơi lại màn: mở lượt mới thay vì đếm vào lượt đã đóng.
+      if (prev.phase === 'won') this.startTracking();
+      else this.tracker.reset();
+    }
+  }
+
   /** Áp kết quả một lệnh: phát phản hồi rồi cập nhật HUD */
   private commit(prev: PuzzleState, transition: Transition | null, subject: FeedbackSubject, silent = false): void {
     if (!transition) return;
+    this.trackCommand(prev, subject);
     if (transition.becameWon) {
       const result = this.controller.getResult();
+      if (result) this.tracker?.completed({ elapsedMs: result.elapsedMs, stars: result.stars });
       this.hud.setResult(result ? resultCardModel(result) : null);
       this.getOrResolveVictoryVerse();
       if (this.mode === 'endless') {
@@ -797,6 +828,7 @@ export class PlayScene extends Phaser.Scene implements Choreographed {
   }
 
   private openLevelSelect(): void {
+    this.tracker?.leave('level-select');
     const justCompleted = this.controller?.getSnapshot().phase === 'won'
       ? this.level.id
       : undefined;

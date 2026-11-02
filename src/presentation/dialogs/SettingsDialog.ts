@@ -3,14 +3,15 @@ import Phaser from 'phaser';
 import type { ProgressRepository } from '../../application/progressPort.ts';
 import { COLOR_NUMBERS, COLOR_TOKENS, TYPO_TOKENS } from '../designTokens.ts';
 import { designViewBounds } from '../../engine/core/viewport/designViewport.ts';
-import { TEXTURE_KEYS } from '../TextureFactory.ts';
 import { t, getLocale, resetCosmicFacts } from '../i18n.ts';
 import type { SupportedLocale } from '../../localization/types.ts';
 import { setMotionScale } from '../transitions/motion.ts';
-import { adsServices } from '../adsServices.ts';
 import { audioServices } from '../audio/audioServices.ts';
 import { playUiCue } from '../audio/uiCues.ts';
 import { createDialogPanelInput } from './dialogInput.ts';
+import { PrivacyDialog } from './PrivacyDialog.ts';
+import { createDialogCard } from './dialogCard.ts';
+import { createLinkRow, createToggleRow } from './dialogRows.ts';
 import { LanguageSelectDialog } from './LanguageSelectDialog.ts';
 import { LOCALE_REGISTRY } from '../../localization/localizationConfig.ts';
 import { APP_VERSION } from '../../appVersion.ts';
@@ -31,75 +32,25 @@ export class SettingsDialog {
     if (this.container) return;
     playUiCue(this.scene, 'open');
 
-    const view = designViewBounds(this.scene);
-    this.container = this.scene.add.container(view.width / 2, view.height / 2).setDepth(150);
-
-    // 1. Nền mờ 65%
-    const backdrop = this.scene.add
-      .rectangle(0, 0, view.width, view.height, COLOR_NUMBERS.navyBackdrop, 0.65)
-      .setInteractive();
-
     // 2. Size the astrological card to the rows actually present on this device.
     const canVibrate =
       Capacitor.isNativePlatform() || (typeof navigator !== 'undefined' && 'vibrate' in navigator);
     const modalW = 620;
-    // EEA/UK: the consent message must stay reachable so players can change their choice.
-    const ads = adsServices(this.scene);
-    const showPrivacy = ads.privacyOptionsRequired();
     const hapticsOffset = 462;
     const lastToggleOffset = canVibrate ? hapticsOffset : 378;
     const privacyOffset = lastToggleOffset + 84;
-    const lastRowOffset = showPrivacy ? privacyOffset : lastToggleOffset;
-    const dangerOffset = lastRowOffset + 84;
+    // The Privacy row is always present so players can change their choices at any time.
+    const dangerOffset = privacyOffset + 84;
     // Room under the danger box for the version line.
     const versionRowH = 46;
     const modalH = dangerOffset + 72 / 2 + 34 + versionRowH;
-    const panel = this.scene.add.graphics();
-    const panelInput = createDialogPanelInput(this.scene, backdrop, modalW, modalH, () => this.close());
-
-    // Lớp bóng đổ mềm
-    panel.fillStyle(0x050a1a, 0.65);
-    panel.fillRoundedRect(-modalW / 2 + 4, -modalH / 2 + 8, modalW, modalH, 28);
-
-    // Thân thẻ kính saphire đậm
-    panel.fillStyle(0x131b4d, 0.98);
-    panel.fillRoundedRect(-modalW / 2, -modalH / 2, modalW, modalH, 28);
-
-    // Viền kép ngọc băng và vàng chiêm tinh
-    panel.lineStyle(3.5, 0x7fd8ff, 0.9);
-    panel.strokeRoundedRect(-modalW / 2, -modalH / 2, modalW, modalH, 28);
-    panel.lineStyle(1.2, 0xffd23f, 0.45);
-    panel.strokeRoundedRect(-modalW / 2 + 6, -modalH / 2 + 6, modalW - 12, modalH - 12, 22);
-
-    // 3. Tiêu đề
-    const title = this.scene.add
-      .text(0, -modalH / 2 + 50, t('settings_title'), {
-        fontFamily: TYPO_TOKENS.fontFamily.display,
-        fontSize: '36px',
-        color: '#FFD23F',
-        stroke: '#22145A',
-        strokeThickness: 3,
-      })
-      .setOrigin(0.5);
-
-    // Nút đóng "X" dạng kẹo tròn 3D
-    const closeBtnBg = this.scene.add.graphics();
-    closeBtnBg.fillStyle(0x0e1438, 1.0);
-    closeBtnBg.fillCircle(modalW / 2 - 50, -modalH / 2 + 50 + 2, 28);
-    closeBtnBg.fillStyle(0x273677, 1.0);
-    closeBtnBg.fillCircle(modalW / 2 - 50, -modalH / 2 + 50, 28);
-    closeBtnBg.lineStyle(2, 0x7fd8ff, 0.9);
-    closeBtnBg.strokeCircle(modalW / 2 - 50, -modalH / 2 + 50, 28);
-
-    const closeBtn = this.scene.add
-      .image(modalW / 2 - 50, -modalH / 2 + 50, TEXTURE_KEYS.iconClose)
-      .setDisplaySize(32, 32);
-    const closeHit = this.scene.add
-      .zone(modalW / 2 - 50, -modalH / 2 + 50, 64, 64)
-      .setInteractive({ useHandCursor: true });
-    closeHit.on('pointerdown', () => this.close());
-
-    this.container.add([backdrop, panel, panelInput, title, closeBtnBg, closeBtn, closeHit]);
+    this.container = createDialogCard(this.scene, {
+      title: t('settings_title'),
+      modalW,
+      modalH,
+      depth: 150,
+      onClose: () => this.close(),
+    });
 
     // 4. Hàng chọn Ngôn ngữ (Language Switcher Row)
     this.createLanguageRow(-modalH / 2 + 126);
@@ -108,7 +59,7 @@ export class SettingsDialog {
     // Toggle 'Bóng mục tiêu' (eye) retired: the dashed outline always shows the goal.
 
     // Toggle 2: Giảm chuyển động
-    this.createToggleRow(
+    createToggleRow(this.scene, this.container, 
       -modalH / 2 + 210,
       t('setting_reduce_motion'),
       this.progressRepo.read().progress.settings.reducedMotion,
@@ -122,13 +73,13 @@ export class SettingsDialog {
     const audioSettings = this.progressRepo.read().progress.settings;
 
     // Background music: fades out and pauses when off (spec G §5.1)
-    this.createToggleRow(-modalH / 2 + 294, t('setting_music'), audioSettings.music, (on) => {
+    createToggleRow(this.scene, this.container, -modalH / 2 + 294, t('setting_music'), audioSettings.music, (on) => {
       this.progressRepo.setMusic(on);
       audio.music.setEnabled(on);
     });
 
     // Sound effects
-    this.createToggleRow(-modalH / 2 + 378, t('setting_sfx'), audioSettings.sfx, (on) => {
+    createToggleRow(this.scene, this.container, -modalH / 2 + 378, t('setting_sfx'), audioSettings.sfx, (on) => {
       this.progressRepo.setSfx(on);
       audio.sfx.setEnabled(on);
     });
@@ -136,7 +87,7 @@ export class SettingsDialog {
     // Toggle 3: Rung phản hồi — Android WebView không đáng tin ở navigator.vibrate,
     // nên hiện khi chạy native (plugin Haptics) hoặc trình duyệt có vibrate
     if (canVibrate) {
-      this.createToggleRow(
+      createToggleRow(this.scene, this.container, 
         -modalH / 2 + hapticsOffset,
         t('setting_haptics'),
         this.progressRepo.read().progress.settings.haptics,
@@ -146,11 +97,9 @@ export class SettingsDialog {
       );
     }
 
-    if (showPrivacy) {
-      this.createLinkRow(-modalH / 2 + privacyOffset, t('setting_privacy'), () => {
-        void ads.showPrivacyOptions();
-      });
-    }
+    createLinkRow(this.scene, this.container, -modalH / 2 + privacyOffset, t('setting_privacy_row'), () => {
+      new PrivacyDialog(this.scene).open();
+    });
 
     // 6. Khu vực nguy hiểm: Xóa tiến trình chơi (tách biệt dưới đáy dạng badge)
     const dangerY = -modalH / 2 + dangerOffset;
@@ -250,122 +199,6 @@ export class SettingsDialog {
     this.container.add([rowLabel, btnBg, flag, name, chevron, btnHit, divider]);
   }
 
-  /** Row that opens something else (a form) when tapped: label on the left, chevron on the right. */
-  private createLinkRow(y: number, label: string, onTap: () => void): void {
-    if (!this.container) return;
-
-    const rowLabel = this.scene.add
-      .text(-270, y, label, {
-        fontFamily: TYPO_TOKENS.fontFamily.display,
-        fontSize: '24px',
-        color: '#FFFFFF',
-        wordWrap: { width: 460, useAdvancedWrap: true },
-      })
-      .setOrigin(0, 0.5);
-    const chevron = this.scene.add
-      .text(250, y, '›', {
-        fontFamily: TYPO_TOKENS.fontFamily.display,
-        fontSize: '28px',
-        color: '#7A89B8',
-      })
-      .setOrigin(0.5);
-    const hitZone = this.scene.add.zone(0, y, 560, 84).setInteractive({ useHandCursor: true });
-    hitZone.on('pointerdown', () => {
-      playUiCue(this.scene, 'tap');
-      onTap();
-    });
-
-    const divider = this.scene.add.graphics();
-    divider.lineStyle(1, COLOR_NUMBERS.icePrimary, 0.15);
-    divider.lineBetween(-270, y + 42, 270, y + 42);
-    this.container.add([rowLabel, chevron, hitZone, divider]);
-  }
-
-  /**
-   * Công tắc gạt 3D Juicy Switch
-   */
-  private createToggleRow(
-    y: number,
-    label: string,
-    initialValue: boolean,
-    onChange: (val: boolean) => void
-  ): void {
-    if (!this.container) return;
-
-    let isChecked = initialValue;
-
-    const rowLabel = this.scene.add
-      .text(-270, y, label, {
-        fontFamily: TYPO_TOKENS.fontFamily.display,
-        fontSize: '24px',
-        color: '#FFFFFF',
-        wordWrap: { width: 420, useAdvancedWrap: true },
-      })
-      .setOrigin(0, 0.5);
-
-    // Switch Track bo tròn dày dặn
-    const trackW = 76;
-    const trackH = 42;
-    const switchX = 230;
-
-    const track = this.scene.add.graphics();
-    const thumb = this.scene.add.graphics();
-
-    const drawSwitch = () => {
-      track.clear();
-      thumb.clear();
-
-      if (isChecked) {
-        // Track màu vàng hổ phách nổi khối
-        track.fillStyle(0xffa800, 1.0);
-        track.fillRoundedRect(switchX - trackW / 2, y - trackH / 2, trackW, trackH, 16);
-        track.fillStyle(0xffd54f, 0.95);
-        track.fillRoundedRect(switchX - trackW / 2 + 2, y - trackH / 2 + 2, trackW - 4, trackH * 0.55, 14);
-        track.lineStyle(2.0, 0x3b2779, 1.0);
-        track.strokeRoundedRect(switchX - trackW / 2, y - trackH / 2, trackW, trackH, 16);
-
-        // Thumb tròn to nổi khối ở bên phải
-        const thumbX = switchX + 17;
-        thumb.fillStyle(0x140d33, 0.4);
-        thumb.fillCircle(thumbX, y + 2, 16);
-        thumb.fillStyle(0x22145a, 1.0);
-        thumb.fillCircle(thumbX, y, 16);
-        thumb.fillStyle(0xffffff, 0.75);
-        thumb.fillCircle(thumbX - 4, y - 4, 4);
-      } else {
-        // Track tối màu khi tắt
-        track.fillStyle(0x0e153b, 1.0);
-        track.fillRoundedRect(switchX - trackW / 2, y - trackH / 2, trackW, trackH, 16);
-        track.lineStyle(1.8, 0x3b4a82, 0.85);
-        track.strokeRoundedRect(switchX - trackW / 2, y - trackH / 2, trackW, trackH, 16);
-
-        // Thumb xám bạc ở bên trái
-        const thumbX = switchX - 17;
-        thumb.fillStyle(0x6d7ca8, 1.0);
-        thumb.fillCircle(thumbX, y, 16);
-        thumb.fillStyle(0xffffff, 0.5);
-        thumb.fillCircle(thumbX - 4, y - 4, 4);
-      }
-    };
-
-    drawSwitch();
-
-    const hitZone = this.scene.add
-      .zone(0, y, 560, 84)
-      .setInteractive({ useHandCursor: true });
-
-    hitZone.on('pointerdown', () => {
-      isChecked = !isChecked;
-      drawSwitch();
-      onChange(isChecked);
-      playUiCue(this.scene, 'tap');
-    });
-
-    const divider = this.scene.add.graphics();
-    divider.lineStyle(1, COLOR_NUMBERS.icePrimary, 0.15);
-    divider.lineBetween(-270, y + 42, 270, y + 42);
-    this.container.add([rowLabel, track, thumb, hitZone, divider]);
-  }
 
   /**
    * Hộp thoại xác nhận 2 bước cho thao tác xóa tiến trình nguy hiểm

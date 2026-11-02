@@ -61,6 +61,7 @@ export class SceneDirector<K extends string, R extends string, M extends string>
   private outDone = false;
   private inDone = false;
   private pendingEnable: K | null = null;
+  private trace: ((from: K, to: K, route: R) => void) | null = null;
 
   constructor(config: DirectorConfig<K, R, M>) {
     this.config = config;
@@ -73,6 +74,11 @@ export class SceneDirector<K extends string, R extends string, M extends string>
 
   setMusic(music: Pick<MusicPort, 'setTrack'>): void {
     this.music = music;
+  }
+
+  /** Gọi mỗi lần một chuyển cảnh thật sự bắt đầu (vd. ghi breadcrumb cho crash reporter). Lỗi trong hàm này bị nuốt. */
+  setTrace(trace: ((from: K, to: K, route: R) => void) | null): void {
+    this.trace = trace;
   }
 
   isTransitioning(): boolean {
@@ -93,6 +99,11 @@ export class SceneDirector<K extends string, R extends string, M extends string>
     this.music?.setTrack(this.config.trackFor(to), timing.sceneSwapFadeMs, timing.sceneSwapGapMs);
 
     const fromKey = fromScene.directorKey;
+    try {
+      this.trace?.(fromKey, to, ctx.route);
+    } catch {
+      // trace chỉ để chẩn đoán, không được làm hỏng chuyển cảnh
+    }
     const fullCtx: TransitionContext<K, R> = { ...ctx, from: fromKey };
     const reduced = isReducedMotion();
     this.begin(fromKey, to);

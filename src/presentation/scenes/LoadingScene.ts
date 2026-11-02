@@ -17,6 +17,10 @@ import { getChapterTagline, getChapterVerses, t } from '../i18n.ts';
 import { mulberry32 } from '../sky/starField.ts';
 import { isReducedMotion, scaleTiming } from '../transitions/motion.ts';
 import { director } from '../transitions/director.ts';
+import { privacyServices } from '../privacyServices.ts';
+import { LEGAL_VERSION } from '../legal/legalVersion.ts';
+import { closeLegalAcceptance, isLegalAcceptanceOpen, openLegalAcceptance } from '../legal/legalAcceptance.ts';
+import { isLegalDocumentOpen } from '../legal/legalViewer.ts';
 
 // Stays up at least this long even when everything is loaded. The bar then
 // runs, hesitates and runs again (see `pacedProgress`), which reads as real work and a smooth game.
@@ -63,6 +67,8 @@ export class LoadingScene extends Phaser.Scene {
   /** Same for vertical positions. The mockup is 844 CSS px tall; the design view is 1280 on 9:16 and taller on long phones. */
   private ky = 1;
   private leaving = false;
+  private awaitingLegal = false;
+  private barTrack!: Phaser.GameObjects.Graphics;
   private jewel!: Phaser.GameObjects.Container;
   private jewelShadow!: Phaser.GameObjects.Ellipse;
   private spinClock = 0;
@@ -93,6 +99,7 @@ export class LoadingScene extends Phaser.Scene {
     this.k = view.width / 390;
     this.ky = view.height / 844;
     this.leaving = false;
+    this.awaitingLegal = false;
     this.swapping = false;
     this.visible = false;
     this.spinClock = 0;
@@ -114,8 +121,11 @@ export class LoadingScene extends Phaser.Scene {
     this.buildBar(view);
     this.buildVersion(view);
 
-    this.input.on('pointerdown', () => this.swapFact());
+    const swapFact = (): void => this.swapFact();
+    this.input.on('pointerdown', swapFact);
     this.events.once('shutdown', () => {
+      closeLegalAcceptance();
+      this.input.off('pointerdown', swapFact);
       for (const key of TEXTURE_KEYS) if (this.textures.exists(key)) this.textures.remove(key);
     });
 
@@ -153,9 +163,37 @@ export class LoadingScene extends Phaser.Scene {
   update(_time: number, delta: number): void {
     if (!this.visible) return;
     const state = this.progress.tick(delta);
-    this.renderBar(state.percent);
+    if (!this.awaitingLegal) this.renderBar(state.percent);
     this.renderJewel(delta);
-    if (state.done && !this.leaving) this.leave();
+    if (state.done && !this.leaving) {
+      if (privacyServices(this).choices?.acceptedLegalVersion() === LEGAL_VERSION) this.leave();
+      else if (!this.awaitingLegal) this.showLegalEntry();
+    }
+  }
+
+  private showLegalEntry(): void {
+    this.awaitingLegal = true;
+    for (const object of [this.barTrack, this.barFill, this.barTip, this.percentText]) object.setVisible(false);
+    const enter = this.add.text(195 * this.k, 712 * this.ky, t('loading_tap_to_enter'), {
+      fontFamily: TYPO_TOKENS.fontFamily.display,
+      fontSize: `${20 * this.k}px`,
+      fontStyle: 'bold',
+      color: '#22145A',
+      backgroundColor: '#FFD54F',
+      padding: { x: 24 * this.k, y: 14 * this.k },
+    }).setOrigin(0.5).setDepth(5).setInteractive({ useHandCursor: true });
+    enter.on('pointerdown', (_pointer: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
+      event.stopPropagation();
+      if (this.leaving) return;
+      const { choices, offered } = privacyServices(this);
+      openLegalAcceptance(() => {
+        if (!choices || this.leaving) return;
+        choices.set(Object.fromEntries(offered.map(purpose => [purpose, true])));
+        choices.acceptLegal(LEGAL_VERSION);
+        enter.disableInteractive();
+        this.leave();
+      }, offered);
+    });
   }
 
   /** Galaxy art goes through the Phaser loader; progress and failures feed the `galaxy` task. */
@@ -356,7 +394,7 @@ export class LoadingScene extends Phaser.Scene {
 
   /** Tap anywhere: cross-fade to the next fact (125 ms out, 125 ms in). A tap never delays leaving. */
   private swapFact(): void {
-    if (this.leaving || this.swapping || !this.deck || !this.factText) return;
+    if (this.leaving || this.swapping || isLegalAcceptanceOpen() || isLegalDocumentOpen() || !this.deck || !this.factText) return;
     const fact = this.factText;
     const next = this.deck.next();
     const apply = (): void => {
@@ -386,7 +424,7 @@ export class LoadingScene extends Phaser.Scene {
     const y = 700 * this.ky;
     const h = 6 * k;
 
-    const track = this.add.graphics().setDepth(2);
+    const track = this.barTrack = this.add.graphics().setDepth(2);
     track.fillStyle(0xffffff, 0.14);
     track.fillRoundedRect(this.barX, y, this.barW, h, 3 * k);
 

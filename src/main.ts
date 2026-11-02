@@ -4,6 +4,7 @@ import { Capacitor } from '@capacitor/core';
 import { AdMob } from '@capacitor-community/admob';
 import { createAdMobDriver, resolveAdMobConfig } from './engine/core/platform/admobDriver.ts';
 import { ADS_REGISTRY_KEY } from './presentation/adsServices.ts';
+import { PRIVACY_REGISTRY_KEY } from './presentation/privacyServices.ts';
 import { BackgroundScene } from './presentation/scenes/BackgroundScene.ts';
 import { LoadingScene } from './presentation/scenes/LoadingScene.ts';
 import { MenuScene } from './presentation/scenes/MenuScene.ts';
@@ -12,6 +13,14 @@ import { LevelSelectScene } from './presentation/scenes/LevelSelectScene.ts';
 import { FixtureScene } from './presentation/scenes/FixtureScene.ts';
 import { setupAndroidLifecycle } from './engine/core/platform/lifecycle.ts';
 import { createPlatformServices, installGlobalErrorHandlers } from './engine/core/platform/platformServices.ts';
+import { createSentryCrashDriver, type ConsentGate } from './engine/core/platform/sentryCrashDriver.ts';
+import { selectAnalyticsDriver } from './infrastructure/analyticsSetup.ts';
+import { dismissTopLegalOverlay } from './presentation/legal/legalOverlay.ts';
+import { installCrashTest } from './devtools/crashTest.ts';
+import { APP_VERSION } from './appVersion.ts';
+import { createPrivacyChoices, type PrivacyPurpose } from './application/privacyChoices.ts';
+import { LevelTracker } from './application/levelTracker.ts';
+import { LEVEL_TRACKER_REGISTRY_KEY } from './presentation/levelTracking.ts';
 import { createProgressRepository } from './infrastructure/progressRepository.ts';
 import { getSafeStorage, memoryStorage } from './engine/core/platform/safeStorage.ts';
 import { campaignManifest } from './content/manifest.ts';
@@ -32,16 +41,58 @@ import type { AudioServices } from './presentation/audio/audioServices.ts';
 import { AUDIO_TOKENS } from './presentation/designTokens.ts';
 import './style.css';
 
-// Quảng cáo chỉ có trên app native (AdMob). Web và test: no-op. Crash/analytics chưa gắn SDK:
-// gắn Sentry/CrazyGames bằng cách truyền driver vào đây.
+// Quảng cáo chỉ có trên app native (AdMob). Web và test: no-op.
 const adMobConfig = Capacitor.isNativePlatform() ? resolveAdMobConfig(import.meta.env) : null;
 if (Capacitor.isNativePlatform() && !adMobConfig) {
   console.warn('[ads] VITE_ADMOB_USE_TEST_ADS=false nhưng thiếu VITE_ADMOB_BANNER_ID / VITE_ADMOB_REWARDED_ID: tắt quảng cáo');
 }
+const privacy = createPrivacyChoices(getSafeStorage() ?? memoryStorage);
+// Không có DSN thì không có driver: mọi lệnh là no-op, game chạy y như chưa gắn SDK.
+// Dev server không gửi lỗi lên Sentry (tránh nhiễu và tốn quota), trừ khi đặt VITE_SENTRY_DEV=true để thử.
+const sentryDsn =
+  !import.meta.env.DEV || import.meta.env.VITE_SENTRY_DEV === 'true' ? import.meta.env.VITE_SENTRY_DSN : undefined;
+const analyticsSelection = selectAnalyticsDriver({
+  gameKey: import.meta.env.VITE_GA_GAME_KEY,
+  secretKey: import.meta.env.VITE_GA_SECRET_KEY,
+  isNative: Capacitor.isNativePlatform(),
+  isDev: import.meta.env.DEV,
+  build: APP_VERSION,
+  privacy,
+});
+/** Mục có trong bản build này; dialog Privacy chỉ hiện những mục này. */
+const offeredPurposes: PrivacyPurpose[] = [
+  ...(analyticsSelection.requiresConsent ? (['analytics'] as const) : []),
+  ...(sentryDsn ? (['diagnostics'] as const) : []),
+  ...(adMobConfig ? (['ads'] as const) : []),
+];
+const diagnosticsGate: ConsentGate = {
+  enabled: () => privacy.get().diagnostics,
+  onChange: (listener) => privacy.onChange((state) => listener(state.diagnostics)),
+};
 const platform = createPlatformServices({
-  ads: adMobConfig ? createAdMobDriver(AdMob, adMobConfig) : null,
+  ads: adMobConfig ? createAdMobDriver(AdMob, { ...adMobConfig, personalizedAds: () => privacy.get().ads }) : null,
+  crash: sentryDsn
+    ? createSentryCrashDriver(
+        {
+          dsn: sentryDsn,
+          release: APP_VERSION,
+          environment: import.meta.env.MODE,
+          appOrigin: window.location.origin,
+          tags: { platform: Capacitor.getPlatform(), native: String(Capacitor.isNativePlatform()) },
+        },
+        undefined,
+        diagnosticsGate
+      )
+    : null,
+  analytics: analyticsSelection.driver,
 });
 installGlobalErrorHandlers(window, platform.crash);
+const levelTrackerService = new LevelTracker(platform.analytics, Date.now, platform.crash);
+window.addEventListener('pagehide', () => {
+  levelTrackerService.leave('app-exit');
+  platform.analytics.flush();
+});
+if (import.meta.env.DEV) installCrashTest(window, platform.crash);
 
 const launch = resolveLaunch(window.location.search, import.meta.env.DEV);
 
@@ -129,10 +180,17 @@ export async function startGame(options: StartGameOptions = {}): Promise<void> {
   // Splash and first paint use chapter I; Menu, Map and Play switch it afterwards.
   setPcBackground(1);
   await waitForFonts();
+  // Khởi tạo GA ngay nếu đã đồng ý (SDK bỏ sự kiện gửi trước khi phiên mở).
+  analyticsSelection.warmUp?.();
 
   // BackgroundScene đứng đầu nên tự khởi động và luôn vẽ dưới cùng; các scene
   // khác chỉ chạy khi SceneDirector gọi.
   const game = new Phaser.Game({
+    callbacks: {
+      preBoot: (game) => {
+        game.registry.set(PRIVACY_REGISTRY_KEY, { choices: privacy, offered: offeredPurposes });
+      },
+    },
     type: Phaser.AUTO,
     parent: 'game',
     disableContextMenu: true,
@@ -150,6 +208,8 @@ export async function startGame(options: StartGameOptions = {}): Promise<void> {
     scene: [BackgroundScene, LoadingScene, MenuScene, PlayScene, LevelSelectScene, FixtureScene],
   });
 
+  game.registry.set(LEVEL_TRACKER_REGISTRY_KEY, levelTrackerService);
+
   if (import.meta.env.DEV) {
     (window as unknown as { __GAME__?: Phaser.Game }).__GAME__ = game;
   }
@@ -160,6 +220,7 @@ export async function startGame(options: StartGameOptions = {}): Promise<void> {
 
   director.setHost(new PhaserSceneHost(game));
   director.setMusic(music);
+  director.setTrace((from, to, route) => platform.crash.breadcrumb(`scene ${from} > ${to} (${route})`));
 
   game.events.once('ready', () => {
     const webAudio = (game.sound as Phaser.Sound.WebAudioSoundManager).context as
@@ -227,6 +288,7 @@ export async function startGame(options: StartGameOptions = {}): Promise<void> {
 
   setupAndroidLifecycle({
     onHardwareBack: () => {
+      if (dismissTopLegalOverlay()) return;
       if (director.isTransitioning()) {
         director.skip();
         return;

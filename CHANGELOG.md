@@ -4,6 +4,54 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Changed (Agree enables offered privacy purposes)
+- Agree now enables every offered optional privacy purpose before accepting legal version `2026-11-04`; closing changes nothing, and each purpose can still be turned off in Settings, under Privacy.
+- Updated the notice in all ten locales, showing the optional-purpose sentence only when at least one purpose is offered.
+
+### Changed (loading terms acceptance and legal viewer)
+- The first loading screen now waits for agreement to legal version `2026-11-03`; optional statistics, error reports and personalised ads retain their saved choices and default to off.
+- Added a plain, offline Privacy Policy and Terms viewer (Vietnamese or English), accessible from the acceptance popup and Settings, with focus handling and Escape/Android Back dismissal.
+- Removed the pre-game privacy consent screen and its unused strings; the new loading step and notice are translated into all ten locales.
+
+### Added (legal documents)
+- `legal/privacy.vi.md`, `legal/privacy.en.md` (Privacy Policy v3, exported from the working draft) and `legal/terms.vi.md`, `legal/terms.en.md` (Terms of Service for Nozvi: publisher Nozvi, Vietnamese law, Ho Chi Minh City courts, no in-app purchase section, consumer-law carve-outs, Vietnamese prevails for users in Vietnam). Single source for the in-game viewer and the future public pages.
+
+### Added (keep ID before withdrawing statistics)
+- Turning off gameplay statistics now asks for confirmation and shows the full current ID with Copy, so players can keep it for a later deletion request.
+- Confirming creates a new ID and refreshes the Privacy ID row; cancelling keeps statistics and the current ID unchanged. Available in all ten locales.
+
+### Changed (consent buttons)
+- Shortened the first-launch buttons to Accept / Reject in all ten locales; Reject uses the dark candy palette on the left, while Accept keeps yellow on the right, with shared sizing and typography.
+
+### Added (personalised ads consent)
+- Android builds with AdMob now offer personalised ads consent; Accept and play includes it, while Reject and play keeps ads non-personalised.
+- Settings, under Privacy, has a Personalised ads toggle above Ad choices; banner and rewarded requests read the current choice and set `npa` when it is off.
+- Privacy storage uses `nozvi.privacy.v3` to ask everyone again; withdrawing ads leaves the statistics ID unchanged. Consent text is available in all ten locales.
+
+### Changed (privacy consent screen)
+- The first-launch privacy screen now has exactly two equal buttons, "Reject and play" and "Accept and play" (same size and style, the game's yellow candy button), on a card styled like the in-game dialogs. The "Options" panel and its switches are gone from this screen; choosing each service separately is done in Settings, under Privacy. Bullets list only the services in this build (web: error reports only). New keys `privacy_reject_play`, `privacy_accept_play`, `privacy_bullet_play/analytics/diagnostics`, `privacy_settings_hint` in all ten locales; `privacy_intro`, `privacy_options`, `privacy_save`, `privacy_accept_all`, `privacy_reject_all` removed. The word "anonymous" is no longer used (the statistics ID makes the data pseudonymous).
+
+### Fixed (privacy consent)
+
+- Sentry: if the SDK finished loading after the 8 s start timeout, withdrawing consent did not close it and it kept sending. The driver now tracks the instance that actually ran `init` and closes it on withdrawal.
+- GameAnalytics: same pattern when the SDK took longer than the ready timeout; withdrawal now turns event submission off on the initialized SDK.
+- Policy link: the first-launch screen and the Privacy dialog open it through `openExternal` (new window, `noopener`); the boot screen anchor no longer lets the WebView navigate away.
+- Reading the saved privacy record failing no longer overwrites it; the Copy ID row shows "Copied" after a successful copy.
+
+### Changed (privacy consent)
+- Consent is now per service and optional: a first-launch screen offers "Reject all" / "Accept all" (equal buttons) and "Options" with one switch per service in this build (Android: gameplay statistics via GameAnalytics and error reports via Sentry; web: error reports only). Declining never blocks play. Choices live in `PrivacyChoices` (`application/privacyChoices.ts`, key `nozvi.privacy.v2`); the old `nozvi.analytics.consent.v1` choice is ignored, so everyone is asked again.
+- Sentry starts only with diagnostics consent (`ConsentGate` in `sentryCrashDriver.ts`); withdrawing calls `close()` and later calls are no-ops; turning it on again re-initialises.
+- GameAnalytics uses a game-owned random user ID (`configureUserId`). Withdrawing stops submission, deletes the SDK's unsent-event store (`GA::<key>::ga_event`, `ga_session`, `ga_progression`, `ga_items`) and creates a new ID. Turning statistics back on in the same session takes effect from the next launch (the SDK cannot change user ID while running).
+- Settings: the EEA/UK-only "Privacy settings" row is replaced by an always-visible "Privacy" row opening `PrivacyDialog` (switches, "Ad choices" for UMP in EEA/UK, the shortened user ID with Copy, Privacy Policy link from `VITE_PRIVACY_POLICY_URL`).
+- New `privacy_*` strings in all ten locales; `setting_privacy` replaced by `setting_privacy_row`.
+
+### Changed (crash reporting, Sentry)
+- Crash guard (`createCrashReporter`): each error (same source, name, message and first stack line) is reported once per session instead of once per 60 s window, and a session sends at most 30 reports (`maxPerSession`) on top of 10 per minute. A loop error in `update` that ran for 20 minutes used to send 20 reports; now it sends 1.
+- Sentry init (`sentryCrashDriver.ts`): `maxBreadcrumbs` 30; `ignoreErrors` for known noise (`ResizeObserver loop`, `Non-Error promise rejection captured`, `Script error.`); `denyUrls` for browser extension scripts; `beforeBreadcrumb` drops click/input, fetch/xhr (SDK traffic, may expose URLs) and `console.log` (keeps warn/error); `beforeSend` drops events whose stack has frames but none from the game origin (`appOrigin`, set to `window.location.origin`).
+- Game breadcrumbs: scene changes (`SceneDirector.setTrace`, wired in `main.ts`), `level_complete` / `level_abandon` (`LevelTracker`), and the stuck-hint ad start and outcome (`LevelTracker.note`).
+- The dev server no longer sends to Sentry even with `VITE_SENTRY_DSN` set; set `VITE_SENTRY_DEV=true` in `.env.local` to try it with `__crashTest`.
+- No offline queue on purpose: events raised while offline are dropped (decided 2026-11-01; revisit if Sentry user counts look low next to GA / Play Console).
+
 ### Changed (engine extraction, phases 0 and 1)
 - Game-independent runtime moved to `src/engine/core/`: platform services and drivers, `music`/`sfx` (string ids), `audio-synth`, boot helpers, viewport maths, `TransitionTimeline`, a generic `SceneDirector`, and a generic `Localization` engine. No behaviour change.
 - `SceneDirector` is now generic and takes a `DirectorConfig`; Mirror's instance, keys and routes live in `src/presentation/transitions/director.ts`. Import `director` from there.
@@ -80,6 +128,13 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 - `AUDIO_TOKENS.maxVoices` 6 to 12: ringing notes and the victory run overlap.
 
 ### Added
+- Sentry tags and source maps: every event carries `platform` and `native` (set at init) and `level`, `chapter`, `mode` (set by `LevelTracker.start`, plus a `level_start` breadcrumb). `vite.config.ts` now uses `@sentry/vite-plugin` (dev dependency): only when `SENTRY_AUTH_TOKEN` is set in the shell (with `SENTRY_ORG`, `SENTRY_PROJECT`) it builds hidden source maps, uploads them under release `package.json` version and deletes every `.map` from `dist`, so the APK and web bundle still ship none. Without the token nothing changes. A failed upload does not fail the build.
+- GameAnalytics driver (`infrastructure/gameAnalyticsDriver.ts`, `gameAnalyticsSdk.ts`, `analyticsSetup.ts`): `level_start`, `level_complete` and `level_abandon` go out as progression events (`chapter<N>` / level id; `Complete` carries the stars as score, `Fail` is used for an abandoned level) plus design events `Complete:Moves:<levelId>`, `Complete:Resets:<levelId>` and `Abandon:<levelId>`. Active only in the native Android app and only with both `VITE_GA_GAME_KEY` and `VITE_GA_SECRET_KEY` set; the SDK (`gameanalytics` 5.0.0) is a separate chunk loaded only after consent, and is never loaded when the keys are unset. The SDK drops events sent before its session starts, so it is initialised right after consent (`warmUp`) and the driver waits for `isSdkReady` (up to 10 s) before sending. SDK or network failures never reach the game.
+- Placeholder analytics consent (`infrastructure/analyticsConsent.ts`, `presentation/consent/consentGate.ts`): when GameAnalytics is active the game shows one question with an **Đồng ý** button on first launch and does not start until the player agrees; the choice is stored. Final UI, wording and localisation are still to do.
+- Level tracking: `LevelTracker` (`application/levelTracker.ts`) counts moves, rotations and resets in memory and sends only `level_start`, `level_complete` (time, stars, counts) and `level_abandon` (time, counts, reason) through `AnalyticsPort`, so the 100-event queue never drops `level_start`. One closing event per run; a second `start` closes the previous run as abandoned. Campaign and endless are tracked (endless ids are `endless-<chapter>-<number>` because pool ids repeat); harness runs are not. `main.ts` registers the tracker in the Phaser registry (`presentation/levelTracking.ts`) and reports `app-exit` on `pagehide`. `TelemetryEvent` gained `chapter`, `mode`, `moveCount`, `rotateCount` and the `level_abandon` type. No driver yet, so nothing is sent.
+- Sentry crash reporting (web), opt-in: set `VITE_SENTRY_DSN` in `.env.local` (git-ignored). Without it nothing is bundled or sent. `@sentry/browser` loads through a dynamic `import()` into its own chunk and initialises in the background (`initInBackground`, 8 s timeout), so a blocked or hung SDK never delays boot. Sentry's own GlobalHandlers are off; errors go through `installGlobalErrorHandlers` once. `sendDefaultPii` is off.
+- Crash reporter guards: max 10 reports and 100 breadcrumbs per 60 s, duplicate reports dropped, re-entrant `capture` blocked. Analytics `track` only queues (max 100, flushed in batches after 2 s, and on `pagehide`).
+- Dev-only crash test: `window.__crashTest('capture' | 'throw' | 'reject')` (not in release builds).
 - Sounds `kalimba` (short) and `kalimba-ring` (about 3.5 s) in `content/audio/sources/`; cue tokens `place`, `victoryNote`, `victoryEnd`, `victoryStepMs`, `victoryChordGapMs`, `echo`, `echoDelayMs`.
 - Pause dialog: Background Music and Sound Effects switches under the title (same settings as the Settings dialog); Resume stands alone and Restart / Level Select share one row. The Language picker is also in Pause (`onLanguageChange`). Hidden when `audio` is not passed.
 - Tutorial 1-1: a new first step (now 3 steps) that spotlights the time bar and stars with a pulsing frame; tap the card to continue. The clock starts on the first press, so reading it costs no time. New keys `tutorial_time_title/body/chip` in all ten locales; `tutorial_drag_body` is back to its original text.
