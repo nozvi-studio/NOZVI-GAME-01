@@ -4,6 +4,10 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Added (Android release signing)
+- `android/app/build.gradle` signs release builds with the upload key named in `android/keystore.properties` (git-ignored; template `android/keystore.properties.example`). Without that file, release builds stay unsigned and debug builds are unchanged.
+- `android/.gitignore` now ignores `*.jks`, `*.keystore` and `keystore.properties`. The upload key lives outside the repo (`NOZVI-KEY/nozvi-upload.jks`, one upload key per game); Play App Signing is to be turned on so Google holds the app signing key.
+
 ### Changed (Agree enables offered privacy purposes)
 - Agree now enables every offered optional privacy purpose before accepting legal version `2026-11-04`; closing changes nothing, and each purpose can still be turned off in Settings, under Privacy.
 - Updated the notice in all ten locales, showing the optional-purpose sentence only when at least one purpose is offered.
