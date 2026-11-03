@@ -4,6 +4,11 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Changed (licensed background music)
+- Replaced `music-sky.ogg` and `music-stele.ogg` with `music-sky.m4a` and `music-stele.m4a` made with a Suno Pro plan; the old files were moved out of the repo.
+- `audioManifest.ts` points both tracks at the `.m4a` files and records their licence as `Suno-Pro-Commercial` (new `AudioLicense` value) instead of `CC0-1.0`.
+- Rebuilt the Android debug APK and the signed release AAB from `release/v1.0.0` (2026-11-03).
+
 ### Changed (legal documents ready for production)
 - Privacy Policy and Terms of Service (vi, en) share one layout: "Nozvi" titles, a single effective date (3 November 2026), an at-a-glance summary, the language clause in the updates section, and publisher address in Terms.
 - Removed internal comments, version lines and the version history table; Privacy now links to the Terms.

@@ -51,7 +51,7 @@ Facts from the code to answer the questionnaires truthfully:
 - Puzzle game, no violence, no gambling, no user-generated content, no chat/social features, no ads, no IAP, no login.
 - Permissions: only `INTERNET` (Capacitor default); the game works offline.
 - Data: progress, settings and the optional local playtest log (`nozvi.playtest.v1`) stay on the device (`localStorage`); no network telemetry found. `LocalPlaytestRecorder` is not wired into any scene in `src`, to be confirmed with the leader.
-- Third-party content: audio credits point to suno.com (check the licence allows commercial release).
+- Third-party content: background music (`music-sky.m4a`, `music-stele.m4a`) was made with a Suno Pro plan, which grants commercial use; licence recorded as `Suno-Pro-Commercial` in `audioManifest.ts` (2026-11-03). Keep proof of the Pro plan at creation time.
 - Target audience / "designed for children" and the final answers are a product decision.
 
 To do (console, not possible from the repo): complete Play Console IARC questionnaire and App Store Connect age rating; screenshot the resulting ratings; make the Data safety form say "no data collected" only if that stays true.
