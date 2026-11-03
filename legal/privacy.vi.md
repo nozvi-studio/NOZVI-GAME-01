@@ -1,13 +1,8 @@
 # Chính sách quyền riêng tư của Nozvi
 
-<!--
-Nguồn gốc: tab "Tiếng Việt (v3)" của tài liệu Claude Docs "Nozvi – Chính sách quyền riêng tư", xuất ngày 03/11/2026.
-Giữ đồng bộ với privacy.en.md. Ghi chú trong khối này là nội bộ, không hiển thị trong game hay trên web.
--->
+**Ngày hiệu lực:** 03/11/2026
 
-**Cập nhật lần cuối:** 02/11/2026 · **Phiên bản:** 3.0
-
-Cảm ơn bạn đã chơi Nozvi. Chính sách này giải thích chúng tôi thu thập dữ liệu nào khi bạn chơi Nozvi trên Android hoặc trên web (gọi chung là **"Trò chơi"**), vì sao chúng tôi cần dữ liệu đó, ai được nhận, và bạn kiểm soát nó như thế nào.
+Cảm ơn bạn đã chơi Nozvi. Chính sách này giải thích chúng tôi thu thập dữ liệu nào khi bạn chơi Nozvi trên Android hoặc trên web (gọi chung là **"Trò chơi"**), vì sao chúng tôi cần dữ liệu đó, ai được nhận, và bạn kiểm soát nó như thế nào. Việc bạn sử dụng Trò chơi còn chịu sự điều chỉnh của Điều khoản Dịch vụ của chúng tôi.
 
 **Tóm tắt nhanh**
 
@@ -23,7 +18,7 @@ Trò chơi do **Nozvi** ("**chúng tôi**") phát hành. Chúng tôi là bên ki
 
 - **Địa chỉ:** B12.18 tầng 12 tòa B, Central Premium, 854-856 Tạ Quang Bửu, Phường Chánh Hưng, TP Hồ Chí Minh, Việt Nam
 - **Email về quyền riêng tư:** support@alpaca-solutions.com
-- **Người phụ trách bảo vệ dữ liệu:** Ruan-Khanh
+- **Người phụ trách bảo vệ dữ liệu:** Nozvi
 
 Bạn có thể liên hệ với chúng tôi về bất kỳ câu hỏi nào liên quan đến chính sách này hoặc để thực hiện các quyền nêu ở mục 10.
 
@@ -217,12 +212,6 @@ Trường hợp phức tạp, chúng tôi có thể gia hạn một lần và s�
 ## 11. Chúng tôi cập nhật chính sách này thế nào?
 
 Chúng tôi có thể cập nhật chính sách khi Trò chơi, các dịch vụ bên thứ ba hoặc pháp luật thay đổi. Phiên bản mới có hiệu lực từ ngày ghi ở đầu trang. Nếu thay đổi ảnh hưởng đáng kể đến quyền của bạn hoặc cần sự đồng ý của bạn, Trò chơi sẽ thông báo và hỏi lại.
-
-**Lịch sử phiên bản**
-
-| Phiên bản | Ngày hiệu lực | Thay đổi chính |
-| --- | --- | --- |
-| 3.0 | 03/11/2026 | Bản đầu tiên được công bố |
 
 Chính sách này có bản tiếng Việt và tiếng Anh. Nếu có khác biệt, bản tiếng Việt được ưu tiên áp dụng đối với người dùng tại Việt Nam, và bản tiếng Anh đối với người dùng ở nơi khác.
 

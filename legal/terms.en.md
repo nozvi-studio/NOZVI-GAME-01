@@ -1,16 +1,19 @@
-# Terms of Service
-
-<!--
-Shared template for Nozvi games, filled in for Nozvi (English version of terms.vi.md).
-Keep in sync with the Vietnamese version and with the Privacy Policy (privacy.en.md).
-Notes inside this block are internal and are never shown in the game or on the web.
--->
+# Nozvi Terms of Service
 
 **Effective date:** 3 November 2026
+
+**At a glance**
+
+- Nozvi grants you a personal, non-commercial licence to play the Game; the Game itself remains ours.
+- Please play fairly: no cheats, modified versions or copying of Game content.
+- The Game shows ads; how data is used is explained in our Privacy Policy.
+- The Game is provided "as is", and these Terms are governed by Vietnamese law.
 
 ## 1. Acceptance of the Terms
 
 These Terms of Service ("Terms") govern your use of the game Nozvi and all related updates, content and services (together, the "Game"), published by Nozvi ("Nozvi", "we", "us"). By downloading, installing or playing the Game, you agree to these Terms and confirm that you have read our Privacy Policy. Processing that needs your consent (such as gameplay statistics, error reports and personalised ads) is asked for separately in the Game, as described in the Privacy Policy. If you do not agree to these Terms, please do not install or use the Game.
+
+The Game is published by **Nozvi** ("**we**"), B12.18, 12th floor, Block B, Central Premium, 854-856 Ta Quang Buu, Chanh Hung Ward, Ho Chi Minh City, Vietnam. Contact details are in section 17.
 
 If you are under the age of majority where you live, you may use the Game only with the consent of a parent or legal guardian, who agrees to these Terms on your behalf.
 
@@ -85,6 +88,8 @@ We may suspend or terminate your right to use the Game if you breach these Terms
 
 We may update these Terms from time to time. Updates will be posted in the Game and wherever the Terms are published, with a new effective date. For significant changes we will give reasonable advance notice. If you continue to use the Game after a change takes effect, you accept the change.
 
+These Terms are available in Vietnamese and English. If they differ, the Vietnamese version prevails for users in Vietnam and the English version for users elsewhere.
+
 ## 15. Governing law and disputes
 
 These Terms are governed by the laws of the Socialist Republic of Vietnam. The parties will first try to resolve any dispute through negotiation; if that fails, the dispute will be settled by the competent court in Ho Chi Minh City, Vietnam, unless mandatory law where you live allows you to bring proceedings locally.
@@ -95,6 +100,7 @@ If any provision of these Terms is found unenforceable, it will be limited to th
 
 ## 17. Contact
 
-For any question about these Terms, contact: support@alpaca-solutions.com
+For any question about these Terms, contact Nozvi:
 
-These Terms are available in Vietnamese and English. If they differ, the Vietnamese version prevails for users in Vietnam and the English version for users elsewhere.
+- **Address:** B12.18, 12th floor, Block B, Central Premium, 854-856 Ta Quang Buu, Chanh Hung Ward, Ho Chi Minh City, Vietnam
+- **Email:** support@alpaca-solutions.com

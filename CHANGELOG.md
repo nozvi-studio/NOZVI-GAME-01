@@ -4,6 +4,10 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Changed (legal documents ready for production)
+- Privacy Policy and Terms of Service (vi, en) share one layout: "Nozvi" titles, a single effective date (3 November 2026), an at-a-glance summary, the language clause in the updates section, and publisher address in Terms.
+- Removed internal comments, version lines and the version history table; Privacy now links to the Terms.
+
 ### Added (Android release signing)
 - `android/app/build.gradle` signs release builds with the upload key named in `android/keystore.properties` (git-ignored; template `android/keystore.properties.example`). Without that file, release builds stay unsigned and debug builds are unchanged.
 - `android/.gitignore` now ignores `*.jks`, `*.keystore` and `keystore.properties`. The upload key lives outside the repo (`NOZVI-KEY/nozvi-upload.jks`, one upload key per game); Play App Signing is to be turned on so Google holds the app signing key.
