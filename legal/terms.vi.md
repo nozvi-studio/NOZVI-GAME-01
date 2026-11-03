@@ -1,16 +1,19 @@
-# Điều khoản Dịch vụ
-
-<!--
-Mẫu dùng chung cho các game của Nozvi, đã điền cho Nozvi (bản tiếng Việt của terms.en.md).
-Giữ nội dung đồng bộ với bản tiếng Anh và với Chính sách Quyền riêng tư (privacy.vi.md).
-Ghi chú trong khối này là nội bộ, không hiển thị trong game hay trên web.
--->
+# Điều khoản Dịch vụ của Nozvi
 
 **Ngày hiệu lực:** 03/11/2026
+
+**Tóm tắt nhanh**
+
+- Nozvi cấp cho bạn quyền chơi Game cho mục đích cá nhân, phi thương mại; Game vẫn thuộc sở hữu của chúng tôi.
+- Hãy chơi công bằng: không gian lận, không dùng bản sửa đổi, không sao chép nội dung Game.
+- Game có hiển thị quảng cáo; cách dữ liệu được sử dụng được giải thích trong Chính sách Quyền riêng tư.
+- Game được cung cấp "nguyên trạng" và Điều khoản này chịu sự điều chỉnh của pháp luật Việt Nam.
 
 ## 1. Chấp thuận Điều khoản
 
 Điều khoản Dịch vụ này ("Điều khoản") điều chỉnh việc bạn sử dụng trò chơi Nozvi cùng mọi bản cập nhật, nội dung và dịch vụ liên quan (gọi chung là "Game"), do Nozvi ("Nozvi", "chúng tôi") phát hành. Khi tải xuống, cài đặt hoặc chơi Game, bạn đồng ý với Điều khoản này và xác nhận đã đọc Chính sách Quyền riêng tư của chúng tôi. Việc xử lý dữ liệu cần sự đồng ý của bạn (như thống kê cách chơi, báo lỗi và quảng cáo cá nhân hóa) được hỏi riêng trong Game, theo Chính sách Quyền riêng tư. Nếu không đồng ý với Điều khoản này, vui lòng không cài đặt hoặc sử dụng Game.
+
+Game do **Nozvi** ("**chúng tôi**") phát hành, địa chỉ: B12.18 tầng 12 tòa B, Central Premium, 854-856 Tạ Quang Bửu, Phường Chánh Hưng, TP Hồ Chí Minh, Việt Nam. Thông tin liên hệ xem tại mục 17.
 
 Nếu bạn chưa đủ tuổi thành niên theo pháp luật nơi bạn sinh sống, bạn chỉ được sử dụng Game khi có sự đồng ý của cha mẹ hoặc người giám hộ hợp pháp, và người đó đồng ý với Điều khoản này thay cho bạn.
 
@@ -85,6 +88,8 @@ Chúng tôi có thể tạm ngưng hoặc chấm dứt quyền sử dụng Game 
 
 Chúng tôi có thể cập nhật Điều khoản này theo thời gian. Bản cập nhật sẽ được đăng trong Game và tại nơi Điều khoản được công bố, kèm ngày hiệu lực mới. Với thay đổi quan trọng, chúng tôi sẽ thông báo trước trong thời gian hợp lý. Việc bạn tiếp tục sử dụng Game sau khi thay đổi có hiệu lực đồng nghĩa với việc bạn chấp nhận thay đổi đó.
 
+Điều khoản này có bản tiếng Việt và tiếng Anh. Nếu có khác biệt, bản tiếng Việt được ưu tiên áp dụng đối với người dùng tại Việt Nam, và bản tiếng Anh đối với người dùng ở nơi khác.
+
 ## 15. Luật áp dụng và giải quyết tranh chấp
 
 Điều khoản này được điều chỉnh bởi pháp luật nước Cộng hòa Xã hội Chủ nghĩa Việt Nam. Các bên ưu tiên giải quyết tranh chấp bằng thương lượng; nếu không thương lượng được, tranh chấp sẽ được giải quyết tại Tòa án có thẩm quyền tại Thành phố Hồ Chí Minh, Việt Nam, trừ khi pháp luật bắt buộc tại nơi bạn cư trú cho phép bạn khởi kiện tại địa phương.
@@ -95,6 +100,7 @@ Nếu bất kỳ quy định nào của Điều khoản này bị xác định l
 
 ## 17. Liên hệ
 
-Mọi câu hỏi về Điều khoản này, vui lòng liên hệ: support@alpaca-solutions.com
+Mọi câu hỏi về Điều khoản này, vui lòng liên hệ Nozvi:
 
-Điều khoản này có bản tiếng Việt và tiếng Anh. Nếu có khác biệt, bản tiếng Việt được ưu tiên áp dụng đối với người dùng tại Việt Nam, và bản tiếng Anh đối với người dùng ở nơi khác.
+- **Địa chỉ:** B12.18 tầng 12 tòa B, Central Premium, 854-856 Tạ Quang Bửu, Phường Chánh Hưng, TP Hồ Chí Minh, Việt Nam
+- **Email:** support@alpaca-solutions.com

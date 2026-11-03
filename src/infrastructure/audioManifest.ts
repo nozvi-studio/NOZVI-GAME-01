@@ -21,14 +21,14 @@ export type MusicAsset = {
 /**
  * Fill both rows from what the reviewer supplies (index stop point 2):
  * the real title, author, page URL and licence, and the file names they
- * placed in public/audio/. Add 'music-sky.m4a' to files only if iOS is
- * targeted; .ogg covers Chrome and the Android WebView.
+ * placed in public/audio/. Tracks ship as .m4a (AAC), which plays in
+ * Chrome, Safari/iOS and the Android WebView.
  * The source fields are intentionally blank until Task 9b supplies them.
  */
 export const MUSIC_ASSETS: readonly MusicAsset[] = [
   {
     id: 'music-sky',
-    files: ['music-sky.ogg'],
+    files: ['music-sky.m4a'],
     source: {
       title: 'Starry Arpeggio',
       author: 'Suno AI',
@@ -38,7 +38,7 @@ export const MUSIC_ASSETS: readonly MusicAsset[] = [
   },
   {
     id: 'music-stele',
-    files: ['music-stele.ogg'],
+    files: ['music-stele.m4a'],
     source: {
       title: 'Meditative Silence',
       author: 'Suno AI',

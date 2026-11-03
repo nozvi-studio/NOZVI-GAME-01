@@ -1,13 +1,8 @@
 # Nozvi Privacy Policy
 
-<!--
-Source: tab "English (v3)" of the Claude Docs document "Nozvi – Chính sách quyền riêng tư", exported 3 November 2026.
-Keep in sync with privacy.vi.md. Notes inside this block are internal and are never shown in the game or on the web.
--->
+**Effective date:** 3 November 2026
 
-**Last updated:** 2 November 2026 · **Version:** 3.0
-
-Thank you for playing Nozvi. This policy explains what data we collect when you play Nozvi on Android or on the web (together, the **"Game"**), why we need it, who receives it, and how you control it.
+Thank you for playing Nozvi. This policy explains what data we collect when you play Nozvi on Android or on the web (together, the **"Game"**), why we need it, who receives it, and how you control it. Your use of the Game is also governed by our Terms of Service.
 
 **At a glance**
 
@@ -23,7 +18,7 @@ The Game is published by **Nozvi** ("**we**"). We are the controller of the pers
 
 - **Address:** B12.18, 12th floor, Block B, Central Premium, 854-856 Ta Quang Buu, Chanh Hung Ward, Ho Chi Minh City, Vietnam
 - **Privacy email:** support@alpaca-solutions.com
-- **Data protection contact:** Ruan-Khanh
+- **Data protection contact:** Nozvi
 
 You can contact us with any question about this policy or to exercise the rights described in section 10.
 
@@ -217,12 +212,6 @@ For complex cases we may extend once and will tell you why. We ask for more info
 ## 11. How do we update this policy?
 
 We may update this policy when the Game, third-party services or the law change. The new version takes effect from the date at the top of the page. If a change significantly affects your rights or needs your consent, the Game will notify you and ask again.
-
-**Version history**
-
-| Version | Effective date | Main changes |
-| --- | --- | --- |
-| 3.0 | 3 November 2026 | First published version |
 
 This policy is available in Vietnamese and English. If they differ, the Vietnamese version prevails for users in Vietnam and the English version for users elsewhere.
 
