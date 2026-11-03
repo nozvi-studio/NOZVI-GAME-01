@@ -9,8 +9,8 @@
 export type TrackId = 'music-sky' | 'music-stele';
 export const TRACK_IDS: readonly TrackId[] = ['music-sky', 'music-stele'];
 
-export type AudioLicense = 'CC0-1.0' | 'Pixabay';
-export const AUDIO_LICENSES: readonly AudioLicense[] = ['CC0-1.0', 'Pixabay'];
+export type AudioLicense = 'CC0-1.0' | 'Pixabay' | 'Suno-Pro-Commercial';
+export const AUDIO_LICENSES: readonly AudioLicense[] = ['CC0-1.0', 'Pixabay', 'Suno-Pro-Commercial'];
 
 export type MusicAsset = {
   id: TrackId;
@@ -33,7 +33,7 @@ export const MUSIC_ASSETS: readonly MusicAsset[] = [
       title: 'Starry Arpeggio',
       author: 'Suno AI',
       url: 'https://suno.com',
-      license: 'CC0-1.0',
+      license: 'Suno-Pro-Commercial',
     },
   },
   {
@@ -43,7 +43,7 @@ export const MUSIC_ASSETS: readonly MusicAsset[] = [
       title: 'Meditative Silence',
       author: 'Suno AI',
       url: 'https://suno.com',
-      license: 'CC0-1.0',
+      license: 'Suno-Pro-Commercial',
     },
   },
 ];
