@@ -30,7 +30,7 @@ describe('music manifest', () => {
   });
 
   test('urls are relative to the page', () => {
-    expect(musicUrls('music-sky')[0]).toBe('audio/music-sky.ogg');
+    expect(musicUrls('music-sky')[0]).toBe('audio/music-sky.m4a');
     expect(musicUrls('nope' as TrackId)).toEqual([]);
   });
 });
