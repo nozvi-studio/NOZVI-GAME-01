@@ -44,12 +44,21 @@ export type Viewport = {
  *
  * Tách khỏi `readViewport` để test được mà không cần `window`.
  */
-export function computeViewport(cssWidth: number, cssHeight: number, rawDpr: number): Viewport {
+export function computeViewport(
+  cssWidth: number,
+  cssHeight: number,
+  rawDpr: number,
+  insetsCssPx: SafeArea = NO_SAFE_AREA
+): Viewport {
   const safeCssHeight = cssHeight > 0 ? cssHeight : DESIGN_HEIGHT;
-  // Giới hạn bề ngang tối đa theo tỉ lệ thiết kế 720:1280 (9:16).
-  // Trên màn ngang (desktop/web), game giữ tỉ lệ chân dung chuẩn, nằm giữa màn hình
-  // thay vì bị bè ngang và ép chiều cao thiết kế xuống thấp làm UI bị phóng đại quá mức.
-  const maxPortraitWidth = safeCssHeight * (DESIGN_WIDTH / DESIGN_HEIGHT);
+  // Giới hạn bề ngang tối đa theo tỉ lệ thiết kế 720:1280 (9:16), tính trên phần
+  // cao còn lại sau khi trừ lề an toàn trên/dưới. Bố cục cần trọn 1280 đơn vị
+  // giữa hai lề; nếu chỉ tính trên toàn bộ chiều cao thì trên iPhone (Safari hiện
+  // thanh công cụ, vùng nhìn gần 9:16 mà vẫn có tai thỏ + thanh Home) bàn chơi và
+  // khay mảnh chồng lên nhau. Phải khớp `max-width` của `#game` trong style.css.
+  const insetY = Math.max(0, insetsCssPx.top) + Math.max(0, insetsCssPx.bottom);
+  const usableCssHeight = Math.max(safeCssHeight - insetY, safeCssHeight / 2);
+  const maxPortraitWidth = usableCssHeight * (DESIGN_WIDTH / DESIGN_HEIGHT);
   const rawCssWidth = cssWidth > 0 ? cssWidth : DESIGN_WIDTH;
   const safeCssWidth = Math.min(rawCssWidth, maxPortraitWidth);
   const dpr = clamp(Number.isFinite(rawDpr) && rawDpr > 0 ? rawDpr : 1, 1, MAX_DPR);
@@ -70,7 +79,12 @@ export function computeViewport(cssWidth: number, cssHeight: number, rawDpr: num
 
 /** Đọc kích thước thật của cửa sổ. Chỉ gọi được trong trình duyệt. */
 export function readViewport(): Viewport {
-  return computeViewport(window.innerWidth, window.innerHeight, window.devicePixelRatio);
+  return computeViewport(
+    window.innerWidth,
+    window.innerHeight,
+    window.devicePixelRatio,
+    readSafeAreaCssPx()
+  );
 }
 
 /** Vùng toạ độ thiết kế mà camera nhìn thấy. Luôn bắt đầu tại gốc. */
@@ -122,6 +136,33 @@ export function safeAreaToDesignUnits(
     bottom: Math.max(0, insetsCssPx.bottom) * k,
     left: Math.max(0, insetsCssPx.left) * k,
   };
+}
+
+/**
+ * Lề an toàn của canvas, theo đơn vị thiết kế, từ lề của cả cửa sổ.
+ *
+ * - Bề ngang CSS của canvas lấy từ `viewport` (bộ đệm / dpr đã kẹp), không chia
+ *   cho `window.devicePixelRatio` gốc: trên máy dpr > MAX_DPR phép chia đó làm
+ *   lề phình ra và bố cục bị ép thiếu chiều cao.
+ * - Canvas bị đóng khung 9:16 ở giữa cửa sổ, nên lề trái/phải (tai thỏ khi xoay
+ *   ngang) chỉ tính phần thật sự lấn vào canvas.
+ */
+export function canvasSafeArea(
+  insetsCssPx: SafeArea,
+  viewport: Viewport,
+  windowCssWidth: number
+): SafeArea {
+  const canvasCssWidth = viewport.bufferWidth / viewport.dpr;
+  const margin = Math.max(0, (windowCssWidth - canvasCssWidth) / 2);
+  return safeAreaToDesignUnits(
+    {
+      top: insetsCssPx.top,
+      bottom: insetsCssPx.bottom,
+      left: Math.max(0, insetsCssPx.left - margin),
+      right: Math.max(0, insetsCssPx.right - margin),
+    },
+    canvasCssWidth
+  );
 }
 
 /**

@@ -4,6 +4,14 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Added (screen support guide)
+- `docs/design/screen-support.md`: the screen ratios a portrait-only Nozvi supports (9:16 base, 19.5:9-21:9 phones, 4:3-16:10 tablets and foldables), how each is laid out, safe-area rules for new UI, the device test matrix and current limits. The game does not rotate.
+
+### Fixed (board and tray overlap on iPhone)
+- On iPhones whose visible area is close to 9:16 but still has notch/Home-bar safe areas (e.g. Safari with its toolbar showing), the board and the piece tray overlapped. `computeViewport` now keeps the 9:16 limit on the height left after the top and bottom safe areas, so the layout always gets its full 1280 units; `#game`'s CSS `max-width` matches. The same fix covers iPad in portrait (pillarboxed 9:16 frame with status-bar and Home-indicator insets), now covered by a test.
+- Safe areas on phones with a device pixel ratio above 3 (many Android flagships) were scaled by the raw ratio instead of the clamped one, so they came out 17-33% too large and squeezed the layout. New `canvasSafeArea` converts insets from the real canvas width and ignores left/right notch insets that fall outside a pillarboxed canvas (phones in landscape).
+- New screen-matrix test (`tests/engine/core/viewportMatrix.test.ts`, 22 devices: iPhone SE to Pro Max in Safari and full screen, iPad portrait/landscape/Split View, Android 9:16 to 21:9, Fold, tablets, desktop, short iframe) checks that header, board, tray and bottom bar never overlap or enter the safe areas.
+
 ### Changed (licensed background music)
 - Replaced `music-sky.ogg` and `music-stele.ogg` with `music-sky.m4a` and `music-stele.m4a` made with a Suno Pro plan; the old files were moved out of the repo.
 - `audioManifest.ts` points both tracks at the `.m4a` files and records their licence as `Suno-Pro-Commercial` (new `AudioLicense` value) instead of `CC0-1.0`.
