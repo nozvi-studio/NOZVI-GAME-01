@@ -1,8 +1,9 @@
 import Phaser from 'phaser';
 import {
   computeDesignView,
+  canvasSafeArea,
   readSafeAreaCssPx,
-  safeAreaToDesignUnits,
+  readViewport,
   DESIGN_WIDTH,
   NO_SAFE_AREA,
 } from './viewport.ts';
@@ -56,8 +57,7 @@ export function designSafeArea(scene: Phaser.Scene): SafeArea {
   if (cachedSafeArea) return cachedSafeArea;
   if (typeof document === 'undefined') return NO_SAFE_AREA;
 
-  const cssWidth = scene.scale.width / (window.devicePixelRatio || 1);
-  cachedSafeArea = safeAreaToDesignUnits(readSafeAreaCssPx(), cssWidth);
+  cachedSafeArea = canvasSafeArea(readSafeAreaCssPx(), readViewport(), window.innerWidth);
   return cachedSafeArea;
 }
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { computeLayout } from '../../../src/presentation/board/layout.ts';
 import {
   computeDesignHeight,
   computeDesignView,
@@ -65,7 +66,30 @@ describe('computeViewport', () => {
     expect(vp.bufferWidth).toBe(1170);
     expect(vp.bufferHeight).toBe(2532);
   });
-});
+
+  it('chừa đủ chỗ cho lề an toàn: bàn và khay không chồng nhau trên iPhone (Safari)', () => {
+    // iPhone 14 trong Safari đang hiện thanh công cụ: vùng nhìn thấy gần 9:16
+    // nhưng vẫn có lề tai thỏ + thanh Home.
+    const insets = { top: 47, right: 0, bottom: 34, left: 0 };
+    const vp = computeViewport(390, 700, 3, insets);
+    const designH = computeDesignHeight(vp.bufferWidth, vp.bufferHeight);
+    const safe = safeAreaToDesignUnits(insets, vp.cssWidth);
+    const layout = computeLayout(DESIGN_WIDTH, designH, safe);
+
+    expect(designH - safe.top - safe.bottom).toBeGreaterThanOrEqual(DESIGN_HEIGHT - 1);
+    expect(layout.boardBounds.y + layout.boardBounds.height).toBeLessThanOrEqual(layout.trayBounds.y);
+  });
+
+  it('iPad dọc (Safari): khung 9:16 trừ lề an toàn, bàn không đè khay', () => {
+    const insets = { top: 24, right: 0, bottom: 20, left: 0 };
+    const vp = computeViewport(820, 1180, 2, insets);
+    const designH = computeDesignHeight(vp.bufferWidth, vp.bufferHeight);
+    const safe = safeAreaToDesignUnits(insets, vp.cssWidth);
+    const layout = computeLayout(DESIGN_WIDTH, designH, safe);
+
+    expect(vp.cssWidth).toBeLessThan(820);
+    expect(layout.boardBounds.y + layout.boardBounds.height).toBeLessThanOrEqual(layout.trayBounds.y);
+  });});
 
 describe('computeDesignHeight', () => {
   it('trả đúng khung thiết kế trên màn 9:16', () => {

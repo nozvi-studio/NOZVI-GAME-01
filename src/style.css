@@ -255,7 +255,8 @@ body {
    * vùng nhìn thấy, khớp với `window.innerHeight` mà viewport.ts dùng.
    */
   height: 100dvh;
-  max-width: calc(100dvh * 720 / 1280);
+  /* Khớp computeViewport: tỉ lệ 9:16 tính trên phần cao đã trừ lề an toàn. */
+  max-width: calc((100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 720 / 1280);
   position: fixed;
   top: 0;
   left: 50%;
