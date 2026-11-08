@@ -4,6 +4,9 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Fixed (overlapping pieces vanished instead of cutting a hole, reported on iPhone Chrome)
+- Overlaps are cut out of the pieces with an inverted `GeometryMask`. Phaser's Canvas renderer ignores `invertAlpha` and keeps only the last polygon of the mask shape, so where the game runs on Canvas the pieces were clipped *to* the last hole instead of *out of* all holes, and both pieces seemed to disappear. `invertOnCanvas` (`BoardRenderer.ts`) replaces the Canvas hook of both hole masks with `clipOutsideHoles` (`canvasHoleMask.ts`): one even-odd clip per hole, so the union of overlapping holes is cut. WebGL keeps the stencil mask. Checked in headless Chrome with a forced Canvas renderer and a zoomed, scrolled camera (before: only the last hole visible; after: both holes cut). Not yet confirmed that the iPhone actually falls back to Canvas.
+
 ### Changed (legal notice and viewer match the game's look)
 - The first-launch notice and the offline legal viewer used browser-default grey/white panels, system fonts, a plain "Close" button, a blue Agree button and the browser scrollbar, which looked foreign inside the game (worst when embedded on the website). They now use the game palette (night-sky navy card, ice-glass rim, amber links and section headings), the game fonts (Baloo 2 titles, Be Vietnam Pro text, CJK stacks per locale, passed from `TYPO_TOKENS` by `mountLegalOverlay`), a round glass ✕ close button (label kept as `aria-label`), an amber Agree button with the same face as the menu's primary button, and a thin themed scrollbar. Sizes keep scaling with `--legal-u`.
 

@@ -40,6 +40,8 @@ import { POSE_TAU, anchorCenter, magnetRing, pieceTargetPose, stepScalar } from 
 import type { Pose } from './pieceMotion.ts';
 import { diffLayers, overlapLayers } from '../feedback/parityDiff.ts';
 import { computeDragParityLayers } from './dragParity.ts';
+import { clipOutsideHoles } from './canvasHoleMask.ts';
+import type { Pt } from './polygonClip.ts';
 import { linkRelated, linkRole } from '../../domain/linkedRotation.ts';
 
 /** First overlap depth whose hole cuts a flat fill (4 pieces stacked), and the first fill that sits above such a hole. */
@@ -100,6 +102,9 @@ export class BoardRenderer {
   /** Fills of depth 5 and deeper sit above the deep holes, so they are drawn here unmasked. */
   private readonly deepFillGraphics: Phaser.GameObjects.Graphics;
   private holesMasked = false;
+  /** World-space hole polygons behind `holeMask` / `deepHoleMask`, for the Canvas-renderer clip. */
+  private holePolygons: Pt[][] = [];
+  private deepHolePolygons: Pt[][] = [];
   private deepMasked = false;
   private glow = 0;
   private dragHollow: ParityLayer[] = [];
@@ -184,6 +189,8 @@ export class BoardRenderer {
     this.holeShape = scene.make.graphics({ x: 0, y: 0 }, false);
     this.holeMask = this.holeShape.createGeometryMask();
     this.holeMask.setInvertAlpha(true);
+    invertOnCanvas(this.deepHoleMask, this.deepHoleShape, () => this.deepHolePolygons);
+    invertOnCanvas(this.holeMask, this.holeShape, () => this.holePolygons);
 
     this.drawStaticBoard();
     for (const piece of level.pieces) this.views.set(piece.id, new PieceView(scene));
@@ -710,6 +717,8 @@ export class BoardRenderer {
     const hollow = [...this.currentParity.filter((l) => !l.filled), ...this.dragHollow];
     this.holeShape.clear();
     this.deepHoleShape.clear();
+    this.holePolygons = [];
+    this.deepHolePolygons = [];
     this.deepFillGraphics.clear();
     this.glowGraphics.clear();
     if (hollow.length === 0) {
@@ -730,8 +739,10 @@ export class BoardRenderer {
     for (const layer of hollow) {
       const pts = layer.points.map((p) => new Phaser.Geom.Point(p.x, p.y));
       this.holeShape.fillPoints(pts, true);
+      this.holePolygons.push(layer.points);
       if (layer.depth >= DEEP_HOLE_DEPTH) {
         this.deepHoleShape.fillPoints(pts, true);
+        this.deepHolePolygons.push(layer.points);
         deepHoles = true;
       }
       if (snapshot.phase === 'won') continue; // solved: the removed areas keep no edge
@@ -1061,4 +1072,20 @@ export class BoardRenderer {
     this.trayFrame?.destroy();
     this.trayWells.forEach((w) => w.destroy());
   }
+}
+
+/**
+ * Phaser's Canvas renderer ignores `invertAlpha` (and keeps only the last polygon of the
+ * mask shape), so on Canvas the hole masks would show the pieces ONLY inside the holes.
+ * Replace the Canvas hook with a real "everything but the holes" clip. WebGL is untouched.
+ */
+function invertOnCanvas(
+  mask: Phaser.Display.Masks.GeometryMask,
+  shape: Phaser.GameObjects.Graphics,
+  holes: () => readonly (readonly Pt[])[]
+): void {
+  mask.preRenderCanvas = (renderer, _masked, camera) => {
+    const matrix = Phaser.GameObjects.GetCalcMatrix(shape, camera).calc;
+    clipOutsideHoles(renderer.currentContext, holes(), matrix);
+  };
 }
