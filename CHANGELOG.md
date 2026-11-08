@@ -4,6 +4,9 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Changed (legal notice and viewer match the game's look)
+- The first-launch notice and the offline legal viewer used browser-default grey/white panels, system fonts, a plain "Close" button, a blue Agree button and the browser scrollbar, which looked foreign inside the game (worst when embedded on the website). They now use the game palette (night-sky navy card, ice-glass rim, amber links and section headings), the game fonts (Baloo 2 titles, Be Vietnam Pro text, CJK stacks per locale, passed from `TYPO_TOKENS` by `mountLegalOverlay`), a round glass ✕ close button (label kept as `aria-label`), an amber Agree button with the same face as the menu's primary button, and a thin themed scrollbar. Sizes keep scaling with `--legal-u`.
+
 ### Changed (Terms and Privacy open the public web pages)
 - Google Play needs the Terms of Service and Privacy Policy as URLs, so the in-game links (loading-screen notice and Settings, under Privacy) now open `https://dev.nozvi.pages.dev/term-of-service/` and `https://dev.nozvi.pages.dev/privacy-policy/` in the system browser (Vietnamese by default, `?lang=en` for every other locale; `LEGAL_URLS` in `src/presentation/legal/legalViewer.ts`).
 - When the device is offline (`navigator.onLine === false`) the game opens the bundled copy (`legal/*.md`) instead, so a player can still read what the first-launch notice asks them to accept.

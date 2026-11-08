@@ -1,3 +1,4 @@
+import { TYPO_TOKENS } from '../designTokens.ts';
 type Overlay = { dismiss: () => void };
 const stack: Overlay[] = [];
 
@@ -12,6 +13,8 @@ export function dismissTopLegalOverlay(): boolean {
 /** Modal input/focus lifecycle shared by the notice and the viewer stacked over it. */
 export function mountLegalOverlay(root: HTMLElement, initialFocus: HTMLElement, dismiss: () => void): () => void {
   const doc = document;
+  // Game fonts follow the active locale (CJK stacks), so they are handed to CSS here.
+  root.style.cssText += `--legal-font-display:${TYPO_TOKENS.fontFamily.display};--legal-font-body:${TYPO_TOKENS.fontFamily.sans};`;
   const opener = doc.activeElement as HTMLElement | null;
   const blocked = Array.from(doc.body.children).map(el => ({ el: el as HTMLElement, inert: (el as HTMLElement).inert }));
   for (const { el } of blocked) el.inert = true;

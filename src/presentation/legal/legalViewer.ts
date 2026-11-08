@@ -65,7 +65,9 @@ export function showBundledLegalDocument(kind: LegalDocumentKind): void {
   title.textContent = t(kind === 'privacy' ? 'privacy_policy' : 'terms_of_service');
   const close = document.createElement('button');
   close.type = 'button';
-  close.textContent = t('legal_close');
+  close.className = 'legal-close';
+  close.textContent = '✕';
+  close.setAttribute('aria-label', t('legal_close'));
   close.setAttribute('data-id', 'legal-document-close');
   close.addEventListener('click', closeLegalDocument);
   bar.append(title, close);

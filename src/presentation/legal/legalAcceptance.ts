@@ -36,6 +36,7 @@ export function openLegalAcceptance(onAccept: () => void, offered: readonly Priv
   title.textContent = t('terms_of_service');
   const close = el('button', 'legal-acceptance-close');
   close.type = 'button';
+  close.className = 'legal-close';
   close.textContent = '✕';
   close.setAttribute('aria-label', t('legal_close'));
   close.addEventListener('click', closeLegalAcceptance);
