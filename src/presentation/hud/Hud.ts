@@ -149,7 +149,8 @@ export class Hud {
       .image(0, 0, TEXTURE_KEYS.btnCircle80)
       .setSize(96, 96)
       .setInteractive({ useHandCursor: true });
-    const menuIcon = this.scene.add.image(0, 0, TEXTURE_KEYS.iconMenuBack).setScale(1.25);
+    // This button opens the pause dialog (PlayScene `onMenu`), so it shows pause, not back.
+    const menuIcon = this.scene.add.image(0, 0, TEXTURE_KEYS.iconPause).setScale(1.25);
     menuBtn.on('pointerdown', () => {
       this.animateButtonTap(menuBtn, () => this.callbacks.onMenu());
     });

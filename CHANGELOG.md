@@ -4,6 +4,20 @@ Change history following [Keep a Changelog](https://keepachangelog.com/). Only a
 
 ## [Unreleased]
 
+### Changed (Terms and Privacy open the public web pages)
+- Google Play needs the Terms of Service and Privacy Policy as URLs, so the in-game links (loading-screen notice and Settings, under Privacy) now open `https://dev.nozvi.pages.dev/term-of-service/` and `https://dev.nozvi.pages.dev/privacy-policy/` in the system browser (Vietnamese by default, `?lang=en` for every other locale; `LEGAL_URLS` in `src/presentation/legal/legalViewer.ts`).
+- When the device is offline (`navigator.onLine === false`) the game opens the bundled copy (`legal/*.md`) instead, so a player can still read what the first-launch notice asks them to accept.
+- The bundled viewer now scales with the 9:16 game frame like the notice: one `--legal-u` unit (frame width / 390) for text, spacing and buttons, and the sheet is exactly as wide as the frame, centred, inside the safe areas.
+- New `npm run legal:check` (needs network) compares the words of `legal/*.md` with the web pages and fails on any difference; it is the first step of `npm run build:release`. Checked on 2026-11-08: all four files match.
+
+### Fixed (tap-to-enter button and legal notice width)
+- The "Tap to enter" button on the first loading screen is drawn with the menu's primary button face (`createPrimaryButtonImage`) with the label on top. Phaser's own text background was not centred on the label (the yellow box sat to the left of the text), so it is no longer used. The button is moved below the "tap for another fact" hint, which it used to cover.
+- The legal notice card is as wide as the game frame (390 units minus the 16-unit gutter on each side, scaled by `--legal-u`), so on laptops it no longer exceeds the 9:16 frame.
+
+### Fixed (pause button and legal notice scaling)
+- The top-left HUD button that opens the pause dialog shows a pause icon (two bars, `iconPause`) instead of the back arrow. The Back button on the level map still uses `iconMenuBack`.
+- The first-launch legal notice (Terms / Privacy acceptance) now scales with the 9:16 game frame: text, spacing and card radius use `--legal-u` (frame width / 390), the same unit as the canvas, instead of fixed CSS px. Its frame maths matches `#game` in `style.css`, safe areas included.
+
 ### Added (screen support guide)
 - `docs/design/screen-support.md`: the screen ratios a portrait-only Nozvi supports (9:16 base, 19.5:9-21:9 phones, 4:3-16:10 tablets and foldables), how each is laid out, safe-area rules for new UI, the device test matrix and current limits. The game does not rotate.
 

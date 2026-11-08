@@ -4,7 +4,7 @@ import { LoadingScene } from '../src/presentation/scenes/LoadingScene.ts';
 import { createPrivacyChoices, type PrivacyPurpose } from '../src/application/privacyChoices.ts';
 import { LEGAL_VERSION } from '../src/presentation/legal/legalVersion.ts';
 import { closeLegalAcceptance, isLegalAcceptanceOpen } from '../src/presentation/legal/legalAcceptance.ts';
-import { isLegalDocumentOpen } from '../src/presentation/legal/legalViewer.ts';
+import { openExternal } from '../src/presentation/openExternal.ts';
 import { dismissTopLegalOverlay } from '../src/presentation/legal/legalOverlay.ts';
 import { director } from '../src/presentation/transitions/director.ts';
 import { setMotionScale } from '../src/presentation/transitions/motion.ts';
@@ -12,6 +12,7 @@ import { t } from '../src/presentation/i18n.ts';
 import { fakeScene } from './helpers/fakeScene.ts';
 import { fakeDocument } from './helpers/fakeDocument.ts';
 
+vi.mock('../src/presentation/openExternal.ts', () => ({ openExternal: vi.fn() }));
 vi.mock('phaser', () => ({ default: {
   Scene: class {}, Core: { Events: { POST_RENDER: 'postrender' } },
   Cameras: { Scene2D: { Events: { FADE_OUT_COMPLETE: 'fadeout' } } },
@@ -20,6 +21,11 @@ vi.mock('../src/engine/core/viewport/designViewport.ts', () => ({
   applyDesignViewport: () => {}, designViewBounds: () => ({ width: 390, height: 844 }),
 }));
 vi.mock('../src/presentation/transitions/director.ts', () => ({ director: { boot: vi.fn() } }));
+// The drawn face is a canvas texture; the fake scene stands in with a text object carrying the hit area and handlers.
+vi.mock('../src/presentation/menu/menuButtons.ts', () => ({
+  createPrimaryButtonImage: (scene: { add: { text: (...a: unknown[]) => unknown } }) => scene.add.text(0, 0, '__face__', {}),
+}));
+const FACE = '__face__';
 
 afterEach(() => { closeLegalAcceptance(); vi.unstubAllGlobals(); vi.clearAllMocks(); setMotionScale(1); });
 
@@ -53,7 +59,7 @@ async function setup(version?: string, reduced = true, offered: readonly Privacy
   gameEvents.emit('postrender');
   await Promise.resolve(); await Promise.resolve();
   const finish = () => scene.update(2000, 2000);
-  const entry = () => ui.items.find(i => i.text === t('loading_tap_to_enter'));
+  const entry = () => ui.items.find(i => i.text === FACE);
   const tap = () => {
     const stopPropagation = vi.fn();
     entry()!.handlers.get('pointerdown')!({}, 0, 0, { stopPropagation });
@@ -68,7 +74,7 @@ it.each([undefined, '2025-01-01'])('waits for acceptance when stored version is 
   expect(s.entry()).toBeUndefined();
   s.finish();
   expect(s.entry()?.interactive).toBe(true);
-  expect(s.entry()?.style?.backgroundColor).toBe('#FFD54F');
+  expect(s.ui.items.some(i => i.text === t('loading_tap_to_enter'))).toBe(true);
   expect(director.boot).not.toHaveBeenCalled();
   const spin = (s.scene as unknown as { spinClock: number }).spinClock;
   s.scene.update(5000, 100);
@@ -156,18 +162,16 @@ it('automatically leaves when the current legal version was accepted', async () 
   expect(isLegalAcceptanceOpen()).toBe(false);
 });
 
-it('Back closes the viewer then popup without leaving; shutdown cleans up overlays', async () => {
+it('legal links open the web pages; Back closes the popup without leaving; shutdown cleans up', async () => {
   const s = await setup();
   s.finish(); s.tap(); s.d.byId('legal-link-terms').fire('click');
-  expect(dismissTopLegalOverlay()).toBe(true);
-  expect(isLegalDocumentOpen()).toBe(false);
+  expect(openExternal).toHaveBeenCalledOnce();
   expect(isLegalAcceptanceOpen()).toBe(true);
   expect(dismissTopLegalOverlay()).toBe(true);
   expect(isLegalAcceptanceOpen()).toBe(false);
   expect(director.boot).not.toHaveBeenCalled();
   s.tap(); s.d.byId('legal-link-privacy').fire('click');
   s.events.emit('shutdown');
-  expect(isLegalDocumentOpen()).toBe(false);
   expect(isLegalAcceptanceOpen()).toBe(false);
   expect(s.input.listenerCount('pointerdown')).toBe(0);
 });

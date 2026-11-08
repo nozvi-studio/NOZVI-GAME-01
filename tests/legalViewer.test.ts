@@ -7,7 +7,7 @@ import { fakeDocument } from './helpers/fakeDocument.ts';
 
 vi.mock('../src/presentation/openExternal.ts', () => ({ openExternal: vi.fn() }));
 let d: ReturnType<typeof fakeDocument>;
-beforeEach(() => { d = fakeDocument(); vi.stubGlobal('document', d.doc); setLocale('en-US'); });
+beforeEach(() => { d = fakeDocument(); vi.stubGlobal('document', d.doc); vi.stubGlobal('navigator', { onLine: false }); setLocale('en-US'); });
 afterEach(() => { closeLegalDocument(); vi.unstubAllGlobals(); vi.clearAllMocks(); setLocale('en-US'); });
 
 describe('safe legal Markdown', () => {
@@ -41,7 +41,7 @@ describe('safe legal Markdown', () => {
   });
 });
 
-describe('legal viewer', () => {
+describe('legal viewer (offline fallback)', () => {
   it('opens one labelled modal, takes focus, traps Tab, closes with Escape and restores focus', () => {
     const opener = d.fake.createElement('button'); d.fake.body.append(opener); opener.focus();
     openLegalDocument('privacy');
@@ -77,5 +77,24 @@ describe('legal viewer', () => {
       expect(content).not.toContain('<!--');
       expect(content).not.toContain('Shared template');
     }
+  });
+});
+
+describe('online: legal documents open the public web pages', () => {
+  it.each(['vi', 'en-US', 'es', 'pt-BR', 'fr', 'de', 'ja', 'ko', 'zh-CN', 'id'] as const)('opens the right URL for %s', (locale) => {
+    vi.stubGlobal('navigator', { onLine: true });
+    setLocale(locale);
+    const suffix = locale === 'vi' ? '' : '?lang=en';
+    openLegalDocument('terms');
+    expect(openExternal).toHaveBeenLastCalledWith(`https://dev.nozvi.pages.dev/term-of-service/${suffix}`);
+    openLegalDocument('privacy');
+    expect(openExternal).toHaveBeenLastCalledWith(`https://dev.nozvi.pages.dev/privacy-policy/${suffix}`);
+    expect(isLegalDocumentOpen()).toBe(false);
+  });
+  it('treats a missing onLine flag as online', () => {
+    vi.stubGlobal('navigator', {});
+    openLegalDocument('terms');
+    expect(openExternal).toHaveBeenCalledOnce();
+    expect(isLegalDocumentOpen()).toBe(false);
   });
 });

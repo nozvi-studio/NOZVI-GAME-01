@@ -8,7 +8,7 @@ import { setLocale, t } from '../src/presentation/i18n.ts';
 import type { PrivacyPurpose } from '../src/application/privacyChoices.ts';
 
 let d: ReturnType<typeof fakeDocument>;
-beforeEach(() => { d = fakeDocument(); vi.stubGlobal('document', d.doc); setLocale('en-US'); });
+beforeEach(() => { d = fakeDocument(); vi.stubGlobal('document', d.doc); vi.stubGlobal('navigator', { onLine: false }); setLocale('en-US'); });
 afterEach(() => { closeLegalAcceptance(); vi.unstubAllGlobals(); setLocale('en-US'); });
 
 it('substitutes localized notice placeholders with inline links and offers Agree and Close', () => {

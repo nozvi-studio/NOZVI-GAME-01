@@ -3,6 +3,7 @@ import privacyEn from '../../../legal/privacy.en.md?raw';
 import termsVi from '../../../legal/terms.vi.md?raw';
 import termsEn from '../../../legal/terms.en.md?raw';
 import { getLocale, t } from '../i18n.ts';
+import { openExternal } from '../openExternal.ts';
 import { renderLegalMarkdown } from './legalMarkdown.ts';
 import { mountLegalOverlay } from './legalOverlay.ts';
 import './legal.css';
@@ -18,7 +19,35 @@ export function closeLegalDocument(): void {
   close?.();
 }
 
+/**
+ * Điều khoản và Chính sách công khai ở trang web (Google Play yêu cầu URL).
+ * Trang song ngữ: tiếng Việt là mặc định, `?lang=en` cho mọi ngôn ngữ khác.
+ * Bản Markdown trong `legal/` là bản dự phòng khi máy offline; `npm run legal:check` giữ hai bản khớp nhau.
+ */
+export const LEGAL_URLS: Readonly<Record<LegalDocumentKind, string>> = {
+  terms: 'https://dev.nozvi.pages.dev/term-of-service/',
+  privacy: 'https://dev.nozvi.pages.dev/privacy-policy/',
+};
+
+export function legalDocumentUrl(kind: LegalDocumentKind, locale: string = getLocale()): string {
+  return locale === 'vi' ? LEGAL_URLS[kind] : `${LEGAL_URLS[kind]}?lang=en`;
+}
+
+function isOnline(): boolean {
+  try { return typeof navigator === 'undefined' || navigator.onLine !== false; } catch { return true; }
+}
+
+/** Online: mở trang web ở trình duyệt hệ thống. Offline: mở bản đóng gói trong game. */
 export function openLegalDocument(kind: LegalDocumentKind): void {
+  if (isOnline()) {
+    closeLegalDocument();
+    openExternal(legalDocumentUrl(kind));
+    return;
+  }
+  showBundledLegalDocument(kind);
+}
+
+export function showBundledLegalDocument(kind: LegalDocumentKind): void {
   closeLegalDocument();
   const overlay = document.createElement('div');
   overlay.className = 'legal-overlay legal-viewer';

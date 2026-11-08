@@ -21,6 +21,7 @@ import { privacyServices } from '../privacyServices.ts';
 import { LEGAL_VERSION } from '../legal/legalVersion.ts';
 import { closeLegalAcceptance, isLegalAcceptanceOpen, openLegalAcceptance } from '../legal/legalAcceptance.ts';
 import { isLegalDocumentOpen } from '../legal/legalViewer.ts';
+import { createPrimaryButtonImage } from '../menu/menuButtons.ts';
 
 // Stays up at least this long even when everything is loaded. The bar then
 // runs, hesitates and runs again (see `pacedProgress`), which reads as real work and a smooth game.
@@ -174,15 +175,19 @@ export class LoadingScene extends Phaser.Scene {
   private showLegalEntry(): void {
     this.awaitingLegal = true;
     for (const object of [this.barTrack, this.barFill, this.barTip, this.percentText]) object.setVisible(false);
-    const enter = this.add.text(195 * this.k, 712 * this.ky, t('loading_tap_to_enter'), {
+    // The button is a drawn face (same as the menu's primary button) with the label on top.
+    // Phaser's own text background was not centred on the label, so it is not used here.
+    const cx = 195 * this.k;
+    const cy = 722 * this.ky; // below the "tap for another fact" hint (675 * ky), which sits at the button's old top edge
+    const face = createPrimaryButtonImage(this, 232 * this.k, 44 * this.k).setPosition(cx, cy).setDepth(5);
+    const label = this.add.text(cx, cy, t('loading_tap_to_enter'), {
       fontFamily: TYPO_TOKENS.fontFamily.display,
       fontSize: `${20 * this.k}px`,
       fontStyle: 'bold',
       color: '#22145A',
-      backgroundColor: '#FFD54F',
-      padding: { x: 24 * this.k, y: 14 * this.k },
-    }).setOrigin(0.5).setDepth(5).setInteractive({ useHandCursor: true });
-    enter.on('pointerdown', (_pointer: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
+    }).setOrigin(0.5).setDepth(6);
+    face.setInteractive({ useHandCursor: true });
+    face.on('pointerdown', (_pointer: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
       event.stopPropagation();
       if (this.leaving) return;
       const { choices, offered } = privacyServices(this);
@@ -190,7 +195,8 @@ export class LoadingScene extends Phaser.Scene {
         if (!choices || this.leaving) return;
         choices.set(Object.fromEntries(offered.map(purpose => [purpose, true])));
         choices.acceptLegal(LEGAL_VERSION);
-        enter.disableInteractive();
+        face.disableInteractive();
+        label.setVisible(false);
         this.leave();
       }, offered);
     });

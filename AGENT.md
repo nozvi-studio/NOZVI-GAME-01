@@ -48,4 +48,4 @@ General rules live in `CLAUDE.md`.
 ## 6. Release
 - **Do:** `npm run build:release` → `npm run android:sync` → (in `android/`) `gradlew.bat assembleDebug`.
 - **Before that:** update `CHANGELOG.md` (rename `Unreleased` to the version number) and `STATUS.md`.
-- **Done when:** the build passes the release gate (`content:validate --release`).
+- **Done when:** the build passes the release gate (`legal:check`, which needs network and compares `legal/*.md` with the public Terms/Privacy pages, then `content:validate --release`).

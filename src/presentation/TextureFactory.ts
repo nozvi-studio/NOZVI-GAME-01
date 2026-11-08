@@ -64,6 +64,7 @@ export const TEXTURE_KEYS = {
   iconRotate: 'icon_rotate',
   iconGear: 'icon_gear',
   iconMenuBack: 'icon_menu_back',
+  iconPause: 'icon_pause',
   iconEyeOpen: 'icon_eye_open',
   iconEyeClosed: 'icon_eye_closed',
   iconClose: 'icon_close',
@@ -418,6 +419,20 @@ export class TextureFactory {
         ctx.lineTo(11, 14);
         ctx.lineTo(18, 21);
         ctx.stroke();
+        canvas.refresh();
+      }
+    }
+
+    // 6b. Icon Tạm dừng (Pause): two bars, 28x28, same stroke colour as the back arrow
+    if (!tm.exists(TEXTURE_KEYS.iconPause)) {
+      const canvas = tm.createCanvas(TEXTURE_KEYS.iconPause, 28, 28);
+      if (canvas) {
+        const ctx = canvas.context;
+        ctx.fillStyle = COLOR_TOKENS.text.primary;
+        ctx.beginPath();
+        ctx.roundRect(9, 7, 4, 14, 1.5);
+        ctx.roundRect(15, 7, 4, 14, 1.5);
+        ctx.fill();
         canvas.refresh();
       }
     }
